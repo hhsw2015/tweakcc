@@ -756,10 +756,38 @@ export async function findClaudeCodeInstallation(
     );
   }
 
-  // Multiple candidates found
+  // Multiple candidates found.
+  // csp: 非交互模式下, 自动挑"最优候选" (native binary + 最新版本), 不再要求用户手动配置.
+  //   优先规则:
+  //     1. native-binary 优先于 npm-based (native 是主体)
+  //     2. 排除 .bak / .locked (findCurrentClaudeExe 已保证不含)
+  //     3. 按语义版本号排序取最新
   if (!options.interactive) {
-    throw new InstallationDetectionError(
-      getMultipleCandidatesError(candidates)
+    const parseVer = (v: string): number[] =>
+      v.split('.').map((x) => (/^\d+$/.test(x) ? parseInt(x, 10) : 0));
+    const scored = candidates.map((c) => ({
+      c,
+      // 分数: native=1000, 加版本号(每级 * 100)
+      score:
+        (c.kind === 'native-binary' ? 1_000_000 : 0) +
+        parseVer(c.version ?? '0.0.0').reduce(
+          (acc, n, i) => acc + n * Math.pow(1000, 2 - Math.min(i, 2)),
+          0
+        ),
+    }));
+    scored.sort((a, b) => b.score - a.score);
+    const best = scored[0].c;
+    console.error(
+      `[csp] auto-selected installation: ${best.path} (v${best.version}, ${best.kind})`
+    );
+    console.error(
+      `[csp] override with TWEAKCC_CC_INSTALLATION_PATH env var or config.json`
+    );
+    return toInstallationInfo(
+      best.path,
+      best.kind,
+      best.version,
+      'search-paths'
     );
   }
 

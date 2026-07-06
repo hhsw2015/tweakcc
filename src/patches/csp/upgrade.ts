@@ -87,14 +87,11 @@ export const runUpgradeAndPatch = (args: string[]): UpgradeResult => {
   );
   console.log(`[csp-upgrade] auto-applying patches...\n`);
 
-  // 调 tweakcc --apply (会输出 tweakcc 自己的 patch 状态汇报)
+  // 调 tweakcc --apply (installationDetection 自动挑最新 native binary, 无需 env)
   const tweakccCmd = process.env.TWEAKCC_BIN ?? 'tweakcc';
   const applyR = spawnSync(tweakccCmd, ['--apply'], {
     stdio: 'inherit',
-    env: {
-      ...process.env,
-      TWEAKCC_CC_INSTALLATION_PATH: findCurrentClaudeExe() ?? '',
-    },
+    env: process.env,
   });
   if (applyR.status !== 0) {
     result.applyError = `tweakcc --apply exited ${applyR.status}`;
