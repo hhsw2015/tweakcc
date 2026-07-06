@@ -33,6 +33,23 @@ export const writeContextLimit = (oldFile: string): string | null => {
     );
   }
 
+  // CC 2.1.201: the 20000 constant was removed from the block.
+  // Actual shape: `var X=200000,Y=200000,Z=32000,W=128000;` (no 20000)
+  const patternTwoNoLower =
+    /var ([\w$]+)=200000,([\w$]+)=200000,([\w$]+)=32000,([\w$]+)=(128000|64000);/;
+  const matchTwoNoLower = oldFile.match(patternTwoNoLower);
+  if (matchTwoNoLower) {
+    return oldFile.replace(
+      patternTwoNoLower,
+      `var ${matchTwoNoLower[1]}=${OVERRIDE},${matchTwoNoLower[2]}=${OVERRIDE},${matchTwoNoLower[3]}=32000,${matchTwoNoLower[4]}=${matchTwoNoLower[5]};`
+    );
+  }
+
+  // Idempotent: if patched already, treat as no-op
+  if (oldFile.includes('CLAUDE_CODE_CONTEXT_LIMIT')) {
+    return oldFile;
+  }
+
   console.error('patch: contextLimit: failed to find context limit constants');
   return null;
 };

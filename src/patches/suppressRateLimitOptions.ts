@@ -8,6 +8,9 @@ export const writeSuppressRateLimitOptions = (
   const patterns = [
     /\.createElement.{0,500},showAllInTranscript:[$\w]+,agentDefinitions:[$\w]+,onOpenRateLimitOptions:([$\w]+)/g,
     /\.createElement\([\w$]+,\{messages:[\w$]+,tools:[\w$]+,commands:[\w$]+,verbose:!0,toolJSX:null,inProgressToolUseIDs:[\w$]+,isMessageSelectorVisible:!1,conversationId:[\w$]+,screen:[\w$]+,agentDefinitions:[\w$]+,streamingToolUses:[\w$]+,showAllInTranscript:[\w$]+,onOpenRateLimitOptions:([\w$]+)/g,
+    // CC 2.1.201: jsx() runtime + rearranged prop order (agentDefinitions before onOpenRateLimitOptions)
+    /\.jsx\([\w$]+,\{messages:[\w$]+,[^}]{0,600}?showAllInTranscript:[\w$]+,agentDefinitions:[\w$]+,onOpenRateLimitOptions:([$\w]+)/g,
+    /\.jsx\([\w$]+,\{messages:[\w$]+,[^}]{0,600}?agentDefinitions:[\w$]+,streamingToolUses:[\w$]+,showAllInTranscript:[\w$]+,onOpenRateLimitOptions:([$\w]+)/g,
   ];
 
   let newFile = oldFile;

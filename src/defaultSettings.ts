@@ -710,47 +710,48 @@ export const DEFAULT_SETTINGS: Settings = {
     removeBorder: false,
   },
   misc: {
+    // csp: 全部推荐默认开. 只跳过明确有副作用/依赖外部工具的 4 项.
     showTweakccVersion: true,
     showPatchesApplied: true,
-    expandThinkingBlocks: true,
-    enableConversationTitle: true,
-    hideStartupBanner: false,
-    hideCtrlGToEdit: false,
-    hideStartupClawd: false,
-    increaseFileReadLimit: false,
-    suppressLineNumbers: false,
-    suppressRateLimitOptions: false,
-    suppressRateLimitWarning: false,
-    keybindingCustomization: false,
-    sessionColorFromEnv: false,
+    expandThinkingBlocks: true,        // 展开 thinking blocks, 减少 Ctrl+O
+    enableConversationTitle: true,     // 加 /title 命令
+    hideStartupBanner: true,           // ✚ 隐藏 startup banner (简洁)
+    hideCtrlGToEdit: true,             // ✚ 隐藏 Ctrl+G 提示
+    hideStartupClawd: true,            // ✚ 隐藏 Clawd 图标
+    increaseFileReadLimit: true,       // ✚ Read token 上限提升
+    suppressLineNumbers: true,         // ✚ Read 去掉 "1→" 前缀
+    suppressRateLimitOptions: true,    // ✚ 隐藏限流按钮
+    suppressRateLimitWarning: true,    // ✚ 隐藏限流警告
+    keybindingCustomization: false,    // 需要用户输入具体键位, 保持关
+    sessionColorFromEnv: false,        // 需要 TWEAKCC_SESSION_COLOR env, 保持关
     mcpConnectionNonBlocking: true,
-    mcpServerBatchSize: null,
-    statuslineThrottleMs: null,
+    mcpServerBatchSize: null,          // null 就是用官方默认 batch size
+    statuslineThrottleMs: null,        // null 就是用官方默认 throttle
     statuslineUseFixedInterval: false,
-    tableFormat: 'default',
+    tableFormat: 'default',            // 保留 default, 换 unicode 需要用户偏好
     enableSessionMemory: true,
     enableDreamMode: true,
-    enableLeanMemoryTypes: false,
+    enableLeanMemoryTypes: true,       // ✚ compact memory types 显示
     fixSummarizeFromHere: true,
     fixRewindSummaryHeader: true,
-    enableRememberSkill: false,
-    tokenCountRounding: null,
-    autoAcceptPlanMode: false,
-    allowBypassPermissionsInSudo: false,
-    suppressNativeInstallerWarning: false,
-    filterScrollEscapeSequences: false,
+    enableRememberSkill: false,        // /remember 是特殊 skill, 用户不需要
+    tokenCountRounding: null,          // null=精确显示, 保守
+    autoAcceptPlanMode: true,          // ✚ Plan 自动通过
+    allowBypassPermissionsInSudo: true,// ✚ root 允许 --dangerously-skip
+    suppressNativeInstallerWarning: true, // ✚ 你 native 装, 关警告
+    filterScrollEscapeSequences: true, // ✚ 过滤终端 escape 噪音
     enableWorktreeMode: true,
-    swapRipgrepForFff: false,
-    allowCustomAgentModels: false,
-    enableContextLimitOverride: false,
+    swapRipgrepForFff: false,          // ✗ 需要 fff CLI, 跳
+    allowCustomAgentModels: true,      // ✚ agent 允许自定义 model
+    enableContextLimitOverride: true,  // ✚ env 覆盖 200k context
     enableModelCustomizations: true,
-    enableVoiceMode: false,
+    enableVoiceMode: false,            // 特殊 feature, 你不用
     enableVoiceConciseOutput: true,
-    enableChannelsMode: false,
-    maxEffortDefault: false,
-    autonomousOperationAllModels: false,
-    autoModeClassifierModel: 'default',
-    suppressDeferredTools: false,
+    enableChannelsMode: false,         // 特殊 feature
+    maxEffortDefault: true,            // ✚ Opus 默认 max effort
+    autonomousOperationAllModels: true,// ✚ 全 model 走 Fable 自主 prompt
+    autoModeClassifierModel: 'haiku',  // ✚ auto-mode 分类器走 haiku (避 opus 拥堵)
+    suppressDeferredTools: false,      // ✗ DANGEROUS, 跳
     claudemdContextOncePerConversation: true,
   },
   toolsets: [],

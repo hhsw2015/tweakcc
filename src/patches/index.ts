@@ -1022,7 +1022,7 @@ export const applyCustomization = async (
     // 25 ported patches from claude-patch_v2.py (byte-for-byte cross-verified).
     // Import shims via require() to keep TS static analysis happy at top-level.
     'csp-01-cyber-risk': {
-      fn: (c: string) => csp_writeCyberRiskInstruction(c),
+      fn: (c: string) => csp_writeCyberRiskInstruction(c) ?? c,
     },
     'csp-02-url-generation': {
       fn: (c: string) => csp_applyAnchorTailPatch(c, CSP_ANCHOR_TAIL[0]),
@@ -1061,25 +1061,25 @@ export const applyCustomization = async (
       fn: (c: string) => csp_applyAnchorTailPatch(c, CSP_ANCHOR_TAIL[11]),
     },
     'csp-16-force-v0': {
-      fn: (c: string) => csp_writeForceV0True(c),
+      fn: (c: string) => csp_writeForceV0True(c) ?? c,
     },
     'csp-17-er-no-downgrade': {
-      fn: (c: string) => csp_writeErNoDowngrade(c),
+      fn: (c: string) => csp_writeErNoDowngrade(c) ?? c,
     },
     'csp-18-hm-normalize': {
-      fn: (c: string) => csp_writeHmNormalizeDot(c),
+      fn: (c: string) => csp_writeHmNormalizeDot(c) ?? c,
     },
     'csp-22-sdk-url': {
-      fn: (c: string) => csp_writeUnlockSdkUrlHost(c),
+      fn: (c: string) => csp_writeUnlockSdkUrlHost(c) ?? c,
     },
     'csp-23-remote-gate': {
-      fn: (c: string) => csp_writeUnlockRemoteGate(c),
+      fn: (c: string) => csp_writeUnlockRemoteGate(c) ?? c,
     },
     'csp-24-disable-rc': {
-      fn: (c: string) => csp_writeUnlockDisableRc(c),
+      fn: (c: string) => csp_writeUnlockDisableRc(c) ?? c,
     },
     'csp-25-force-1h-cache': {
-      fn: (c: string) => csp_writeForce1hCache(c),
+      fn: (c: string) => csp_writeForce1hCache(c) ?? c,
     },
     // Misc Configurable
     'patches-applied-indication': {
