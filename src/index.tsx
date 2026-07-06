@@ -383,6 +383,26 @@ const main = async () => {
     });
 
   program
+    .command('csp-upgrade')
+    .description(
+      'codex-session-patcher: run claude install/update, then auto-apply patches if version changed. Usage: tweakcc csp-upgrade [install|update]'
+    )
+    .argument(
+      '[cmd]',
+      'claude subcommand to run (install/update); defaults to install',
+      'install'
+    )
+    .allowExcessArguments(true)
+    .allowUnknownOption(true)
+    .action(async (cmd: string, _opts, command) => {
+      const { runUpgradeAndPatch } = await import('./patches/csp/upgrade');
+      // 收集用户额外传入的 args
+      const args = [cmd, ...command.args.slice(1)];
+      const r = runUpgradeAndPatch(args);
+      process.exit(r.applyError ? 1 : 0);
+    });
+
+  program
     .command('csp-check')
     .description(
       'codex-session-patcher: dry-run — show 25-patch status table (applicable / applied / obsolete / broken)'

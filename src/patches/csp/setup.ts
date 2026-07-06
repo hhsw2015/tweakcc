@@ -102,16 +102,16 @@ export DISABLE_GROWTHBOOK=1
 export ENABLE_PROMPT_CACHING_1H=true
 export CLAUDE_CODE_ATTRIBUTION_HEADER=false
 
-# install/update: 升级后可能替换 binary, 完成后询问是否重新 patch
+# install/update: 走 tweakcc csp-upgrade 自动执行 install + 自动 apply patch + 汇报
 if [[ "$1" == "install" || "$1" == "update" ]]; then
-    "$REAL_CLAUDE" --model "opus[1m]" "$@"
-    _rc=$?
-    if [[ $_rc -eq 0 ]] && command -v "$TWEAKCC" >/dev/null 2>&1; then
-        echo ""
-        echo "[tweakcc-csp] 升级后 binary 已就绪. 提示: 若需重新应用 patch, 运行:"
-        echo "[tweakcc-csp]   $TWEAKCC --apply"
+    if command -v "$TWEAKCC" >/dev/null 2>&1; then
+        # tweakcc csp-upgrade: 内部会调 claude install, 检测版本变化, 自动 apply, 打印状态表
+        exec "$TWEAKCC" csp-upgrade "$@"
+    else
+        # tweakcc 不可用则回退到原 install (无 auto-patch)
+        echo "[tweakcc-csp] warning: '$TWEAKCC' not found on PATH, running vanilla install"
+        exec "$REAL_CLAUDE" --model "opus[1m]" "$@"
     fi
-    exit $_rc
 fi
 
 # 显式已经带 --append-system-prompt-file 参数 → 不再重复注入 override

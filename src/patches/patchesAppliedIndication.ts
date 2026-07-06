@@ -572,30 +572,33 @@ export const writePatchesAppliedIndication = (
   showTweakccVersion: boolean = true,
   showPatchesApplied: boolean = true
 ): string | null => {
-  // PATCH 1: Version output modification
-  const versionOutputLocation = findVersionOutputLocation(fileContents);
-  if (!versionOutputLocation) {
-    console.error(
-      'patch: patchesAppliedIndication: failed to version output location'
+  // PATCH 1: Version output modification (受 showTweakccVersion 控制)
+  let content = fileContents;
+  if (showTweakccVersion) {
+    const versionOutputLocation = findVersionOutputLocation(fileContents);
+    if (!versionOutputLocation) {
+      console.error(
+        'patch: patchesAppliedIndication: failed to version output location'
+      );
+      return null;
+    }
+
+    const newText = `\\n${tweakccVersion} (tweakcc-fixed)`;
+    // Patch ALL occurrences of the version pattern (commander help text + console.log early exit)
+    const versionPattern = '}.VERSION} (Claude Code)';
+    content = fileContents.replaceAll(
+      versionPattern,
+      versionPattern + newText
     );
-    return null;
+
+    showDiff(
+      fileContents,
+      content,
+      newText,
+      versionOutputLocation.endIndex,
+      versionOutputLocation.endIndex
+    );
   }
-
-  const newText = `\\n${tweakccVersion} (tweakcc-fixed)`;
-  // Patch ALL occurrences of the version pattern (commander help text + console.log early exit)
-  const versionPattern = '}.VERSION} (Claude Code)';
-  let content = fileContents.replaceAll(
-    versionPattern,
-    versionPattern + newText
-  );
-
-  showDiff(
-    fileContents,
-    content,
-    newText,
-    versionOutputLocation.endIndex,
-    versionOutputLocation.endIndex
-  );
 
   // Find shared components needed by multiple patches
   const chalkVar = findChalkVar(fileContents);

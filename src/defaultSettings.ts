@@ -711,8 +711,8 @@ export const DEFAULT_SETTINGS: Settings = {
   },
   misc: {
     // csp: 全部推荐默认开. 只跳过明确有副作用/依赖外部工具的 4 项.
-    showTweakccVersion: true,
-    showPatchesApplied: true,
+    showTweakccVersion: false,
+    showPatchesApplied: false,
     expandThinkingBlocks: true,        // 展开 thinking blocks, 减少 Ctrl+O
     enableConversationTitle: true,     // 加 /title 命令
     hideStartupBanner: true,           // ✚ 隐藏 startup banner (简洁)
