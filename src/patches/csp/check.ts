@@ -11,10 +11,7 @@ import * as fs from 'node:fs';
 import { ANCHOR_TAIL_PATCHES } from './anchorTailPatches';
 
 export type CspPatchState =
-  | 'applicable'
-  | 'already_applied'
-  | 'obsolete'
-  | 'broken';
+  'applicable' | 'already_applied' | 'obsolete' | 'broken';
 
 export interface CspCheckRow {
   id: number;
@@ -29,31 +26,133 @@ export interface CspCheckRow {
  * PATCHES 元数据 (顺序与 Python PATCHES 表一致)
  */
 export const CSP_PATCH_META = [
-  { id: 1, name: 'CYBER_RISK_INSTRUCTION', layer: '提示词' as const, obsolete: false },
+  {
+    id: 1,
+    name: 'CYBER_RISK_INSTRUCTION',
+    layer: '提示词' as const,
+    obsolete: false,
+  },
   { id: 2, name: 'URL 生成限制', layer: '提示词' as const, obsolete: false },
-  { id: 3, name: 'Executing actions (compact)', layer: '提示词' as const, obsolete: false },
-  { id: 4, name: 'Executing actions (full)', layer: '提示词' as const, obsolete: false },
+  {
+    id: 3,
+    name: 'Executing actions (compact)',
+    layer: '提示词' as const,
+    obsolete: false,
+  },
+  {
+    id: 4,
+    name: 'Executing actions (full)',
+    layer: '提示词' as const,
+    obsolete: false,
+  },
   { id: 5, name: 'OWASP 安全编码', layer: '提示词' as const, obsolete: false },
-  { id: 6, name: 'Git Safety Protocol', layer: '提示词' as const, obsolete: false },
+  {
+    id: 6,
+    name: 'Git Safety Protocol',
+    layer: '提示词' as const,
+    obsolete: false,
+  },
   { id: 7, name: 'Bash git 限制', layer: '提示词' as const, obsolete: false },
-  { id: 8, name: 'Prompt Injection 警告', layer: '提示词' as const, obsolete: false },
+  {
+    id: 8,
+    name: 'Prompt Injection 警告',
+    layer: '提示词' as const,
+    obsolete: false,
+  },
   { id: 9, name: 'Sandbox 默认限制', layer: '代码' as const, obsolete: false },
   { id: 10, name: 'Sandbox 敏感路径', layer: '代码' as const, obsolete: false },
   { id: 11, name: 'Sandbox 策略模式', layer: '代码' as const, obsolete: false },
-  { id: 12, name: '破坏性命令检测 (Bash)', layer: '代码' as const, obsolete: true },
+  {
+    id: 12,
+    name: '破坏性命令检测 (Bash)',
+    layer: '代码' as const,
+    obsolete: true,
+  },
   // patch 13 (danger_table_skip) 跟随 patch 12, 不单独显示
-  { id: 14, name: 'CYBER_RISK 残余 (数据段)', layer: '提示词' as const, obsolete: false },
-  { id: 15, name: 'AppleScript 反绕过', layer: '提示词' as const, obsolete: false },
-  { id: 16, name: 'v0() 强制 dynamic workflows 启用', layer: '代码' as const, obsolete: false },
-  { id: 17, name: 'er() xhigh 不降级', layer: '代码' as const, obsolete: false },
-  { id: 18, name: 'HM 模型归一化兼容点格式 (4.7=4-7)', layer: '代码' as const, obsolete: false },
-  { id: 19, name: 'China 指纹 eca 中和', layer: '代码' as const, obsolete: true },
-  { id: 20, name: 'China 指纹 ddp 二防', layer: '代码' as const, obsolete: true },
-  { id: 21, name: 'China 指纹 pdp 三防', layer: '代码' as const, obsolete: true },
-  { id: 22, name: 'Remote Control sdk-url 白名单解除', layer: '代码' as const, obsolete: false },
-  { id: 23, name: 'Remote Control primary gate 解除', layer: '代码' as const, obsolete: false },
-  { id: 24, name: 'Remote Control settings override', layer: '代码' as const, obsolete: false },
-  { id: 25, name: '1h prompt cache 强制启用', layer: '代码' as const, obsolete: false },
+  {
+    id: 14,
+    name: 'CYBER_RISK 残余 (数据段)',
+    layer: '提示词' as const,
+    obsolete: false,
+  },
+  {
+    id: 15,
+    name: 'AppleScript 反绕过',
+    layer: '提示词' as const,
+    obsolete: false,
+  },
+  {
+    id: 16,
+    name: 'v0() 强制 dynamic workflows 启用',
+    layer: '代码' as const,
+    obsolete: false,
+  },
+  {
+    id: 17,
+    name: 'er() xhigh 不降级',
+    layer: '代码' as const,
+    obsolete: false,
+  },
+  {
+    id: 18,
+    name: 'HM 模型归一化兼容点格式 (4.7=4-7)',
+    layer: '代码' as const,
+    obsolete: false,
+  },
+  {
+    id: 19,
+    name: 'China 指纹 eca 中和',
+    layer: '代码' as const,
+    obsolete: true,
+  },
+  {
+    id: 20,
+    name: 'China 指纹 ddp 二防',
+    layer: '代码' as const,
+    obsolete: true,
+  },
+  {
+    id: 21,
+    name: 'China 指纹 pdp 三防',
+    layer: '代码' as const,
+    obsolete: true,
+  },
+  {
+    id: 22,
+    name: 'Remote Control sdk-url 白名单解除',
+    layer: '代码' as const,
+    obsolete: false,
+  },
+  {
+    id: 23,
+    name: 'Remote Control primary gate 解除',
+    layer: '代码' as const,
+    obsolete: false,
+  },
+  {
+    id: 24,
+    name: 'Remote Control settings override',
+    layer: '代码' as const,
+    obsolete: false,
+  },
+  {
+    id: 25,
+    name: '1h prompt cache 强制启用',
+    layer: '代码' as const,
+    obsolete: false,
+  },
+  {
+    id: 26,
+    name: 'metadata.user_id 剥指纹 (device_id/account_uuid)',
+    layer: '代码' as const,
+    obsolete: false,
+  },
+  {
+    id: 27,
+    name: '禁用 telemetry 上报 (G/I_/pto)',
+    layer: '代码' as const,
+    obsolete: false,
+  },
 ];
 
 /**
@@ -62,56 +161,103 @@ export const CSP_PATCH_META = [
  */
 const ANCHOR_SIGNATURES: Record<number, (file: string) => number> = {
   // patch 1: CYBER_RISK 起始引号 + 主 marker
-  1: (f) => (f.includes('"IMPORTANT: Assist with authorized security testing') ? 1 : 0),
+  1: f =>
+    f.includes('"IMPORTANT: Assist with authorized security testing') ? 1 : 0,
 
   // patch 12: danger_table, 上游 2.1.157+ 已重写, 无 pristine 对象
   12: () => 0,
 
   // patch 19-21: China fingerprint, 上游 2.1.198+ 已移除
-  19: (f) =>
-    /r=t\?\.cnTZ\?e\.replaceAll\("-","\/"\):e;return`Today\$\{[\w$]+\}s date is/.test(f)
-      ? 1 : 0,
-  20: (f) =>
-    /n=t==="Asia\/Shanghai"\|\|t==="Asia\/Urumqi";if\(!e\)return\{known:!1,labKw:!1,cnTZ:n/.test(f)
-      ? 1 : 0,
-  21: (f) =>
-    /if\(!e&&!t\)return"'";if\(e&&!t\)return"\\u2019";if\(!e&&t\)return"\\u02BC"/.test(f)
-      ? 1 : 0,
+  19: f =>
+    /r=t\?\.cnTZ\?e\.replaceAll\("-","\/"\):e;return`Today\$\{[\w$]+\}s date is/.test(
+      f
+    )
+      ? 1
+      : 0,
+  20: f =>
+    /n=t==="Asia\/Shanghai"\|\|t==="Asia\/Urumqi";if\(!e\)return\{known:!1,labKw:!1,cnTZ:n/.test(
+      f
+    )
+      ? 1
+      : 0,
+  21: f =>
+    /if\(!e&&!t\)return"'";if\(e&&!t\)return"\\u2019";if\(!e&&t\)return"\\u02BC"/.test(
+      f
+    )
+      ? 1
+      : 0,
 
   // patch 16: force_v0_true - 匹配 v0() 函数完整签名
-  16: (f) =>
-    /function [\w$]{1,8}\(\)\{if\([\w$]{1,8}\(\)\)return!1;if\(![\w$]{1,8}\(\)\)return!1;let\{available:[\w$]+,defaultOn:[\w$]+\}/.test(f)
-      ? 1 : 0,
+  16: f =>
+    /function [\w$]{1,8}\(\)\{if\([\w$]{1,8}\(\)\)return!1;if\(![\w$]{1,8}\(\)\)return!1;let\{available:[\w$]+,defaultOn:[\w$]+\}/.test(
+      f
+    )
+      ? 1
+      : 0,
 
   // patch 17: er_no_downgrade - xhigh→high 降级判定
-  17: (f) =>
-    /if\([\w$]{1,8}==="xhigh"&&![\w$]{1,8}\([\w$]{1,8}\)\)(?:return"high";|[\w$]{1,8}="high";)/.test(f)
-      ? 1 : 0,
+  17: f =>
+    /if\([\w$]{1,8}==="xhigh"&&![\w$]{1,8}\([\w$]{1,8}\)\)(?:return"high";|[\w$]{1,8}="high";)/.test(
+      f
+    )
+      ? 1
+      : 0,
 
   // patch 18: hm_normalize - 任一 model key 的 includes 形式
-  18: (f) =>
-    /\w\.includes\("claude-(?:opus-4-[15678]|sonnet-4-[56]|haiku-4-5)"\)/.test(f)
-      ? 1 : 0,
+  18: f =>
+    /\w\.includes\("claude-(?:opus-4-[15678]|sonnet-4-[56]|haiku-4-5)"\)/.test(
+      f
+    )
+      ? 1
+      : 0,
 
   // patch 22: unlock_sdk_url_host - b_c 函数完整
-  22: (f) =>
-    /function [\w$]{1,8}\(e\)\{let t;try\{t=new URL\(e\)\}catch\{return`could not parse/.test(f)
-      ? 1 : 0,
+  22: f =>
+    /function [\w$]{1,8}\(e\)\{let t;try\{t=new URL\(e\)\}catch\{return`could not parse/.test(
+      f
+    )
+      ? 1
+      : 0,
 
   // patch 23: unlock_remote_gate - Yen 函数
-  23: (f) =>
-    /function [\w$]{1,8}\(\)\{if\(![\w$]{1,8}\(\)\)return!1;return!![\w$.]{1,20}ANTHROPIC_UNIX_SOCKET/.test(f)
-      ? 1 : 0,
+  23: f =>
+    /function [\w$]{1,8}\(\)\{if\(![\w$]{1,8}\(\)\)return!1;return!![\w$.]{1,20}ANTHROPIC_UNIX_SOCKET/.test(
+      f
+    )
+      ? 1
+      : 0,
 
   // patch 24: unlock_disable_rc - Jen 函数
-  24: (f) =>
-    /function [\w$]{1,8}\(\)\{return [\w$]{1,8}\(\)\?\.settings\.disableRemoteControl===!0\}/.test(f)
-      ? 1 : 0,
+  24: f =>
+    /function [\w$]{1,8}\(\)\{return [\w$]{1,8}\(\)\?\.settings\.disableRemoteControl===!0\}/.test(
+      f
+    )
+      ? 1
+      : 0,
 
   // patch 25: force_1h_cache - gKe 函数完整
-  25: (f) =>
-    /function [\w$]{1,8}\(e\)\{if\(it\(process\.env\.FORCE_PROMPT_CACHING_5M\)\)return!1;if\(it\(process\.env\.ENABLE_PROMPT_CACHING_1H\)/.test(f)
-      ? 1 : 0,
+  25: f =>
+    /function [\w$]{1,8}\(e\)\{if\(it\(process\.env\.FORCE_PROMPT_CACHING_5M\)\)return!1;if\(it\(process\.env\.ENABLE_PROMPT_CACHING_1H\)/.test(
+      f
+    )
+      ? 1
+      : 0,
+
+  // patch 26: scrub_metadata - pMe() 完整 device_id+account_uuid+session_id 结构
+  26: f =>
+    /let [\w$]{1,4}=\{\.\.\.[\w$]{1,4},device_id:[\w$]{1,4}\(\),account_uuid:it\(Ie\.CLAUDE_CODE_REMOTE\)&&Ie\.CLAUDE_CODE_ACCOUNT_UUID\|\|[\w$]{1,4}\(\)\?\.accountUuid\|\|"",session_id:[\w$]{1,4}\(\)\};return\{user_id:[\w$]{1,4}\(/.test(
+      f
+    )
+      ? 1
+      : 0,
+
+  // patch 27: disable_telemetry - 任一 G/I_/pto pristine 结构存在
+  27: f =>
+    /function G\(e,t\)\{let n=pdn;if\(n\.sink===null\)/.test(f) ||
+    /async function I_\(e,t\)\{let n=pdn;/.test(f) ||
+    /function pto\(e\)\{if\(!Fj\(\)\)return;if\(!qre\|\|xje/.test(f)
+      ? 1
+      : 0,
 };
 
 /**
@@ -123,37 +269,61 @@ const PATCHED_SIGNATURES: Record<number, (file: string) => number> = {
   // 精确判定复杂, 靠 status heuristic: 若整段 CYBER 相关都不在文件里, 有可能是 patched.
 
   // patch 16: patched signature: return!0/* ... */
-  16: (f) =>
+  16: f =>
     /function [\w$]{1,8}\(\)\{return!0\/\*[\s\S]{0,300}?\*\/\}/.test(f) ? 1 : 0,
 
   // patch 17: /*xxx*/ 替换 xhigh→high 判定
-  17: (f) => /\/\*x+\*\//.test(f) ? 1 : 0,
+  17: f => (/\/\*x+\*\//.test(f) ? 1 : 0),
 
   // patch 18: /claude-...[.-]N/.test(...) 新形式
-  18: (f) => /\/claude-[a-z]+-4\[\.-\][15678]\/\.test\(/.test(f) ? 1 : 0,
+  18: f => (/\/claude-[a-z]+-4\[\.-\][15678]\/\.test\(/.test(f) ? 1 : 0),
 
   // patch 22: b_c 中和 return null
-  22: (f) =>
-    /function [\w$]{1,8}\(e\)\{return null\/\*[\s\S]{0,400}?\*\/\}/.test(f) ? 1 : 0,
+  22: f =>
+    /function [\w$]{1,8}\(e\)\{return null\/\*[\s\S]{0,400}?\*\/\}/.test(f)
+      ? 1
+      : 0,
 
   // patch 23: Yen 中和 return kc()
-  23: (f) =>
-    /function [\w$]{1,8}\(\)\{return [\w$]{1,8}\(\)\/\*[\s\S]{0,80}?\*\/\}/.test(f)
-      ? 1 : 0,
+  23: f =>
+    /function [\w$]{1,8}\(\)\{return [\w$]{1,8}\(\)\/\*[\s\S]{0,80}?\*\/\}/.test(
+      f
+    )
+      ? 1
+      : 0,
 
   // patch 24: Jen 中和 return!1
-  24: (f) =>
+  24: f =>
     /function [\w$]{1,8}\(\)\{return!1\/\*[\s\S]{0,80}?\*\/\}/.test(f) ? 1 : 0,
 
   // patch 25: gKe 中和 return!it(FORCE_PROMPT_CACHING_5M)
-  25: (f) =>
-    /function [\w$]{1,8}\(e\)\{return!it\(process\.env\.FORCE_PROMPT_CACHING_5M\)/.test(f)
-      ? 1 : 0,
+  25: f =>
+    /function [\w$]{1,8}\(e\)\{return!it\(process\.env\.FORCE_PROMPT_CACHING_5M\)/.test(
+      f
+    )
+      ? 1
+      : 0,
+
+  // patch 26: pMe 中和 - session_id only, /* pad */ 尾
+  26: f =>
+    /let [\w$]{1,4}=\{\.\.\.[\w$]{1,4},session_id:[\w$]{1,4}\(\)\};return\{user_id:[\w$]{1,4}\([\w$]{1,4}\)\}\/\*/.test(
+      f
+    )
+      ? 1
+      : 0,
+
+  // patch 27: G/I_/pto 中和 signature - 任一 no-op body + 长 pad
+  27: f =>
+    /function G\(\)\{\/\*[\s\S]{0,200}?\*\/\}/.test(f) ||
+    /async function I_\(\)\{\/\*[\s\S]{0,200}?\*\/\}/.test(f) ||
+    /function pto\(\)\{\/\*[\s\S]{0,700}?\*\/\}/.test(f)
+      ? 1
+      : 0,
 };
 
 const countHits = (file: string, id: number): number => {
   // anchor+tail 类 patch (2-11, 14-15) 用 anchor 常量直接匹配
-  const at = ANCHOR_TAIL_PATCHES.find((p) => p.id === id);
+  const at = ANCHOR_TAIL_PATCHES.find(p => p.id === id);
   if (at) return file.includes(at.anchor) ? 1 : 0;
 
   const fn = ANCHOR_SIGNATURES[id];
@@ -164,7 +334,7 @@ const countPatchedSignature = (file: string, id: number): number => {
   // patch 1 anchor+tail: 已 patched 时 anchor 完全消失 (被空格覆盖).
   // 无法直接检测 patched signature, 用启发式: 若原关键字 "authorized security testing"
   // 完全不在, 视为 patched. 但要排除 CC 版本重构导致 anchor 也消失的情况.
-  const at = ANCHOR_TAIL_PATCHES.find((p) => p.id === id);
+  const at = ANCHOR_TAIL_PATCHES.find(p => p.id === id);
   if (at || id === 1) {
     // For anchor+tail patches: if anchor is absent, we assume patched (best-effort).
     // Broken 判定需要额外结构 signature — 保守起见: anchor 不在 → 视为 patched.
@@ -230,10 +400,10 @@ export interface CspCheckSummary {
 }
 
 export const summarize = (rows: CspCheckRow[]): CspCheckSummary => ({
-  applicable: rows.filter((r) => r.state === 'applicable').length,
-  alreadyApplied: rows.filter((r) => r.state === 'already_applied').length,
-  obsolete: rows.filter((r) => r.state === 'obsolete').length,
-  broken: rows.filter((r) => r.state === 'broken').length,
+  applicable: rows.filter(r => r.state === 'applicable').length,
+  alreadyApplied: rows.filter(r => r.state === 'already_applied').length,
+  obsolete: rows.filter(r => r.state === 'obsolete').length,
+  broken: rows.filter(r => r.state === 'broken').length,
   total: rows.length,
 });
 

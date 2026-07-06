@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/);
 this fork uses its own `2.x` line (npm package `tweakcc-fixed`) and is a strict
 superset of upstream. Pre-fork upstream history lives in Piebald's releases.
 
+## [Unreleased]
+
+- **csp #26 metadata.user_id 剥指纹** — 新增 CSP 隐私 patch. `pMe()`
+  组装的 `metadata.user_id` JSON 里剥掉 `device_id` 和 `account_uuid`,
+  保留 `session_id` (caching / rate-limit 依赖) 和 `CLAUDE_CODE_EXTRA_METADATA`
+  用户自定义字段 (escape hatch). 服务端仍通过 API key 识别账号, 但
+  少一个跨机器 fingerprint 面. 证据: HitCC `abuse-control-and-telemetry.md`
+  `XLe()` 章节.
+- **csp #27 禁用 telemetry 上报** — 新增 CSP 隐私 patch. 三个上报入口
+  一次性中和成 no-op: `G(e,t)` (sync Statsig sink, 覆盖 `tengu_*` 全套 +
+  `api_refusal` + `ClaudeCodeInternalEvent`), `I_(e,t)` (async 版), `pto(e)`
+  (GrowthBook experiment event, 含 device_id + account_uuid + session_id).
+  只断"上传"方向, 保留 GrowthBook feature-flag fetch (下发), 不影响功能
+  分支. 不用再设 `CLAUDE_CODE_ENABLE_TELEMETRY / OTEL_* / DO_NOT_TRACK`
+  等一堆环境变量; managed settings 也覆盖不掉.
+
 ## [2.3.2] - 2026-06-25
 
 Transparency for the patches that change how the model behaves.

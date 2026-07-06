@@ -26,7 +26,7 @@ export const writeForceV0True = (file: string): string | null => {
     /function ([\w$]{1,8})\(\)\{if\([\w$]{1,8}\(\)\)return!1;if\(![\w$]{1,8}\(\)\)return!1;let\{available:[\w$]+,defaultOn:[\w$]+\}=[\w$]+\(\);if\(![\w$]+\)return!1;return [\w$]+\(\)\?\?[\w$]+\}/g;
   return applyRegexReplace(file, {
     pattern,
-    build: (m) => ({ body: `function ${m[1]}(){return!0`, tail: '}' }),
+    build: m => ({ body: `function ${m[1]}(){return!0`, tail: '}' }),
   });
 };
 
@@ -72,7 +72,8 @@ const HM_MODEL_KEYS: Array<[string, string]> = [
   ['haiku-4-5', 'haiku-4[.-]5'],
 ];
 
-const escapeRegex = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const escapeRegex = (s: string): string =>
+  s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 export const writeHmNormalizeDot = (file: string): string => {
   // Python 语义: 对 8 个 model key 各自在 pristine file 上做 regex 扫描 (不用
@@ -94,7 +95,11 @@ export const writeHmNormalizeDot = (file: string): string => {
       if (pad < 0) continue;
       const replacement = core + ' '.repeat(pad);
       if (replacement.length !== orig.length) continue;
-      allEdits.push({ start: m.index, end: m.index + orig.length, replacement });
+      allEdits.push({
+        start: m.index,
+        end: m.index + orig.length,
+        replacement,
+      });
       if (rx.lastIndex === m.index) rx.lastIndex = m.index + 1;
     }
   }
@@ -114,7 +119,7 @@ export const writeUnlockSdkUrlHost = (file: string): string | null => {
     /function ([\w$]{1,8})\(e\)\{let t;try\{t=new URL\(e\)\}catch\{return`could not parse \$\{[\w$]{1,8}\(e\)\} as a URL`\}if\([\w$]{1,8}\.has\(t\.hostname\)\)\{if\(t\.protocol!=="wss:"&&t\.protocol!=="https:"\)return`scheme \$\{[\w$]{1,8}\(t\.protocol\)\} is not permitted for host \$\{[\w$]{1,8}\(t\.hostname\)\}; only wss:\/\/ and https:\/\/ are accepted`;return null\}return`host \$\{[\w$]{1,8}\(t\.hostname\)\} is not an approved Anthropic endpoint`\}/g;
   return applyRegexReplace(file, {
     pattern,
-    build: (m) => ({ body: `function ${m[1]}(e){return null`, tail: '}' }),
+    build: m => ({ body: `function ${m[1]}(e){return null`, tail: '}' }),
   });
 };
 
@@ -124,7 +129,7 @@ export const writeUnlockRemoteGate = (file: string): string | null => {
     /function ([\w$]{1,8})\(\)\{if\(!([\w$]{1,8})\(\)\)return!1;return!![\w$.]{1,20}ANTHROPIC_UNIX_SOCKET\|\|[\w$]{1,8}\(\)\}/g;
   return applyRegexReplace(file, {
     pattern,
-    build: (m) => ({ body: `function ${m[1]}(){return ${m[2]}()`, tail: '}' }),
+    build: m => ({ body: `function ${m[1]}(){return ${m[2]}()`, tail: '}' }),
   });
 };
 
@@ -134,7 +139,7 @@ export const writeUnlockDisableRc = (file: string): string | null => {
     /function ([\w$]{1,8})\(\)\{return [\w$]{1,8}\(\)\?\.settings\.disableRemoteControl===!0\}/g;
   return applyRegexReplace(file, {
     pattern,
-    build: (m) => ({ body: `function ${m[1]}(){return!1`, tail: '}' }),
+    build: m => ({ body: `function ${m[1]}(){return!1`, tail: '}' }),
   });
 };
 
@@ -144,11 +149,76 @@ export const writeForce1hCache = (file: string): string | null => {
     /function ([\w$]{1,8})\(e\)\{if\(it\(process\.env\.FORCE_PROMPT_CACHING_5M\)\)return!1;if\(it\(process\.env\.ENABLE_PROMPT_CACHING_1H\)\|\|mr\(\)==="bedrock"&&it\(process\.env\.ENABLE_PROMPT_CACHING_1H_BEDROCK\)\)return!0;if\(![\w$]{1,8}\(\)\|\|[\w$]{1,8}\.isUsingOverage\)return!1;let t=[\w$]{1,8}\(\);if\(t===null\)t=[\w$]{1,4}\("tengu_prompt_cache_1h_config",\{allowlist:\[[^\]]{1,300}\]\}\)\.allowlist\?\?\[\],[\w$]{1,8}\(t\);return e!==void 0&&t\.some\(\([\w$]{1,3}\)=>[\w$]{1,3}\.endsWith\("\*"\)\?e\.startsWith\([\w$]{1,3}\.slice\(0,-1\)\):e===[\w$]{1,3}\)\}/g;
   return applyRegexReplace(file, {
     pattern,
-    build: (m) => ({
+    build: m => ({
       body: `function ${m[1]}(e){return!it(process.env.FORCE_PROMPT_CACHING_5M)`,
       tail: '}',
     }),
   });
+};
+
+// ---------- patch #26: scrub_metadata_user_id (pMe) ----------
+// HitCC XLe() = 本项目 pMe():
+// 原: let r={...e,device_id:Hj(),account_uuid:it(Ie.CLAUDE_CODE_REMOTE)&&Ie.CLAUDE_CODE_ACCOUNT_UUID||Cc()?.accountUuid||"",session_id:Pt()};return{user_id:De(r)}
+// 新: 剥 device_id + account_uuid, 保 session_id (caching/rate-limit 依赖) 和 CLAUDE_CODE_EXTRA_METADATA (用户 escape hatch)
+export const writeScrubMetadata = (file: string): string | null => {
+  const pattern =
+    /let ([\w$]{1,4})=\{\.\.\.([\w$]{1,4}),device_id:([\w$]{1,4})\(\),account_uuid:it\(Ie\.CLAUDE_CODE_REMOTE\)&&Ie\.CLAUDE_CODE_ACCOUNT_UUID\|\|([\w$]{1,4})\(\)\?\.accountUuid\|\|"",session_id:([\w$]{1,4})\(\)\};return\{user_id:([\w$]{1,4})\(\1\)\}/g;
+  return applyRegexReplace(file, {
+    pattern,
+    build: m => ({
+      body: `let ${m[1]}={...${m[2]},session_id:${m[5]}()};return{user_id:${m[6]}(${m[1]})}`,
+      tail: '',
+    }),
+  });
+};
+
+// ---------- patch #27: disable_telemetry (G, I_, pto) ----------
+// 断三个 telemetry 入口:
+//   - G(e,t): sync Statsig sink (所有 tengu_*, api_refusal, ClaudeCodeInternalEvent)
+//   - I_(e,t): async 版
+//   - pto(e): GrowthBook experiment event (含 device_id + account_uuid + session_id)
+// 保留 GrowthBook fetch (feature-flag 分发), 只断"上传"方向.
+export const writeDisableTelemetry = (file: string): string | null => {
+  let out = file;
+  let changed = false;
+
+  // G(e,t): sync
+  const gPattern =
+    /function G\(e,t\)\{let n=pdn;if\(n\.sink===null\)\{n\.eventQueue\.push\(\{eventName:e,metadata:t,async:!1\}\);return\}n\.sink\.logEvent\(e,t\)\}/g;
+  const gResult = applyRegexReplace(out, {
+    pattern: gPattern,
+    build: () => ({ body: `function G(){`, tail: '}' }),
+  });
+  if (gResult !== null) {
+    out = gResult;
+    changed = true;
+  }
+
+  // I_(e,t): async
+  const iPattern =
+    /async function I_\(e,t\)\{let n=pdn;if\(n\.sink===null\)\{n\.eventQueue\.push\(\{eventName:e,metadata:t,async:!0\}\);return\}await n\.sink\.logEventAsync\(e,t\)\}/g;
+  const iResult = applyRegexReplace(out, {
+    pattern: iPattern,
+    build: () => ({ body: `async function I_(){`, tail: '}' }),
+  });
+  if (iResult !== null) {
+    out = iResult;
+    changed = true;
+  }
+
+  // pto(e): GrowthBook experiment
+  const ptoPattern =
+    /function pto\(e\)\{if\(!Fj\(\)\)return;if\(!qre\|\|xje\("firstParty"\)\)return;let t=Hj\(\),\{accountUuid:n,organizationUuid:r\}=Vlt\(!0\),o=\{event_type:"GrowthbookExperimentEvent",event_id:cto\.randomUUID\(\),experiment_id:e\.experimentId,variation_id:e\.variationId,\.\.\.t&&\{device_id:t\},\.\.\.n&&\{account_uuid:n\},\.\.\.r&&\{organization_uuid:r\},\.\.\.e\.userAttributes&&\{session_id:e\.userAttributes\.sessionId,user_attributes:De\(\{appVersion:e\.userAttributes\.appVersion\}\)\},\.\.\.e\.experimentMetadata&&\{experiment_metadata:De\(e\.experimentMetadata\)\},environment:vzd\(\)\},s=new Date;qre\.emit\(\{timestamp:s,observedTimestamp:s,body:"growthbook_experiment",attributes:o\}\)\}/g;
+  const ptoResult = applyRegexReplace(out, {
+    pattern: ptoPattern,
+    build: () => ({ body: `function pto(){`, tail: '}' }),
+  });
+  if (ptoResult !== null) {
+    out = ptoResult;
+    changed = true;
+  }
+
+  return changed ? out : null;
 };
 
 // ---------- OBSOLETE patch #19-21 (China fingerprint), 保留元数据 ----------
@@ -165,6 +235,8 @@ export const applyAllSpecialPatches = (file: string): string => {
     writeUnlockRemoteGate,
     writeUnlockDisableRc,
     writeForce1hCache,
+    writeScrubMetadata,
+    writeDisableTelemetry,
   ]) {
     const r = fn(out);
     if (r !== null) out = r;

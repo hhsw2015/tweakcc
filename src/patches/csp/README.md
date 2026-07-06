@@ -6,33 +6,35 @@
 
 25 项 patch (含 5 obsolete):
 
-| # | Name | Type | Status |
-|---|------|------|--------|
-| 1 | CYBER_RISK_INSTRUCTION | anchor+tail | active |
-| 2 | URL 生成限制 | anchor+tail | active |
-| 3 | Executing actions (compact) | anchor+tail | active |
-| 4 | Executing actions (full) | anchor+tail | active |
-| 5 | OWASP 安全编码 | anchor+tail | active |
-| 6 | Git Safety Protocol | anchor+tail | active |
-| 7 | Bash git 限制 | anchor+tail | active |
-| 8 | Prompt Injection 警告 | anchor+tail | active |
-| 9 | Sandbox 默认限制 | anchor+tail | active |
-| 10 | Sandbox 敏感路径 | anchor+tail | active |
-| 11 | Sandbox 策略模式 | anchor+tail | active |
-| 12 | 破坏性命令检测 Bash | special | obsolete (2.1.157+) |
-| 13 | 破坏性命令检测 PowerShell | special | obsolete |
-| 14 | CYBER_RISK 残余 (数据段) | anchor+tail | active |
-| 15 | AppleScript 反绕过 | anchor+tail | active |
-| 16 | v0() 强制 dynamic workflows | struct anchor | active |
-| 17 | er() xhigh 不降级 | struct anchor | active |
-| 18 | HM 模型归一化 (4.7=4-7) | struct anchor + 8 model keys | active |
-| 19 | China 指纹 eca | struct anchor | obsolete (2.1.198+) |
-| 20 | China 指纹 ddp | struct anchor | obsolete |
-| 21 | China 指纹 pdp | struct anchor | obsolete |
-| 22 | Remote Control sdk-url | struct anchor | active |
-| 23 | Remote Control primary gate | struct anchor | active |
-| 24 | Remote Control settings override | struct anchor | active |
-| 25 | 1h prompt cache 强制启用 | struct anchor | active |
+| #   | Name                             | Type                         | Status              |
+| --- | -------------------------------- | ---------------------------- | ------------------- |
+| 1   | CYBER_RISK_INSTRUCTION           | anchor+tail                  | active              |
+| 2   | URL 生成限制                     | anchor+tail                  | active              |
+| 3   | Executing actions (compact)      | anchor+tail                  | active              |
+| 4   | Executing actions (full)         | anchor+tail                  | active              |
+| 5   | OWASP 安全编码                   | anchor+tail                  | active              |
+| 6   | Git Safety Protocol              | anchor+tail                  | active              |
+| 7   | Bash git 限制                    | anchor+tail                  | active              |
+| 8   | Prompt Injection 警告            | anchor+tail                  | active              |
+| 9   | Sandbox 默认限制                 | anchor+tail                  | active              |
+| 10  | Sandbox 敏感路径                 | anchor+tail                  | active              |
+| 11  | Sandbox 策略模式                 | anchor+tail                  | active              |
+| 12  | 破坏性命令检测 Bash              | special                      | obsolete (2.1.157+) |
+| 13  | 破坏性命令检测 PowerShell        | special                      | obsolete            |
+| 14  | CYBER_RISK 残余 (数据段)         | anchor+tail                  | active              |
+| 15  | AppleScript 反绕过               | anchor+tail                  | active              |
+| 16  | v0() 强制 dynamic workflows      | struct anchor                | active              |
+| 17  | er() xhigh 不降级                | struct anchor                | active              |
+| 18  | HM 模型归一化 (4.7=4-7)          | struct anchor + 8 model keys | active              |
+| 19  | China 指纹 eca                   | struct anchor                | obsolete (2.1.198+) |
+| 20  | China 指纹 ddp                   | struct anchor                | obsolete            |
+| 21  | China 指纹 pdp                   | struct anchor                | obsolete            |
+| 22  | Remote Control sdk-url           | struct anchor                | active              |
+| 23  | Remote Control primary gate      | struct anchor                | active              |
+| 24  | Remote Control settings override | struct anchor                | active              |
+| 25  | 1h prompt cache 强制启用         | struct anchor                | active              |
+| 26  | metadata.user_id 剥指纹          | struct anchor                | active (privacy)    |
+| 27  | 禁用 telemetry 上报              | struct anchor                | active (privacy)    |
 
 ## 验证
 
