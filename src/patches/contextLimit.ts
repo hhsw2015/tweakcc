@@ -2,6 +2,13 @@
 
 const OVERRIDE = '(+process.env.CLAUDE_CODE_CONTEXT_LIMIT||200000)';
 
+// String.replace treats `$$` in the replacement string as an escape for a
+// single `$`. When minified identifiers like `$$t` are spliced in via
+// backrefs, the `$$` collapses to `$` and the variable name changes — every
+// other reference then points to an undefined name. Escape by doubling every
+// `$` in captured identifiers before inlining them.
+const esc = (s: string): string => s.replace(/\$/g, '$$$$');
+
 export const writeContextLimit = (oldFile: string): string | null => {
   // CC >= ~2.1.18x split the single 200000 context-limit constant into TWO
   // adjacent ones: `var fkt=200000,KQ=200000,Akt=20000,MWu=32000,NWu=128000;`.
@@ -18,7 +25,7 @@ export const writeContextLimit = (oldFile: string): string | null => {
   if (matchTwo) {
     return oldFile.replace(
       patternTwo,
-      `var ${matchTwo[1]}=${OVERRIDE},${matchTwo[2]}=${OVERRIDE},${matchTwo[3]}=20000,${matchTwo[4]}=32000,${matchTwo[5]}=${matchTwo[6]};`
+      `var ${esc(matchTwo[1])}=${OVERRIDE},${esc(matchTwo[2])}=${OVERRIDE},${esc(matchTwo[3])}=20000,${esc(matchTwo[4])}=32000,${esc(matchTwo[5])}=${matchTwo[6]};`
     );
   }
 
@@ -29,7 +36,7 @@ export const writeContextLimit = (oldFile: string): string | null => {
   if (matchOne) {
     return oldFile.replace(
       patternOne,
-      `var ${matchOne[1]}=${OVERRIDE},${matchOne[2]}=20000,${matchOne[3]}=32000,${matchOne[4]}=${matchOne[5]};`
+      `var ${esc(matchOne[1])}=${OVERRIDE},${esc(matchOne[2])}=20000,${esc(matchOne[3])}=32000,${esc(matchOne[4])}=${matchOne[5]};`
     );
   }
 
@@ -41,7 +48,7 @@ export const writeContextLimit = (oldFile: string): string | null => {
   if (matchTwoNoLower) {
     return oldFile.replace(
       patternTwoNoLower,
-      `var ${matchTwoNoLower[1]}=${OVERRIDE},${matchTwoNoLower[2]}=${OVERRIDE},${matchTwoNoLower[3]}=32000,${matchTwoNoLower[4]}=${matchTwoNoLower[5]};`
+      `var ${esc(matchTwoNoLower[1])}=${OVERRIDE},${esc(matchTwoNoLower[2])}=${OVERRIDE},${esc(matchTwoNoLower[3])}=32000,${esc(matchTwoNoLower[4])}=${matchTwoNoLower[5]};`
     );
   }
 

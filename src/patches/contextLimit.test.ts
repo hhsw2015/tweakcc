@@ -41,4 +41,19 @@ describe('writeContextLimit', () => {
     )!;
     expect(() => new Function(out + 'return 1;')).not.toThrow();
   });
+
+  // CC 2.1.201 minifier picks $$t for the module-scope var. Naive
+  // String.replace interprets $$ in captured idents as literal $, collapsing
+  // $$t → $t and breaking every same-module reference (resume UI hangs).
+  it('preserves $-prefixed captured idents (no $$ collapse)', () => {
+    const input = 'var $$t=200000,Ore=200000,Zjd=32000,e5d=128000;';
+    const out = writeContextLimit(input)!;
+    expect(out).toContain('var $$t=');
+    expect(out).not.toContain('var $t=');
+    // Double $ path too
+    const input2 = 'var $$a=200000,$$b=20000,$$c=32000,$$d=128000;';
+    const out2 = writeContextLimit(input2)!;
+    expect(out2).toContain('var $$a=');
+    expect(out2).toContain('$$b=20000');
+  });
 });
