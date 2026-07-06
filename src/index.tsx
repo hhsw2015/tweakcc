@@ -347,6 +347,7 @@ const main = async () => {
       console.log('  wrapper:      ' + r.wrapper);
       console.log('  override.md:  ' + r.overrideMd);
       console.log('  shell alias:  ' + r.alias);
+      console.log('  npm shim:     ' + r.shim);
       process.exit(0);
     });
 
@@ -363,6 +364,7 @@ const main = async () => {
       console.log('  wrapper:      ' + r.wrapper);
       console.log('  override.md:  ' + r.overrideMd);
       console.log('  shell alias:  ' + r.alias);
+      console.log('  npm shim:     ' + r.shim);
       process.exit(0);
     });
 
@@ -376,7 +378,25 @@ const main = async () => {
       console.log('  wrapper:      ' + (s.wrapper ? 'installed' : 'missing'));
       console.log('  override.md:  ' + (s.overrideMd ? 'present' : 'missing'));
       console.log('  shell alias:  ' + (s.alias ? 'installed' : 'missing'));
+      console.log('  npm shim:     ' + s.shim);
       process.exit(0);
+    });
+
+  program
+    .command('csp-verify')
+    .description(
+      'codex-session-patcher: dynamic verify via ccglass (confirm API-layer prompt has no refusal residue)'
+    )
+    .action(async () => {
+      const { ccglassLiveVerify } = await import('./patches/csp/verify');
+      console.log('csp-verify: launching one-shot claude session via ccglass...');
+      const r = ccglassLiveVerify();
+      const icon = r.status === 'ok' ? '\x1b[32m✓' : r.status === 'residue' ? '\x1b[31m✗' : '\x1b[33m⚠';
+      console.log(`  ${icon} ${r.message}\x1b[0m`);
+      if (r.foundKeywords) {
+        for (const kw of r.foundKeywords) console.log(`    • ${kw}`);
+      }
+      process.exit(r.status === 'ok' ? 0 : r.status === 'residue' ? 1 : 2);
     });
 
   program

@@ -139,6 +139,7 @@ export interface CspSetupResult {
   wrapper: 'created' | 'updated' | 'skipped';
   overrideMd: 'created' | 'skipped';
   alias: 'installed' | 'skipped' | 'not_applicable';
+  shim: 'patched' | 'partial' | 'not_found' | 'not_applicable';
 }
 
 const safeWrite = (
@@ -170,6 +171,7 @@ export const cspSetup = (): CspSetupResult => {
     wrapper: 'skipped',
     overrideMd: 'skipped',
     alias: 'skipped',
+    shim: 'not_applicable',
   };
 
   // 1. wrapper
@@ -219,6 +221,24 @@ export const cspSetup = (): CspSetupResult => {
     result.alias = 'not_applicable';
   }
 
+  // 4. Windows npm shim (windows only; Linux 可选支持通过 findNpmShimDir 判断)
+  if (process.platform === 'win32' || process.platform === 'linux') {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { findNpmShimDir, patchShim } = require('./shim');
+    const shimDir = findNpmShimDir();
+    if (shimDir) {
+      const r = patchShim(shimDir);
+      const patchedCount = Object.values(r).filter(
+        (v) => v === 'patched' || v === 'already_patched'
+      ).length;
+      if (patchedCount === 2) result.shim = 'patched';
+      else if (patchedCount > 0) result.shim = 'partial';
+      else result.shim = 'not_found';
+    } else {
+      result.shim = 'not_found';
+    }
+  }
+
   return result;
 };
 
@@ -226,6 +246,7 @@ export interface CspUnsetupResult {
   wrapper: 'removed' | 'not_found';
   overrideMd: 'kept' | 'removed' | 'not_found';
   alias: 'removed' | 'not_found' | 'not_applicable';
+  shim: 'reverted' | 'not_found' | 'not_applicable';
 }
 
 export const cspUnsetup = (removeOverrideMd = false): CspUnsetupResult => {
@@ -233,6 +254,7 @@ export const cspUnsetup = (removeOverrideMd = false): CspUnsetupResult => {
     wrapper: 'not_found',
     overrideMd: removeOverrideMd ? 'not_found' : 'kept',
     alias: 'not_applicable',
+    shim: 'not_applicable',
   };
 
   if (fs.existsSync(WRAPPER_PATH)) {
@@ -269,6 +291,20 @@ export const cspUnsetup = (removeOverrideMd = false): CspUnsetupResult => {
     }
   }
 
+  // Windows npm shim revert
+  if (process.platform === 'win32' || process.platform === 'linux') {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { findNpmShimDir, revertShim } = require('./shim');
+    const shimDir = findNpmShimDir();
+    if (shimDir) {
+      const r = revertShim(shimDir);
+      const revertedAny = Object.values(r).some((v) => v === 'patched');
+      result.shim = revertedAny ? 'reverted' : 'not_found';
+    } else {
+      result.shim = 'not_found';
+    }
+  }
+
   return result;
 };
 
@@ -276,11 +312,33 @@ export const cspStatus = (): {
   wrapper: boolean;
   overrideMd: boolean;
   alias: boolean;
-} => ({
-  wrapper: fs.existsSync(WRAPPER_PATH),
-  overrideMd: fs.existsSync(OVERRIDE_MD_PATH),
-  alias:
+  shim: 'patched' | 'unpatched' | 'missing' | 'not_applicable';
+} => {
+  const aliasInstalled =
     (process.platform === 'darwin' || process.platform === 'linux') &&
     fs.existsSync(getShellRcPath()) &&
-    fs.readFileSync(getShellRcPath(), 'utf-8').includes(ALIAS_MARKER),
-});
+    fs.readFileSync(getShellRcPath(), 'utf-8').includes(ALIAS_MARKER);
+
+  // Shim status (Windows/Linux)
+  let shimState: 'patched' | 'unpatched' | 'missing' | 'not_applicable' =
+    'not_applicable';
+  if (process.platform === 'win32' || process.platform === 'linux') {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { shimStatus } = require('./shim');
+    const s = shimStatus();
+    const both =
+      s.claudeCmd === 'patched' && s.claudePs1 === 'patched'
+        ? 'patched'
+        : s.claudeCmd === 'unpatched' || s.claudePs1 === 'unpatched'
+          ? 'unpatched'
+          : 'missing';
+    shimState = both;
+  }
+
+  return {
+    wrapper: fs.existsSync(WRAPPER_PATH),
+    overrideMd: fs.existsSync(OVERRIDE_MD_PATH),
+    alias: aliasInstalled,
+    shim: shimState,
+  };
+};
