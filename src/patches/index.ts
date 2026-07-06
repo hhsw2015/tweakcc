@@ -149,6 +149,7 @@ export enum PatchGroup {
   MISC_CONFIGURABLE = 'Misc Configurable',
   FEATURES = 'Features',
   SYSTEM_REMINDERS = 'System Reminders',
+  CSP = 'codex-session-patcher',
 }
 
 export interface PatchResult {
@@ -601,6 +602,28 @@ const PATCH_DEFINITIONS = [
       'Inject the claudeMd / userEmail / currentDate <system-reminder> only on the first API call per conversation (re-fires after /clear). Default: ON. Toggle OFF for vanilla CC per-turn injection.',
     modelFacing: true,
   },
+  // ==================== codex-session-patcher (csp) ====================
+  // 25 patches ported from claude-patch_v2.py (byte-for-byte cross-verified)
+  { id: 'csp-01-cyber-risk', name: 'CSP #1 CYBER_RISK_INSTRUCTION', group: PatchGroup.CSP, description: '安全测试拒绝指令 (渗透/C2/漏洞利用)', modelFacing: true },
+  { id: 'csp-02-url-generation', name: 'CSP #2 URL 生成限制', group: PatchGroup.CSP, description: '禁止模型自行生成或猜测 URL', modelFacing: true },
+  { id: 'csp-03-exec-actions-compact', name: 'CSP #3 Executing actions (compact)', group: PatchGroup.CSP, description: 'compact 模式 # Executing actions with care', modelFacing: true },
+  { id: 'csp-04-exec-actions-full', name: 'CSP #4 Executing actions (full)', group: PatchGroup.CSP, description: 'full 模式 # Executing actions with care', modelFacing: true },
+  { id: 'csp-05-owasp', name: 'CSP #5 OWASP 安全编码', group: PatchGroup.CSP, description: '强制安全编码检查 (XSS/SQLi/注入)', modelFacing: true },
+  { id: 'csp-06-git-safety', name: 'CSP #6 Git Safety Protocol', group: PatchGroup.CSP, description: 'NEVER update/push/skip/commit 全套', modelFacing: true },
+  { id: 'csp-07-bash-git', name: 'CSP #7 Bash git 限制', group: PatchGroup.CSP, description: '工具描述中的 git 安全提示', modelFacing: true },
+  { id: 'csp-08-prompt-injection', name: 'CSP #8 Prompt Injection 警告', group: PatchGroup.CSP, description: '要求模型标记可疑 prompt injection', modelFacing: true },
+  { id: 'csp-09-sandbox-default', name: 'CSP #9 Sandbox 默认限制', group: PatchGroup.CSP, description: '强制沙箱运行指令' },
+  { id: 'csp-10-sandbox-paths', name: 'CSP #10 Sandbox 敏感路径', group: PatchGroup.CSP, description: '禁止将 ~/.ssh 等加入白名单' },
+  { id: 'csp-11-sandbox-policy', name: 'CSP #11 Sandbox 策略模式', group: PatchGroup.CSP, description: '沙箱策略强制模式' },
+  { id: 'csp-14-cyber-risk-data', name: 'CSP #14 CYBER_RISK 残余 (数据段)', group: PatchGroup.CSP, description: '原 patch 1 漏掉的非引号副本' },
+  { id: 'csp-15-applescript', name: 'CSP #15 AppleScript 反绕过', group: PatchGroup.CSP, description: '禁止用 AppleScript/System Events/shell 模拟点击', modelFacing: true },
+  { id: 'csp-16-force-v0', name: 'CSP #16 v0() 强制 dynamic workflows 启用', group: PatchGroup.CSP, description: 'v0() 直接返回 true, 绕过 disableWorkflows' },
+  { id: 'csp-17-er-no-downgrade', name: 'CSP #17 er() xhigh 不降级', group: PatchGroup.CSP, description: '让 ultracode 状态在 /effort 显示正确' },
+  { id: 'csp-18-hm-normalize', name: 'CSP #18 HM 模型归一化 (4.7=4-7)', group: PatchGroup.CSP, description: 'HM() includes 子串匹配改正则' },
+  { id: 'csp-22-sdk-url', name: 'CSP #22 Remote Control sdk-url 白名单解除', group: PatchGroup.CSP, description: 'b_c(e) → return null' },
+  { id: 'csp-23-remote-gate', name: 'CSP #23 Remote Control primary gate 解除', group: PatchGroup.CSP, description: 'Yen() → return kc()' },
+  { id: 'csp-24-disable-rc', name: 'CSP #24 Remote Control settings override', group: PatchGroup.CSP, description: 'Jen() → return!1 忽略 disableRemoteControl' },
+  { id: 'csp-25-force-1h-cache', name: 'CSP #25 1h prompt cache 强制启用', group: PatchGroup.CSP, description: 'gKe(e) 恒返 true (保留 FORCE_PROMPT_CACHING_5M 逃生阀)' },
 ] as const;
 
 /** Union type of all valid patch IDs */
@@ -979,6 +1002,129 @@ export const applyCustomization = async (
     'keybinding-customization': {
       fn: c => writeKeybindingCustomization(c),
       condition: !!config.settings.misc?.keybindingCustomization,
+    },
+    // ==================== codex-session-patcher (csp) ====================
+    // 25 ported patches from claude-patch_v2.py (byte-for-byte cross-verified).
+    // Import shims via require() to keep TS static analysis happy at top-level.
+    'csp-01-cyber-risk': {
+      fn: (c: string) => {
+        const { writeCyberRiskInstruction } = require('./csp/cyberRiskInstruction');
+        return writeCyberRiskInstruction(c);
+      },
+    },
+    'csp-02-url-generation': {
+      fn: (c: string) => {
+        const { ANCHOR_TAIL_PATCHES, applyAnchorTailPatch } = require('./csp/anchorTailPatches');
+        return applyAnchorTailPatch(c, ANCHOR_TAIL_PATCHES[0]);
+      },
+    },
+    'csp-03-exec-actions-compact': {
+      fn: (c: string) => {
+        const { ANCHOR_TAIL_PATCHES, applyAnchorTailPatch } = require('./csp/anchorTailPatches');
+        return applyAnchorTailPatch(c, ANCHOR_TAIL_PATCHES[1]);
+      },
+    },
+    'csp-04-exec-actions-full': {
+      fn: (c: string) => {
+        const { ANCHOR_TAIL_PATCHES, applyAnchorTailPatch } = require('./csp/anchorTailPatches');
+        return applyAnchorTailPatch(c, ANCHOR_TAIL_PATCHES[2]);
+      },
+    },
+    'csp-05-owasp': {
+      fn: (c: string) => {
+        const { ANCHOR_TAIL_PATCHES, applyAnchorTailPatch } = require('./csp/anchorTailPatches');
+        return applyAnchorTailPatch(c, ANCHOR_TAIL_PATCHES[3]);
+      },
+    },
+    'csp-06-git-safety': {
+      fn: (c: string) => {
+        const { ANCHOR_TAIL_PATCHES, applyAnchorTailPatch } = require('./csp/anchorTailPatches');
+        return applyAnchorTailPatch(c, ANCHOR_TAIL_PATCHES[4]);
+      },
+    },
+    'csp-07-bash-git': {
+      fn: (c: string) => {
+        const { ANCHOR_TAIL_PATCHES, applyAnchorTailPatch } = require('./csp/anchorTailPatches');
+        return applyAnchorTailPatch(c, ANCHOR_TAIL_PATCHES[5]);
+      },
+    },
+    'csp-08-prompt-injection': {
+      fn: (c: string) => {
+        const { ANCHOR_TAIL_PATCHES, applyAnchorTailPatch } = require('./csp/anchorTailPatches');
+        return applyAnchorTailPatch(c, ANCHOR_TAIL_PATCHES[6]);
+      },
+    },
+    'csp-09-sandbox-default': {
+      fn: (c: string) => {
+        const { ANCHOR_TAIL_PATCHES, applyAnchorTailPatch } = require('./csp/anchorTailPatches');
+        return applyAnchorTailPatch(c, ANCHOR_TAIL_PATCHES[7]);
+      },
+    },
+    'csp-10-sandbox-paths': {
+      fn: (c: string) => {
+        const { ANCHOR_TAIL_PATCHES, applyAnchorTailPatch } = require('./csp/anchorTailPatches');
+        return applyAnchorTailPatch(c, ANCHOR_TAIL_PATCHES[8]);
+      },
+    },
+    'csp-11-sandbox-policy': {
+      fn: (c: string) => {
+        const { ANCHOR_TAIL_PATCHES, applyAnchorTailPatch } = require('./csp/anchorTailPatches');
+        return applyAnchorTailPatch(c, ANCHOR_TAIL_PATCHES[9]);
+      },
+    },
+    'csp-14-cyber-risk-data': {
+      fn: (c: string) => {
+        const { ANCHOR_TAIL_PATCHES, applyAnchorTailPatch } = require('./csp/anchorTailPatches');
+        return applyAnchorTailPatch(c, ANCHOR_TAIL_PATCHES[10]);
+      },
+    },
+    'csp-15-applescript': {
+      fn: (c: string) => {
+        const { ANCHOR_TAIL_PATCHES, applyAnchorTailPatch } = require('./csp/anchorTailPatches');
+        return applyAnchorTailPatch(c, ANCHOR_TAIL_PATCHES[11]);
+      },
+    },
+    'csp-16-force-v0': {
+      fn: (c: string) => {
+        const { writeForceV0True } = require('./csp/specialPatches');
+        return writeForceV0True(c);
+      },
+    },
+    'csp-17-er-no-downgrade': {
+      fn: (c: string) => {
+        const { writeErNoDowngrade } = require('./csp/specialPatches');
+        return writeErNoDowngrade(c);
+      },
+    },
+    'csp-18-hm-normalize': {
+      fn: (c: string) => {
+        const { writeHmNormalizeDot } = require('./csp/specialPatches');
+        return writeHmNormalizeDot(c);
+      },
+    },
+    'csp-22-sdk-url': {
+      fn: (c: string) => {
+        const { writeUnlockSdkUrlHost } = require('./csp/specialPatches');
+        return writeUnlockSdkUrlHost(c);
+      },
+    },
+    'csp-23-remote-gate': {
+      fn: (c: string) => {
+        const { writeUnlockRemoteGate } = require('./csp/specialPatches');
+        return writeUnlockRemoteGate(c);
+      },
+    },
+    'csp-24-disable-rc': {
+      fn: (c: string) => {
+        const { writeUnlockDisableRc } = require('./csp/specialPatches');
+        return writeUnlockDisableRc(c);
+      },
+    },
+    'csp-25-force-1h-cache': {
+      fn: (c: string) => {
+        const { writeForce1hCache } = require('./csp/specialPatches');
+        return writeForce1hCache(c);
+      },
     },
     // Misc Configurable
     'patches-applied-indication': {

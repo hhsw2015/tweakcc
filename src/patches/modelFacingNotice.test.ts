@@ -18,6 +18,16 @@ const MODEL_FACING_IDS = [
   'lean-memory-types',
   'suppress-deferred-tools',
   'claudemd-context-once-per-conversation',
+  // codex-session-patcher (csp): prompt-facing / behavior-changing patches
+  'csp-01-cyber-risk',
+  'csp-02-url-generation',
+  'csp-03-exec-actions-compact',
+  'csp-04-exec-actions-full',
+  'csp-05-owasp',
+  'csp-06-git-safety',
+  'csp-07-bash-git',
+  'csp-08-prompt-injection',
+  'csp-15-applescript',
 ];
 
 describe('model-facing patch metadata', () => {

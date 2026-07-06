@@ -102,6 +102,7 @@ function printPatchResults(
     PatchGroup.MISC_CONFIGURABLE,
     PatchGroup.FEATURES,
     PatchGroup.SYSTEM_REMINDERS,
+    PatchGroup.CSP,
   ];
 
   // Group results by PatchGroup
@@ -331,6 +332,50 @@ const main = async () => {
     .description('Embed JS into a native Claude Code binary')
     .action(async (inputJsPath: string, binaryPath?: string) => {
       await handleRepack(inputJsPath, binaryPath);
+      process.exit(0);
+    });
+
+  program
+    .command('csp-setup')
+    .description(
+      'codex-session-patcher: install shell wrapper + alias + override.md (jailbreak env)'
+    )
+    .action(async () => {
+      const { cspSetup } = await import('./patches/csp/setup');
+      const r = cspSetup();
+      console.log('csp setup complete:');
+      console.log('  wrapper:      ' + r.wrapper);
+      console.log('  override.md:  ' + r.overrideMd);
+      console.log('  shell alias:  ' + r.alias);
+      process.exit(0);
+    });
+
+  program
+    .command('csp-unsetup')
+    .description(
+      'codex-session-patcher: remove wrapper + alias (keeps override.md by default)'
+    )
+    .option('--remove-override', 'also delete ~/.claude/override.md')
+    .action(async (options: { removeOverride?: boolean }) => {
+      const { cspUnsetup } = await import('./patches/csp/setup');
+      const r = cspUnsetup(!!options.removeOverride);
+      console.log('csp unsetup complete:');
+      console.log('  wrapper:      ' + r.wrapper);
+      console.log('  override.md:  ' + r.overrideMd);
+      console.log('  shell alias:  ' + r.alias);
+      process.exit(0);
+    });
+
+  program
+    .command('csp-status')
+    .description('codex-session-patcher: show setup state')
+    .action(async () => {
+      const { cspStatus } = await import('./patches/csp/setup');
+      const s = cspStatus();
+      console.log('csp status:');
+      console.log('  wrapper:      ' + (s.wrapper ? 'installed' : 'missing'));
+      console.log('  override.md:  ' + (s.overrideMd ? 'present' : 'missing'));
+      console.log('  shell alias:  ' + (s.alias ? 'installed' : 'missing'));
       process.exit(0);
     });
 
@@ -613,6 +658,7 @@ function handleListPatches(asJson = false): void {
     PatchGroup.MISC_CONFIGURABLE,
     PatchGroup.FEATURES,
     PatchGroup.SYSTEM_REMINDERS,
+    PatchGroup.CSP,
   ];
 
   // Group patches by PatchGroup
