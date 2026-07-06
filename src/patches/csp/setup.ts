@@ -56,8 +56,17 @@ const OVERRIDE_MD_B64 =
 
 export const DEFAULT_OVERRIDE_MD = Buffer.from(OVERRIDE_MD_B64, 'base64').toString('utf-8');
 
+/**
+ * 生成 wrapper 脚本. 完整对齐 Python 版 (_build_wrapper_script):
+ * - 4 env vars (WORKFLOWS/DISABLE_GROWTHBOOK/1H_CACHE/NO_ATTRIB)
+ * - install/update 分支: 升级后自动 tweakcc csp-check (通过 auto-patch prompt)
+ * - 默认 --model "opus[1m]"
+ * - 三分支: 显式 --append-system-prompt-file / OVERRIDE 存在 / 都没有
+ */
 const buildWrapperScript = (): string => `#!/bin/bash
 # 统一 Claude 入口: 注入 override.md + 升级后自动检测 patch
+# 生成自: tweakcc csp-setup
+TWEAKCC="\${TWEAKCC_BIN:-tweakcc}"
 OVERRIDE="$HOME/.claude/override.md"
 
 find_real_binary() {
@@ -87,10 +96,25 @@ export DISABLE_GROWTHBOOK=1
 export ENABLE_PROMPT_CACHING_1H=true
 export CLAUDE_CODE_ATTRIBUTION_HEADER=false
 
-if [[ -f "$OVERRIDE" ]]; then
-    exec "$REAL_CLAUDE" --append-system-prompt-file "$OVERRIDE" "$@"
+# install/update: 升级后可能替换 binary, 完成后询问是否重新 patch
+if [[ "$1" == "install" || "$1" == "update" ]]; then
+    "$REAL_CLAUDE" --model "opus[1m]" "$@"
+    _rc=$?
+    if [[ $_rc -eq 0 ]] && command -v "$TWEAKCC" >/dev/null 2>&1; then
+        echo ""
+        echo "[tweakcc-csp] 升级后 binary 已就绪. 提示: 若需重新应用 patch, 运行:"
+        echo "[tweakcc-csp]   $TWEAKCC --apply"
+    fi
+    exit $_rc
+fi
+
+# 显式已经带 --append-system-prompt-file 参数 → 不再重复注入 override
+if [[ " $* " == *"--append-system-prompt-file"* ]]; then
+    exec "$REAL_CLAUDE" --model "opus[1m]" "$@"
+elif [[ -f "$OVERRIDE" ]]; then
+    exec "$REAL_CLAUDE" --model "opus[1m]" --append-system-prompt-file "$OVERRIDE" "$@"
 else
-    exec "$REAL_CLAUDE" "$@"
+    exec "$REAL_CLAUDE" --model "opus[1m]" "$@"
 fi
 `;
 
