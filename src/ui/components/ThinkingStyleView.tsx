@@ -7,7 +7,10 @@ import { DEFAULT_SETTINGS } from '@/defaultSettings';
 
 import { SettingsContext } from '../App';
 import Header from './Header';
+<<<<<<< HEAD
 import { getCenteredViewportSlice } from '../viewport';
+=======
+>>>>>>> upstream/main
 
 interface ThinkingStyleViewProps {
   onBack: () => void;
@@ -534,12 +537,24 @@ export function ThinkingStyleView({ onBack }: ThinkingStyleViewProps) {
           <Box flexDirection="column">
             {(() => {
               const maxVisible = 12; // Show 12 presets at a time (more room for the larger list)
+<<<<<<< HEAD
               const { start: adjustedStartIndex, end: endIndex } =
                 getCenteredViewportSlice(
                   selectedPresetIndex,
                   PRESETS.length,
                   maxVisible
                 );
+=======
+              const startIndex = Math.max(
+                0,
+                selectedPresetIndex - Math.floor(maxVisible / 2)
+              );
+              const endIndex = Math.min(
+                PRESETS.length,
+                startIndex + maxVisible
+              );
+              const adjustedStartIndex = Math.max(0, endIndex - maxVisible);
+>>>>>>> upstream/main
 
               const visiblePresets = PRESETS.slice(
                 adjustedStartIndex,

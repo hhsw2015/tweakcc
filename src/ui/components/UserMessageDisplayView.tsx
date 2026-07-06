@@ -55,6 +55,7 @@ export function UserMessageDisplayView({
   const [formatInput, setFormatInput] = useState(
     () => settings.userMessageDisplay.format
   );
+<<<<<<< HEAD
   // Padding can be 'default' (preserve CC's native padding) or a number.
   // We track a mode separate from the numeric input so 'default' is
   // distinguishable from an explicit 0.
@@ -73,6 +74,13 @@ export function UserMessageDisplayView({
     settings.userMessageDisplay.paddingY === 'default'
       ? '0'
       : String(settings.userMessageDisplay.paddingY)
+=======
+  const [paddingXInput, setPaddingXInput] = useState(() =>
+    String(settings.userMessageDisplay.paddingX)
+  );
+  const [paddingYInput, setPaddingYInput] = useState(() =>
+    String(settings.userMessageDisplay.paddingY)
+>>>>>>> upstream/main
   );
   const [fitBoxToContent, setFitBoxToContent] = useState(
     settings.userMessageDisplay.fitBoxToContent
@@ -169,10 +177,15 @@ export function UserMessageDisplayView({
       settings.userMessageDisplay.borderStyle =
         BORDER_STYLE_OPTIONS[borderStyleIndex].value;
       settings.userMessageDisplay.borderColor = borderColor;
+<<<<<<< HEAD
       settings.userMessageDisplay.paddingX =
         paddingXMode === 'default' ? 'default' : parseInt(paddingXInput) || 0;
       settings.userMessageDisplay.paddingY =
         paddingYMode === 'default' ? 'default' : parseInt(paddingYInput) || 0;
+=======
+      settings.userMessageDisplay.paddingX = parseInt(paddingXInput) || 0;
+      settings.userMessageDisplay.paddingY = parseInt(paddingYInput) || 0;
+>>>>>>> upstream/main
       settings.userMessageDisplay.fitBoxToContent = fitBoxToContent;
     });
   };
@@ -181,6 +194,7 @@ export function UserMessageDisplayView({
   const restoreToOriginal = () => {
     setFormatInput(DEFAULT_SETTINGS.userMessageDisplay.format);
     setActiveStylings([...DEFAULT_SETTINGS.userMessageDisplay.styling]);
+<<<<<<< HEAD
     const defaultFg = DEFAULT_SETTINGS.userMessageDisplay.foregroundColor;
     setForegroundMode(defaultFg === 'default' ? 'default' : 'custom');
     setForegroundColor(
@@ -197,18 +211,29 @@ export function UserMessageDisplayView({
     setBackgroundColor(
       defaultBg === null || defaultBg === 'default' ? 'rgb(0,0,0)' : defaultBg
     );
+=======
+    setForegroundMode('default');
+    setForegroundColor('rgb(255,255,255)');
+    setBackgroundMode('none');
+    setBackgroundColor('rgb(0,0,0)');
+>>>>>>> upstream/main
     setBorderStyleIndex(
       BORDER_STYLE_OPTIONS.findIndex(
         opt => opt.value === DEFAULT_SETTINGS.userMessageDisplay.borderStyle
       )
     );
     setBorderColor(DEFAULT_SETTINGS.userMessageDisplay.borderColor);
+<<<<<<< HEAD
     const defaultPadX = DEFAULT_SETTINGS.userMessageDisplay.paddingX;
     const defaultPadY = DEFAULT_SETTINGS.userMessageDisplay.paddingY;
     setPaddingXMode(defaultPadX === 'default' ? 'default' : 'custom');
     setPaddingYMode(defaultPadY === 'default' ? 'default' : 'custom');
     setPaddingXInput(defaultPadX === 'default' ? '0' : String(defaultPadX));
     setPaddingYInput(defaultPadY === 'default' ? '0' : String(defaultPadY));
+=======
+    setPaddingXInput(String(DEFAULT_SETTINGS.userMessageDisplay.paddingX));
+    setPaddingYInput(String(DEFAULT_SETTINGS.userMessageDisplay.paddingY));
+>>>>>>> upstream/main
     setFitBoxToContent(DEFAULT_SETTINGS.userMessageDisplay.fitBoxToContent);
 
     updateSettings(settings => {
@@ -228,8 +253,11 @@ export function UserMessageDisplayView({
     backgroundColor,
     borderStyleIndex,
     borderColor,
+<<<<<<< HEAD
     paddingXMode,
     paddingYMode,
+=======
+>>>>>>> upstream/main
     paddingXInput,
     paddingYInput,
     fitBoxToContent,
@@ -319,9 +347,15 @@ export function UserMessageDisplayView({
       if (selectedOption === 'format') {
         setEditingFormat(true);
       } else if (selectedOption === 'paddingX') {
+<<<<<<< HEAD
         if (paddingXMode === 'custom') setEditingPaddingX(true);
       } else if (selectedOption === 'paddingY') {
         if (paddingYMode === 'custom') setEditingPaddingY(true);
+=======
+        setEditingPaddingX(true);
+      } else if (selectedOption === 'paddingY') {
+        setEditingPaddingY(true);
+>>>>>>> upstream/main
       } else if (selectedOption === 'foreground') {
         if (foregroundMode === 'custom') {
           setOriginalColor(foregroundColor);
@@ -343,10 +377,13 @@ export function UserMessageDisplayView({
         setBorderStyleIndex(prev =>
           prev === 0 ? BORDER_STYLE_OPTIONS.length - 1 : prev - 1
         );
+<<<<<<< HEAD
       } else if (selectedOption === 'paddingX') {
         setPaddingXMode(prev => (prev === 'default' ? 'custom' : 'default'));
       } else if (selectedOption === 'paddingY') {
         setPaddingYMode(prev => (prev === 'default' ? 'custom' : 'default'));
+=======
+>>>>>>> upstream/main
       } else if (selectedOption === 'foreground') {
         setForegroundMode(prev => {
           const nextMode = prev === 'default' ? 'custom' : 'default';
@@ -384,10 +421,13 @@ export function UserMessageDisplayView({
         setBorderStyleIndex(prev =>
           prev === BORDER_STYLE_OPTIONS.length - 1 ? 0 : prev + 1
         );
+<<<<<<< HEAD
       } else if (selectedOption === 'paddingX') {
         setPaddingXMode(prev => (prev === 'default' ? 'custom' : 'default'));
       } else if (selectedOption === 'paddingY') {
         setPaddingYMode(prev => (prev === 'default' ? 'custom' : 'default'));
+=======
+>>>>>>> upstream/main
       } else if (selectedOption === 'foreground') {
         setForegroundMode(prev => {
           const nextMode = prev === 'default' ? 'custom' : 'default';
@@ -446,6 +486,7 @@ export function UserMessageDisplayView({
           : backgroundColor;
 
     const borderStyle = BORDER_STYLE_OPTIONS[borderStyleIndex].value;
+<<<<<<< HEAD
     // When 'default', the patch preserves CC's native paddingRight:1 on the
     // outer Box. The preview mirrors that so After matches what Claude Code
     // actually renders.
@@ -454,6 +495,10 @@ export function UserMessageDisplayView({
     const paddingY =
       paddingYMode === 'default' ? 0 : parseInt(paddingYInput) || 0;
     const paddingRight = paddingXMode === 'default' ? 1 : paddingX;
+=======
+    const paddingX = parseInt(paddingXInput) || 0;
+    const paddingY = parseInt(paddingYInput) || 0;
+>>>>>>> upstream/main
 
     const styledText = (
       <Text
@@ -499,6 +544,7 @@ export function UserMessageDisplayView({
       borderStyle !== 'none' ||
       paddingX > 0 ||
       paddingY > 0 ||
+<<<<<<< HEAD
       paddingRight > 0 ||
       fitBoxToContent
     ) {
@@ -518,6 +564,18 @@ export function UserMessageDisplayView({
       ) : (
         styledText
       );
+=======
+      fitBoxToContent
+    ) {
+      const content =
+        paddingX > 0 || paddingY > 0 ? (
+          <Box paddingX={paddingX} paddingY={paddingY}>
+            {styledText}
+          </Box>
+        ) : (
+          styledText
+        );
+>>>>>>> upstream/main
 
       const boxProps: Partial<Writable<BoxProps>> = {};
       if (borderStyle !== 'none') {
@@ -855,15 +913,20 @@ export function UserMessageDisplayView({
               {selectedOption === 'paddingX' && (
                 <Box marginLeft={2}>
                   <Text dimColor>
+<<<<<<< HEAD
                     {editingPaddingX
                       ? 'enter/esc'
                       : paddingXMode === 'custom'
                         ? 'up/down · enter'
                         : 'up/down'}
+=======
+                    {editingPaddingX ? 'enter/esc' : 'enter'}
+>>>>>>> upstream/main
                   </Text>
                 </Box>
               )}
 
+<<<<<<< HEAD
               <Box marginLeft={2} flexDirection="column">
                 <Box>
                   <Text>{paddingXMode === 'default' ? '● ' : '○ '}Default</Text>
@@ -881,6 +944,15 @@ export function UserMessageDisplayView({
                     </Box>
                   </Box>
                 )}
+=======
+              <Box marginLeft={2}>
+                <Box
+                  borderStyle="round"
+                  borderColor={editingPaddingX ? 'yellow' : 'gray'}
+                >
+                  <Text>{paddingXInput}</Text>
+                </Box>
+>>>>>>> upstream/main
               </Box>
             </Box>
 
@@ -897,15 +969,20 @@ export function UserMessageDisplayView({
               {selectedOption === 'paddingY' && (
                 <Box marginLeft={2}>
                   <Text dimColor>
+<<<<<<< HEAD
                     {editingPaddingY
                       ? 'enter/esc'
                       : paddingYMode === 'custom'
                         ? 'up/down · enter'
                         : 'up/down'}
+=======
+                    {editingPaddingY ? 'enter/esc' : 'enter'}
+>>>>>>> upstream/main
                   </Text>
                 </Box>
               )}
 
+<<<<<<< HEAD
               <Box marginLeft={2} flexDirection="column">
                 <Box>
                   <Text>{paddingYMode === 'default' ? '● ' : '○ '}Default</Text>
@@ -923,6 +1000,15 @@ export function UserMessageDisplayView({
                     </Box>
                   </Box>
                 )}
+=======
+              <Box marginLeft={2}>
+                <Box
+                  borderStyle="round"
+                  borderColor={editingPaddingY ? 'yellow' : 'gray'}
+                >
+                  <Text>{paddingYInput}</Text>
+                </Box>
+>>>>>>> upstream/main
               </Box>
             </Box>
 
@@ -961,18 +1047,25 @@ export function UserMessageDisplayView({
             <Box marginBottom={1}>
               <Text underline>Before (Claude Code default):</Text>
             </Box>
+<<<<<<< HEAD
             {/* Claude Code renders user messages on a themed bg with an
                 extra trailing column of bg (paddingRight:1 on the wrapper
                 Box). Fake that in plain Text with two trailing spaces so
                 the bg hugs the text the way After will after patching
                 with padding 'default'. */}
+=======
+>>>>>>> upstream/main
             <Box marginLeft={1}>
               <Text
                 backgroundColor={currentTheme?.colors?.userMessageBackground}
                 color={currentTheme?.colors?.text}
               >
                 {' '}
+<<<<<<< HEAD
                 &gt; list the dir{'  '}
+=======
+                &gt; list the dir{' '}
+>>>>>>> upstream/main
               </Text>
             </Box>
             <Box marginLeft={1} marginTop={1}>

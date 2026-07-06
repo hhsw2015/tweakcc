@@ -2,7 +2,12 @@ import { Box, Text, useInput } from 'ink';
 import { useContext, useState, useMemo } from 'react';
 import { SettingsContext } from '../App';
 import Header from './Header';
+<<<<<<< HEAD
 import { TableFormat, AutoModeClassifierModel } from '../../types';
+=======
+import { TableFormat } from '../../types';
+import { DEFAULT_SETTINGS } from '../../defaultSettings';
+>>>>>>> upstream/main
 
 interface MiscViewProps {
   onSubmit: () => void;
@@ -65,16 +70,25 @@ export function MiscView({ onSubmit }: MiscViewProps) {
     increaseFileReadLimit: false,
     suppressLineNumbers: false,
     suppressRateLimitOptions: false,
+<<<<<<< HEAD
+=======
+    suppressRateLimitWarning: false,
+>>>>>>> upstream/main
     mcpConnectionNonBlocking: true,
     mcpServerBatchSize: null as number | null,
     statuslineThrottleMs: null as number | null,
     statuslineUseFixedInterval: false,
     tableFormat: 'default' as TableFormat,
+<<<<<<< HEAD
     enableSessionMemory: true,
     enableDreamMode: true,
     enableLeanMemoryTypes: false,
     fixSummarizeFromHere: true,
     fixRewindSummaryHeader: true,
+=======
+    enableSwarmMode: true,
+    enableSessionMemory: true,
+>>>>>>> upstream/main
     enableRememberSkill: false,
     tokenCountRounding: null as number | null,
     autoAcceptPlanMode: false,
@@ -82,18 +96,24 @@ export function MiscView({ onSubmit }: MiscViewProps) {
     suppressNativeInstallerWarning: false,
     filterScrollEscapeSequences: false,
     enableWorktreeMode: true,
+<<<<<<< HEAD
     swapRipgrepForFff: false,
+=======
+>>>>>>> upstream/main
     allowCustomAgentModels: false,
     enableContextLimitOverride: false,
     enableModelCustomizations: true,
     enableVoiceMode: false,
     enableVoiceConciseOutput: true,
     enableChannelsMode: false,
+<<<<<<< HEAD
     maxEffortDefault: false,
     autonomousOperationAllModels: false,
     autoModeClassifierModel: 'default' as AutoModeClassifierModel,
     suppressDeferredTools: false,
     claudemdContextOncePerConversation: true,
+=======
+>>>>>>> upstream/main
   };
 
   const ensureMisc = () => {
@@ -102,6 +122,7 @@ export function MiscView({ onSubmit }: MiscViewProps) {
     }
   };
 
+<<<<<<< HEAD
   const cycleAutoModeClassifierModel = (
     current: AutoModeClassifierModel
   ): AutoModeClassifierModel => {
@@ -124,6 +145,8 @@ export function MiscView({ onSubmit }: MiscViewProps) {
     }
   };
 
+=======
+>>>>>>> upstream/main
   // Helper to cycle through table format options
   const cycleTableFormat = (current: TableFormat): TableFormat => {
     const formats: TableFormat[] = [
@@ -198,7 +221,11 @@ export function MiscView({ onSubmit }: MiscViewProps) {
         toggle: () => {
           updateSettings(settings => {
             if (!settings.inputBox) {
+<<<<<<< HEAD
               settings.inputBox = { removeBorder: false };
+=======
+              settings.inputBox = { ...DEFAULT_SETTINGS.inputBox };
+>>>>>>> upstream/main
             }
             settings.inputBox.removeBorder = !settings.inputBox.removeBorder;
           });
@@ -356,6 +383,23 @@ export function MiscView({ onSubmit }: MiscViewProps) {
         },
       },
       {
+<<<<<<< HEAD
+=======
+        id: 'suppressRateLimitWarning',
+        title: 'Suppress rate limit warning banners',
+        description:
+          'Hides rate limit warning banners in the status bar. Error messages when limits are actually reached are still shown.',
+        getValue: () => settings.misc?.suppressRateLimitWarning ?? false,
+        toggle: () => {
+          updateSettings(settings => {
+            ensureMisc();
+            settings.misc!.suppressRateLimitWarning =
+              !settings.misc!.suppressRateLimitWarning;
+          });
+        },
+      },
+      {
+>>>>>>> upstream/main
         id: 'mcpNonBlocking',
         title: 'Non-blocking MCP startup',
         description:
@@ -439,6 +483,7 @@ export function MiscView({ onSubmit }: MiscViewProps) {
         },
       },
       {
+<<<<<<< HEAD
         id: 'swapRipgrepForFff',
         title: '[EXPERIMENTAL] fff for Bash search (grep/find/rg -> fff)',
         description:
@@ -453,6 +498,8 @@ export function MiscView({ onSubmit }: MiscViewProps) {
         },
       },
       {
+=======
+>>>>>>> upstream/main
         id: 'enableVoiceMode',
         title: 'Enable voice mode (/voice command)',
         description:
@@ -580,6 +627,7 @@ export function MiscView({ onSubmit }: MiscViewProps) {
         },
       },
       {
+<<<<<<< HEAD
         id: 'enableDreamMode',
         title: 'Enable dream mode',
         description:
@@ -637,6 +685,8 @@ export function MiscView({ onSubmit }: MiscViewProps) {
         },
       },
       {
+=======
+>>>>>>> upstream/main
         id: 'enableRememberSkill',
         title: 'Enable remember skill',
         description:
@@ -759,6 +809,7 @@ export function MiscView({ onSubmit }: MiscViewProps) {
           });
         },
       },
+<<<<<<< HEAD
       {
         id: 'maxEffortDefault',
         title: 'Default Opus 4.7 to max effort',
@@ -806,6 +857,8 @@ export function MiscView({ onSubmit }: MiscViewProps) {
           });
         },
       },
+=======
+>>>>>>> upstream/main
     ],
     [settings, updateSettings]
   );

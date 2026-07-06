@@ -1,5 +1,10 @@
 import { Box, Text } from 'ink';
+<<<<<<< HEAD
 import Link from 'ink-link';
+=======
+
+import Link from './Link';
+>>>>>>> upstream/main
 
 // Generated with `chafa <path> -f symbols -s 20 --bg=#ff8400`.
 // Changed the `\x1b[38;2;R;G;B;48;2;R;G;Bm` pattern to separate
