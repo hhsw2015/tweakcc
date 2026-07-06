@@ -107,6 +107,11 @@ import {
   writeClaudemdContextOncePerConversation,
 } from './systemReminders';
 import { applySystemReminderOverrides } from './systemReminderOverrides';
+// 补 4 个 Piebald 独家 patch (skrabe 已删, 我们补回)
+import { writeInputChevronColor } from './inputChevronColor';
+import { writeSuppressRateLimitWarning } from './suppressRateLimitWarning';
+import { writeSessionColor } from './sessionColor';
+import { writeKeybindingCustomization } from './keybindingCustomization';
 import {
   restoreNativeBinaryFromBackup,
   restoreClijsFromBackup,
@@ -240,6 +245,34 @@ const PATCH_DEFINITIONS = [
     group: PatchGroup.ALWAYS_APPLIED,
     description:
       'Short-circuits CC\'s universal system-reminder wrapper so empty / "(no content)" inputs produce no reminder. Kills the drift-inducing "<system-reminder>(no content)</system-reminder>" blocks that get appended to roughly every other tool call.',
+  },
+  {
+    id: 'session-color',
+    name: 'Session color from env',
+    group: PatchGroup.ALWAYS_APPLIED,
+    description:
+      'Set session prompt bar color via TWEAKCC_SESSION_COLOR env var',
+  },
+  {
+    id: 'keybinding-customization',
+    name: 'Keybinding customization',
+    group: PatchGroup.ALWAYS_APPLIED,
+    description:
+      'Force-enable custom keybindings when CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1',
+  },
+  {
+    id: 'input-chevron-color',
+    name: 'Input chevron color',
+    group: PatchGroup.MISC_CONFIGURABLE,
+    description:
+      'The input chevron changes color based on loading state (e.g. green when idle)',
+  },
+  {
+    id: 'suppress-rate-limit-warning',
+    name: 'Suppress rate limit warning',
+    group: PatchGroup.MISC_CONFIGURABLE,
+    description:
+      'Rate limit warning banners will be suppressed (errors still shown)',
   },
   // Misc Configurable
   {
@@ -939,6 +972,14 @@ export const applyCustomization = async (
     'strip-empty-system-reminders': {
       fn: c => writeStripEmptySystemReminders(c),
     },
+    'session-color': {
+      fn: c => writeSessionColor(c),
+      condition: !!config.settings.misc?.sessionColorFromEnv,
+    },
+    'keybinding-customization': {
+      fn: c => writeKeybindingCustomization(c),
+      condition: !!config.settings.misc?.keybindingCustomization,
+    },
     // Misc Configurable
     'patches-applied-indication': {
       fn: c =>
@@ -1031,6 +1072,22 @@ export const applyCustomization = async (
         config.settings.inputBox.removeBorder !==
           DEFAULT_SETTINGS.inputBox.removeBorder
       ),
+    },
+    'input-chevron-color': {
+      fn: c => {
+        const themeColorKey = config.settings.inputBox?.chevronIdleThemeColor;
+        if (!themeColorKey) return c;
+        const theme = config.settings.themes?.[0];
+        const resolved =
+          (theme?.colors as Record<string, string> | undefined)?.[themeColorKey] ??
+          themeColorKey;
+        return writeInputChevronColor(c, resolved);
+      },
+      condition: !!config.settings.inputBox?.chevronIdleThemeColor,
+    },
+    'suppress-rate-limit-warning': {
+      fn: c => writeSuppressRateLimitWarning(c),
+      condition: !!config.settings.misc?.suppressRateLimitWarning,
     },
     'subagent-models': {
       fn: c => writeSubagentModels(c, config.settings.subagentModels!),

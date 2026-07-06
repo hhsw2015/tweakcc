@@ -1,18 +1,11 @@
 import * as os from 'node:os';
 
 import { Box, Text } from 'ink';
-<<<<<<< HEAD
 import Link from 'ink-link';
-=======
->>>>>>> upstream/main
 
 import { MainMenuItem } from '@/types';
 import { CONFIG_DIR } from '@/config';
 
-<<<<<<< HEAD
-=======
-import Link from './Link';
->>>>>>> upstream/main
 import Header from './Header';
 import PiebaldAnnouncement from './PiebaldAnnouncement';
 import MainMenu from './MainMenu';
@@ -34,15 +27,9 @@ const PleaseStarBanner = () => (
   <Box>
     <Text color="yellow">
       ⭐ <Text bold>Star the repo at </Text>
-<<<<<<< HEAD
       <Link url="https://github.com/skrabe/tweakcc-fixed" fallback={false}>
         <Text bold color="cyan">
           https://github.com/skrabe/tweakcc-fixed
-=======
-      <Link url="https://github.com/Piebald-AI/tweakcc" fallback={false}>
-        <Text bold color="cyan">
-          https://github.com/Piebald-AI/tweakcc
->>>>>>> upstream/main
         </Text>
       </Link>
       <Text bold> if you find this useful!</Text> ⭐

@@ -37,18 +37,14 @@ const baseMenuItems: SelectItem[] = [
     desc: 'Configure which Claude model each subagent uses (Plan, Explore, etc.)',
   },
   {
-<<<<<<< HEAD
     name: MainMenuItem.COMPLEXITY_ROUTER,
     desc: '[EXPERIMENTAL] Auto-route reasoning effort by task complexity (routine=low ... hardest=max)',
   },
   {
-=======
->>>>>>> upstream/main
     name: MainMenuItem.CLAUDE_MD_ALT_NAMES,
     desc: 'Configure alternative filenames for CLAUDE.md (e.g., AGENTS.md)',
   },
   {
-<<<<<<< HEAD
     name: MainMenuItem.SYSTEM_REMINDERS,
     desc: 'Suppress per-turn <system-reminder> injections (skills list, MCP instructions, claudeMd wrapper, etc.)',
   },
@@ -61,8 +57,6 @@ const baseMenuItems: SelectItem[] = [
     desc: 'Drive your real, logged-in tabs over CDP — a fuller take on Claude in Chrome',
   },
   {
-=======
->>>>>>> upstream/main
     name: MainMenuItem.VIEW_SYSTEM_PROMPTS,
     desc: "Opens the system prompts directory where you can customize Claude Code's system prompts",
   },

@@ -9,15 +9,11 @@ import { InputPatternHighlightersView } from './components/InputPatternHighlight
 import { MiscView } from './components/MiscView';
 import { ToolsetsView } from './components/ToolsetsView';
 import { SubagentModelsView } from './components/SubagentModelsView';
-<<<<<<< HEAD
 import { ComplexityRouterView } from './components/ComplexityRouterView';
 import { BrowserBridgeView } from './components/BrowserBridgeView';
 import { ClaudeMdAltNamesView } from './components/ClaudeMdAltNamesView';
 import { SystemRemindersView } from './components/SystemRemindersView';
 import { SkillsView } from './components/SkillsView';
-=======
-import { ClaudeMdAltNamesView } from './components/ClaudeMdAltNamesView';
->>>>>>> upstream/main
 import {
   MainMenuItem,
   Settings,
@@ -56,14 +52,11 @@ export default function App({
     !initialConfig.hidePiebaldAnnouncement
   );
 
-<<<<<<< HEAD
   const [notification, setNotification] = useState<{
     message: string;
     type: 'success' | 'error' | 'warning' | 'info';
   } | null>(null);
 
-=======
->>>>>>> upstream/main
   // Function to update the settings, automatically updated changesApplied.
   const updateSettings = useCallback(
     (updateFn: (settings: Settings) => void) => {
@@ -80,7 +73,6 @@ export default function App({
         changesApplied: false,
       }));
 
-<<<<<<< HEAD
       // Also update the config file. The write is async; surface a failure
       // instead of silently swallowing it (a dropped rejection here would let
       // the user believe a setting saved when it didn't).
@@ -94,25 +86,12 @@ export default function App({
             err instanceof Error ? err.message : String(err)
           }`,
         });
-=======
-      // Also update the config file
-      updateConfigFile(cfg => {
-        cfg.settings = newSettings;
-        cfg.changesApplied = false;
->>>>>>> upstream/main
       });
     },
     [config.settings]
   );
 
   const [currentView, setCurrentView] = useState<MainMenuItem | null>(null);
-<<<<<<< HEAD
-=======
-  const [notification, setNotification] = useState<{
-    message: string;
-    type: 'success' | 'error' | 'warning' | 'info';
-  } | null>(null);
->>>>>>> upstream/main
 
   // Startup check.
   useEffect(() => {
@@ -160,15 +139,11 @@ Please reapply your changes by running \`${invocationCommand} --apply\`.`,
       case MainMenuItem.MISC:
       case MainMenuItem.TOOLSETS:
       case MainMenuItem.SUBAGENT_MODELS:
-<<<<<<< HEAD
       case MainMenuItem.COMPLEXITY_ROUTER:
       case MainMenuItem.CLAUDE_MD_ALT_NAMES:
       case MainMenuItem.SYSTEM_REMINDERS:
       case MainMenuItem.SKILLS:
       case MainMenuItem.BROWSER_BRIDGE:
-=======
-      case MainMenuItem.CLAUDE_MD_ALT_NAMES:
->>>>>>> upstream/main
         setCurrentView(item);
         break;
       case MainMenuItem.VIEW_SYSTEM_PROMPTS:
@@ -182,7 +157,6 @@ Please reapply your changes by running \`${invocationCommand} --apply\`.`,
             ? restoreNativeBinaryFromBackup(startupCheckInfo.ccInstInfo)
             : restoreClijsFromBackup(startupCheckInfo.ccInstInfo);
 
-<<<<<<< HEAD
           restorePromise
             .then(restored => {
               if (restored) {
@@ -206,15 +180,6 @@ Please reapply your changes by running \`${invocationCommand} --apply\`.`,
                 type: 'error',
               });
             });
-=======
-          restorePromise.then(() => {
-            setNotification({
-              message: 'Original Claude Code restored successfully!',
-              type: 'success',
-            });
-            updateSettings(() => {});
-          });
->>>>>>> upstream/main
         }
         break;
       case MainMenuItem.OPEN_CONFIG:
@@ -269,7 +234,6 @@ Please reapply your changes by running \`${invocationCommand} --apply\`.`,
           <ToolsetsView onBack={handleBack} />
         ) : currentView === MainMenuItem.SUBAGENT_MODELS ? (
           <SubagentModelsView onBack={handleBack} />
-<<<<<<< HEAD
         ) : currentView === MainMenuItem.COMPLEXITY_ROUTER ? (
           <ComplexityRouterView onBack={handleBack} />
         ) : currentView === MainMenuItem.CLAUDE_MD_ALT_NAMES ? (
@@ -280,10 +244,6 @@ Please reapply your changes by running \`${invocationCommand} --apply\`.`,
           <SkillsView onSubmit={handleBack} />
         ) : currentView === MainMenuItem.BROWSER_BRIDGE ? (
           <BrowserBridgeView onBack={handleBack} />
-=======
-        ) : currentView === MainMenuItem.CLAUDE_MD_ALT_NAMES ? (
-          <ClaudeMdAltNamesView onBack={handleBack} />
->>>>>>> upstream/main
         ) : null}
       </Box>
     </SettingsContext.Provider>

@@ -5,10 +5,7 @@ import { DEFAULT_SETTINGS } from '@/defaultSettings';
 
 import Header from './Header';
 import { SettingsContext } from '../App';
-<<<<<<< HEAD
 import { getCenteredViewportSlice } from '../viewport';
-=======
->>>>>>> upstream/main
 
 interface ClaudeMdAltNamesViewProps {
   onBack: () => void;
@@ -155,24 +152,12 @@ export function ClaudeMdAltNamesView({ onBack }: ClaudeMdAltNamesViewProps) {
           <>
             {(() => {
               const maxVisible = 12;
-<<<<<<< HEAD
               const { start: adjustedStartIndex, end: endIndex } =
                 getCenteredViewportSlice(
                   selectedIndex,
                   altNames.length,
                   maxVisible
                 );
-=======
-              const startIndex = Math.max(
-                0,
-                selectedIndex - Math.floor(maxVisible / 2)
-              );
-              const endIndex = Math.min(
-                altNames.length,
-                startIndex + maxVisible
-              );
-              const adjustedStartIndex = Math.max(0, endIndex - maxVisible);
->>>>>>> upstream/main
 
               const visibleNames = altNames.slice(adjustedStartIndex, endIndex);
 

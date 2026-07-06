@@ -68,12 +68,6 @@ export function ToolsetEditView({
           if (settings.defaultToolset === oldName) {
             settings.defaultToolset = name;
           }
-<<<<<<< HEAD
-=======
-          if (settings.acceptEditsToolset === oldName) {
-            settings.acceptEditsToolset = name;
-          }
->>>>>>> upstream/main
           if (settings.planModeToolset === oldName) {
             settings.planModeToolset = name;
           }
@@ -109,7 +103,6 @@ export function ToolsetEditView({
   useInput((input, key) => {
     if (editingName) {
       if (key.return) {
-<<<<<<< HEAD
         // Don't commit an empty/whitespace-only name: it's the toolset's
         // identity key (defaultToolset/planModeToolset match on it) and its
         // display label, so a blank name renders as nothing and collides.
@@ -117,8 +110,6 @@ export function ToolsetEditView({
         if (!name.trim()) {
           setName(toolset?.name || 'New Toolset');
         }
-=======
->>>>>>> upstream/main
         setEditingName(false);
       } else if (key.escape) {
         setName(toolset?.name || 'New Toolset');

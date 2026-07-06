@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { escapeNonAscii, findBoxComponent } from './helpers';
+import { escapeNonAscii } from '../utils';
+import { findBoxComponent } from './helpers';
 
 describe('escapeNonAscii', () => {
   it('escapes non-ASCII code points as \\uXXXX and leaves ASCII untouched', () => {

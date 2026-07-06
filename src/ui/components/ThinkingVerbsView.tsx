@@ -6,10 +6,7 @@ import { DEFAULT_SETTINGS } from '@/defaultSettings';
 
 import Header from './Header';
 import { SettingsContext } from '../App';
-<<<<<<< HEAD
 import { getCenteredViewportSlice } from '../viewport';
-=======
->>>>>>> upstream/main
 
 interface ThinkingVerbsViewProps {
   onBack: () => void;
@@ -223,21 +220,12 @@ export function ThinkingVerbsView({ onBack }: ThinkingVerbsViewProps) {
           <Box flexDirection="column">
             {(() => {
               const maxVisible = 8; // Show 8 verbs at a time
-<<<<<<< HEAD
               const { start: adjustedStartIndex, end: endIndex } =
                 getCenteredViewportSlice(
                   selectedVerbIndex,
                   verbs.length,
                   maxVisible
                 );
-=======
-              const startIndex = Math.max(
-                0,
-                selectedVerbIndex - Math.floor(maxVisible / 2)
-              );
-              const endIndex = Math.min(verbs.length, startIndex + maxVisible);
-              const adjustedStartIndex = Math.max(0, endIndex - maxVisible);
->>>>>>> upstream/main
 
               const visibleVerbs = verbs.slice(adjustedStartIndex, endIndex);
 
@@ -310,14 +298,10 @@ export function ThinkingVerbsView({ onBack }: ThinkingVerbsViewProps) {
         >
           <Text>
             <Text color={claudeColor}>
-<<<<<<< HEAD
               {/* `?? ''` guards an empty verbs list (verbs[] is hand-editable in
                   config.json and has no non-empty invariant) — without it,
                   String.replace coerces undefined into the literal "undefined". */}
               ✻ {format.replace(/\{\}/g, verbs[selectedVerbIndex] ?? '')}{' '}
-=======
-              ✻ {format.replace(/\{\}/g, verbs[selectedVerbIndex])}{' '}
->>>>>>> upstream/main
             </Text>
             <Text>(esc to interrupt)</Text>
           </Text>
