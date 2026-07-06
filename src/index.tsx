@@ -383,6 +383,38 @@ const main = async () => {
     });
 
   program
+    .command('csp-check')
+    .description(
+      'codex-session-patcher: dry-run — show 25-patch status table (applicable / applied / obsolete / broken)'
+    )
+    .action(async () => {
+      const { cspCheckFile, summarize, formatTable } = await import(
+        './patches/csp/check'
+      );
+      const { findCurrentClaudeExe } = await import('./patches/csp/cleanup');
+      const cliPath = findCurrentClaudeExe();
+      if (!cliPath) {
+        console.error('csp-check: no claude binary found');
+        process.exit(2);
+      }
+      const stat = require('node:fs').statSync(cliPath);
+      console.log(
+        `\ncsp Dry-run 检测: ${cliPath}`
+      );
+      console.log(`版本: (${(stat.size / 1024 / 1024).toFixed(1)} MB)\n`);
+      const rows = cspCheckFile(cliPath);
+      console.log(formatTable(rows));
+      const s = summarize(rows);
+      console.log(
+        `\n汇总: 可应用 ${s.applicable}, 已 patch ${s.alreadyApplied}, 失效 ${s.broken}, 上游已移除 ${s.obsolete}`
+      );
+      if (s.applicable > 0) {
+        console.log(`\n\x1b[33m→ 运行 'tweakcc --apply' 应用可用 patch\x1b[0m`);
+      }
+      process.exit(s.applicable > 0 ? 1 : 0);
+    });
+
+  program
     .command('csp-verify')
     .description(
       'codex-session-patcher: dynamic verify via ccglass (confirm API-layer prompt has no refusal residue)'
