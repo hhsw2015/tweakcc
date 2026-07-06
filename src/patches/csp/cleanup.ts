@@ -8,6 +8,7 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import * as os from 'node:os';
 
 export interface DeletedFile {
   path: string;
@@ -64,10 +65,7 @@ export const cleanupOldVersions = (currentExe: string): DeletedFile[] => {
  */
 export const findCurrentClaudeExe = (): string | null => {
   // 跨平台 home: Windows 用 USERPROFILE, POSIX 用 HOME
-  const home =
-    process.env.HOME ??
-    process.env.USERPROFILE ??
-    require('node:os').homedir();
+  const home = process.env.HOME ?? process.env.USERPROFILE ?? os.homedir();
   if (!home) return null;
   const versionsDir = path.join(home, '.local', 'share', 'claude', 'versions');
   if (!fs.existsSync(versionsDir)) return null;

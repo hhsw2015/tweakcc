@@ -9,6 +9,12 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
+import {
+  findNpmShimDir,
+  patchShim,
+  revertShim,
+  shimStatus,
+} from './shim';
 
 const HOME = os.homedir();
 const WRAPPER_PATH = path.join(HOME, 'bin', 'claude-with-override');
@@ -223,8 +229,6 @@ export const cspSetup = (): CspSetupResult => {
 
   // 4. Windows npm shim (windows only; Linux 可选支持通过 findNpmShimDir 判断)
   if (process.platform === 'win32' || process.platform === 'linux') {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { findNpmShimDir, patchShim } = require('./shim');
     const shimDir = findNpmShimDir();
     if (shimDir) {
       const r = patchShim(shimDir);
@@ -293,8 +297,6 @@ export const cspUnsetup = (removeOverrideMd = false): CspUnsetupResult => {
 
   // Windows npm shim revert
   if (process.platform === 'win32' || process.platform === 'linux') {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { findNpmShimDir, revertShim } = require('./shim');
     const shimDir = findNpmShimDir();
     if (shimDir) {
       const r = revertShim(shimDir);
@@ -323,8 +325,6 @@ export const cspStatus = (): {
   let shimState: 'patched' | 'unpatched' | 'missing' | 'not_applicable' =
     'not_applicable';
   if (process.platform === 'win32' || process.platform === 'linux') {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { shimStatus } = require('./shim');
     const s = shimStatus();
     const both =
       s.claudeCmd === 'patched' && s.claudePs1 === 'patched'

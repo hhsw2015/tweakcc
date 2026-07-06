@@ -397,7 +397,8 @@ const main = async () => {
         console.error('csp-check: no claude binary found');
         process.exit(2);
       }
-      const stat = require('node:fs').statSync(cliPath);
+      const fs = await import('node:fs');
+      const stat = fs.statSync(cliPath);
       console.log(
         `\ncsp Dry-run 检测: ${cliPath}`
       );

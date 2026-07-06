@@ -112,6 +112,21 @@ import { writeInputChevronColor } from './inputChevronColor';
 import { writeSuppressRateLimitWarning } from './suppressRateLimitWarning';
 import { writeSessionColor } from './sessionColor';
 import { writeKeybindingCustomization } from './keybindingCustomization';
+// csp: codex-session-patcher 移植 (25 patches). ESM 项目, 用静态 import
+import { writeCyberRiskInstruction as csp_writeCyberRiskInstruction } from './csp/cyberRiskInstruction';
+import {
+  ANCHOR_TAIL_PATCHES as CSP_ANCHOR_TAIL,
+  applyAnchorTailPatch as csp_applyAnchorTailPatch,
+} from './csp/anchorTailPatches';
+import {
+  writeForceV0True as csp_writeForceV0True,
+  writeErNoDowngrade as csp_writeErNoDowngrade,
+  writeHmNormalizeDot as csp_writeHmNormalizeDot,
+  writeUnlockSdkUrlHost as csp_writeUnlockSdkUrlHost,
+  writeUnlockRemoteGate as csp_writeUnlockRemoteGate,
+  writeUnlockDisableRc as csp_writeUnlockDisableRc,
+  writeForce1hCache as csp_writeForce1hCache,
+} from './csp/specialPatches';
 import {
   restoreNativeBinaryFromBackup,
   restoreClijsFromBackup,
@@ -1007,124 +1022,64 @@ export const applyCustomization = async (
     // 25 ported patches from claude-patch_v2.py (byte-for-byte cross-verified).
     // Import shims via require() to keep TS static analysis happy at top-level.
     'csp-01-cyber-risk': {
-      fn: (c: string) => {
-        const { writeCyberRiskInstruction } = require('./csp/cyberRiskInstruction');
-        return writeCyberRiskInstruction(c);
-      },
+      fn: (c: string) => csp_writeCyberRiskInstruction(c),
     },
     'csp-02-url-generation': {
-      fn: (c: string) => {
-        const { ANCHOR_TAIL_PATCHES, applyAnchorTailPatch } = require('./csp/anchorTailPatches');
-        return applyAnchorTailPatch(c, ANCHOR_TAIL_PATCHES[0]);
-      },
+      fn: (c: string) => csp_applyAnchorTailPatch(c, CSP_ANCHOR_TAIL[0]),
     },
     'csp-03-exec-actions-compact': {
-      fn: (c: string) => {
-        const { ANCHOR_TAIL_PATCHES, applyAnchorTailPatch } = require('./csp/anchorTailPatches');
-        return applyAnchorTailPatch(c, ANCHOR_TAIL_PATCHES[1]);
-      },
+      fn: (c: string) => csp_applyAnchorTailPatch(c, CSP_ANCHOR_TAIL[1]),
     },
     'csp-04-exec-actions-full': {
-      fn: (c: string) => {
-        const { ANCHOR_TAIL_PATCHES, applyAnchorTailPatch } = require('./csp/anchorTailPatches');
-        return applyAnchorTailPatch(c, ANCHOR_TAIL_PATCHES[2]);
-      },
+      fn: (c: string) => csp_applyAnchorTailPatch(c, CSP_ANCHOR_TAIL[2]),
     },
     'csp-05-owasp': {
-      fn: (c: string) => {
-        const { ANCHOR_TAIL_PATCHES, applyAnchorTailPatch } = require('./csp/anchorTailPatches');
-        return applyAnchorTailPatch(c, ANCHOR_TAIL_PATCHES[3]);
-      },
+      fn: (c: string) => csp_applyAnchorTailPatch(c, CSP_ANCHOR_TAIL[3]),
     },
     'csp-06-git-safety': {
-      fn: (c: string) => {
-        const { ANCHOR_TAIL_PATCHES, applyAnchorTailPatch } = require('./csp/anchorTailPatches');
-        return applyAnchorTailPatch(c, ANCHOR_TAIL_PATCHES[4]);
-      },
+      fn: (c: string) => csp_applyAnchorTailPatch(c, CSP_ANCHOR_TAIL[4]),
     },
     'csp-07-bash-git': {
-      fn: (c: string) => {
-        const { ANCHOR_TAIL_PATCHES, applyAnchorTailPatch } = require('./csp/anchorTailPatches');
-        return applyAnchorTailPatch(c, ANCHOR_TAIL_PATCHES[5]);
-      },
+      fn: (c: string) => csp_applyAnchorTailPatch(c, CSP_ANCHOR_TAIL[5]),
     },
     'csp-08-prompt-injection': {
-      fn: (c: string) => {
-        const { ANCHOR_TAIL_PATCHES, applyAnchorTailPatch } = require('./csp/anchorTailPatches');
-        return applyAnchorTailPatch(c, ANCHOR_TAIL_PATCHES[6]);
-      },
+      fn: (c: string) => csp_applyAnchorTailPatch(c, CSP_ANCHOR_TAIL[6]),
     },
     'csp-09-sandbox-default': {
-      fn: (c: string) => {
-        const { ANCHOR_TAIL_PATCHES, applyAnchorTailPatch } = require('./csp/anchorTailPatches');
-        return applyAnchorTailPatch(c, ANCHOR_TAIL_PATCHES[7]);
-      },
+      fn: (c: string) => csp_applyAnchorTailPatch(c, CSP_ANCHOR_TAIL[7]),
     },
     'csp-10-sandbox-paths': {
-      fn: (c: string) => {
-        const { ANCHOR_TAIL_PATCHES, applyAnchorTailPatch } = require('./csp/anchorTailPatches');
-        return applyAnchorTailPatch(c, ANCHOR_TAIL_PATCHES[8]);
-      },
+      fn: (c: string) => csp_applyAnchorTailPatch(c, CSP_ANCHOR_TAIL[8]),
     },
     'csp-11-sandbox-policy': {
-      fn: (c: string) => {
-        const { ANCHOR_TAIL_PATCHES, applyAnchorTailPatch } = require('./csp/anchorTailPatches');
-        return applyAnchorTailPatch(c, ANCHOR_TAIL_PATCHES[9]);
-      },
+      fn: (c: string) => csp_applyAnchorTailPatch(c, CSP_ANCHOR_TAIL[9]),
     },
     'csp-14-cyber-risk-data': {
-      fn: (c: string) => {
-        const { ANCHOR_TAIL_PATCHES, applyAnchorTailPatch } = require('./csp/anchorTailPatches');
-        return applyAnchorTailPatch(c, ANCHOR_TAIL_PATCHES[10]);
-      },
+      fn: (c: string) => csp_applyAnchorTailPatch(c, CSP_ANCHOR_TAIL[10]),
     },
     'csp-15-applescript': {
-      fn: (c: string) => {
-        const { ANCHOR_TAIL_PATCHES, applyAnchorTailPatch } = require('./csp/anchorTailPatches');
-        return applyAnchorTailPatch(c, ANCHOR_TAIL_PATCHES[11]);
-      },
+      fn: (c: string) => csp_applyAnchorTailPatch(c, CSP_ANCHOR_TAIL[11]),
     },
     'csp-16-force-v0': {
-      fn: (c: string) => {
-        const { writeForceV0True } = require('./csp/specialPatches');
-        return writeForceV0True(c);
-      },
+      fn: (c: string) => csp_writeForceV0True(c),
     },
     'csp-17-er-no-downgrade': {
-      fn: (c: string) => {
-        const { writeErNoDowngrade } = require('./csp/specialPatches');
-        return writeErNoDowngrade(c);
-      },
+      fn: (c: string) => csp_writeErNoDowngrade(c),
     },
     'csp-18-hm-normalize': {
-      fn: (c: string) => {
-        const { writeHmNormalizeDot } = require('./csp/specialPatches');
-        return writeHmNormalizeDot(c);
-      },
+      fn: (c: string) => csp_writeHmNormalizeDot(c),
     },
     'csp-22-sdk-url': {
-      fn: (c: string) => {
-        const { writeUnlockSdkUrlHost } = require('./csp/specialPatches');
-        return writeUnlockSdkUrlHost(c);
-      },
+      fn: (c: string) => csp_writeUnlockSdkUrlHost(c),
     },
     'csp-23-remote-gate': {
-      fn: (c: string) => {
-        const { writeUnlockRemoteGate } = require('./csp/specialPatches');
-        return writeUnlockRemoteGate(c);
-      },
+      fn: (c: string) => csp_writeUnlockRemoteGate(c),
     },
     'csp-24-disable-rc': {
-      fn: (c: string) => {
-        const { writeUnlockDisableRc } = require('./csp/specialPatches');
-        return writeUnlockDisableRc(c);
-      },
+      fn: (c: string) => csp_writeUnlockDisableRc(c),
     },
     'csp-25-force-1h-cache': {
-      fn: (c: string) => {
-        const { writeForce1hCache } = require('./csp/specialPatches');
-        return writeForce1hCache(c);
-      },
+      fn: (c: string) => csp_writeForce1hCache(c),
     },
     // Misc Configurable
     'patches-applied-indication': {
