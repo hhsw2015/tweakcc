@@ -58,8 +58,9 @@ const scanSessions = (base: string): Set<string> => {
 export const ccglassLiveVerify = (): VerifyResult => {
   const ccglassBase = path.join(os.homedir(), '.ccglass', 'sessions');
 
-  // 探测 ccglass 是否可用
-  const which = spawnSync('which', ['ccglass'], { encoding: 'utf-8' });
+  // 探测 ccglass 是否可用 (Windows 用 where, POSIX 用 which)
+  const finderCmd = process.platform === 'win32' ? 'where' : 'which';
+  const which = spawnSync(finderCmd, ['ccglass'], { encoding: 'utf-8' });
   if (which.status !== 0 || !which.stdout.trim()) {
     return {
       status: 'ccglass_missing',

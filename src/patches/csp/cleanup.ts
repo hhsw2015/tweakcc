@@ -63,7 +63,11 @@ export const cleanupOldVersions = (currentExe: string): DeletedFile[] => {
  * 返回 null 表示没找到.
  */
 export const findCurrentClaudeExe = (): string | null => {
-  const home = process.env.HOME ?? '';
+  // 跨平台 home: Windows 用 USERPROFILE, POSIX 用 HOME
+  const home =
+    process.env.HOME ??
+    process.env.USERPROFILE ??
+    require('node:os').homedir();
   if (!home) return null;
   const versionsDir = path.join(home, '.local', 'share', 'claude', 'versions');
   if (!fs.existsSync(versionsDir)) return null;

@@ -128,7 +128,13 @@ export const patchShim = (shimDir: string): ShimPatchResult => {
       if (!fs.existsSync(bak)) {
         fs.copyFileSync(p, bak);
       }
-      fs.writeFileSync(p, tmpl);
+      // 保留 executable 位: Linux 上 shim 需要 +x 才能被 exec.
+      // Windows 上 mode 位无效, 但 writeFileSync 仍会应用 (无副作用).
+      let mode = 0o755;
+      try {
+        mode = fs.statSync(p).mode;
+      } catch { /* keep default */ }
+      fs.writeFileSync(p, tmpl, { mode });
       result[fname] = 'patched';
     } catch {
       result[fname] = 'error';

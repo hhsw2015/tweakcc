@@ -3,22 +3,12 @@
 // 对应 Python dry_run_check + silent_check + 表格输出.
 // 每个 patch 4 种状态:
 //   applicable       可应用 (anchor 命中, patch 未做)
-//   already_applied  已 patch (anchor 已被中和)
+//   already_applied  已 patch (anchor 已被中和, patched signature 存在)
 //   obsolete         上游已移除 (patch obsolete=true 且 anchor 也找不到)
-//   broken           失效 (anchor 找不到 + 未标 obsolete, 可能上游改结构)
+//   broken           失效 (anchor 找不到 + patched signature 也不在, 上游改结构)
 
 import * as fs from 'node:fs';
-import { writeCyberRiskInstruction } from './cyberRiskInstruction';
 import { ANCHOR_TAIL_PATCHES } from './anchorTailPatches';
-import {
-  writeForceV0True,
-  writeErNoDowngrade,
-  writeHmNormalizeDot,
-  writeUnlockSdkUrlHost,
-  writeUnlockRemoteGate,
-  writeUnlockDisableRc,
-  writeForce1hCache,
-} from './specialPatches';
 
 export type CspPatchState =
   | 'applicable'
@@ -67,69 +57,122 @@ export const CSP_PATCH_META = [
 ];
 
 /**
- * 每个 patch 的原始 anchor 检测函数 (返回 hit 数).
- * 用 pristine input 判断能否 apply.
+ * 每个 patch 的 anchor (pristine signature). 匹配到说明 pristine, 可 patch.
+ * 用纯 regex/substring 检测, 不 apply, 保持 O(n) 性能.
  */
-const countHits = (file: string, id: number): number => {
-  switch (id) {
-    case 1:
-      return file.includes('"IMPORTANT: Assist with authorized security testing') ? 1 : 0;
-    case 12: // obsolete, 上游无对象
-      return 0;
-    case 19: // obsolete: 检查 eca signature
-      return /r=t\?\.cnTZ\?e\.replaceAll\("-","\/"\):e;return`Today\$\{n\}s date is/.test(file) ? 1 : 0;
-    case 20:
-      return /n=t==="Asia\/Shanghai"\|\|t==="Asia\/Urumqi";if\(!e\)return\{known:!1,labKw:!1,cnTZ:n/.test(file) ? 1 : 0;
-    case 21:
-      return /if\(!e&&!t\)return"'";if\(e&&!t\)return"\\u2019";if\(!e&&t\)return"\\u02BC"/.test(file) ? 1 : 0;
-    default: {
-      // anchor+tail patches
-      const at = ANCHOR_TAIL_PATCHES.find((p) => p.id === id);
-      if (at) return file.includes(at.anchor) ? 1 : 0;
+const ANCHOR_SIGNATURES: Record<number, (file: string) => number> = {
+  // patch 1: CYBER_RISK 起始引号 + 主 marker
+  1: (f) => (f.includes('"IMPORTANT: Assist with authorized security testing') ? 1 : 0),
 
-      // special patches (16, 17, 18, 22, 23, 24, 25)
-      // 通过尝试 apply, 看能不能匹配
-      let out: string | null = null;
-      try {
-        switch (id) {
-          case 16: out = writeForceV0True(file); break;
-          case 17: out = writeErNoDowngrade(file); break;
-          case 18: {
-            const r = writeHmNormalizeDot(file);
-            out = r !== file ? r : null;
-            break;
-          }
-          case 22: out = writeUnlockSdkUrlHost(file); break;
-          case 23: out = writeUnlockRemoteGate(file); break;
-          case 24: out = writeUnlockDisableRc(file); break;
-          case 25: out = writeForce1hCache(file); break;
-          default: return 0;
-        }
-      } catch {
-        return 0;
-      }
-      return out !== null ? 1 : 0;
-    }
-  }
+  // patch 12: danger_table, 上游 2.1.157+ 已重写, 无 pristine 对象
+  12: () => 0,
+
+  // patch 19-21: China fingerprint, 上游 2.1.198+ 已移除
+  19: (f) =>
+    /r=t\?\.cnTZ\?e\.replaceAll\("-","\/"\):e;return`Today\$\{[\w$]+\}s date is/.test(f)
+      ? 1 : 0,
+  20: (f) =>
+    /n=t==="Asia\/Shanghai"\|\|t==="Asia\/Urumqi";if\(!e\)return\{known:!1,labKw:!1,cnTZ:n/.test(f)
+      ? 1 : 0,
+  21: (f) =>
+    /if\(!e&&!t\)return"'";if\(e&&!t\)return"\\u2019";if\(!e&&t\)return"\\u02BC"/.test(f)
+      ? 1 : 0,
+
+  // patch 16: force_v0_true - 匹配 v0() 函数完整签名
+  16: (f) =>
+    /function [\w$]{1,8}\(\)\{if\([\w$]{1,8}\(\)\)return!1;if\(![\w$]{1,8}\(\)\)return!1;let\{available:[\w$]+,defaultOn:[\w$]+\}/.test(f)
+      ? 1 : 0,
+
+  // patch 17: er_no_downgrade - xhigh→high 降级判定
+  17: (f) =>
+    /if\([\w$]{1,8}==="xhigh"&&![\w$]{1,8}\([\w$]{1,8}\)\)(?:return"high";|[\w$]{1,8}="high";)/.test(f)
+      ? 1 : 0,
+
+  // patch 18: hm_normalize - 任一 model key 的 includes 形式
+  18: (f) =>
+    /\w\.includes\("claude-(?:opus-4-[15678]|sonnet-4-[56]|haiku-4-5)"\)/.test(f)
+      ? 1 : 0,
+
+  // patch 22: unlock_sdk_url_host - b_c 函数完整
+  22: (f) =>
+    /function [\w$]{1,8}\(e\)\{let t;try\{t=new URL\(e\)\}catch\{return`could not parse/.test(f)
+      ? 1 : 0,
+
+  // patch 23: unlock_remote_gate - Yen 函数
+  23: (f) =>
+    /function [\w$]{1,8}\(\)\{if\(![\w$]{1,8}\(\)\)return!1;return!![\w$.]{1,20}ANTHROPIC_UNIX_SOCKET/.test(f)
+      ? 1 : 0,
+
+  // patch 24: unlock_disable_rc - Jen 函数
+  24: (f) =>
+    /function [\w$]{1,8}\(\)\{return [\w$]{1,8}\(\)\?\.settings\.disableRemoteControl===!0\}/.test(f)
+      ? 1 : 0,
+
+  // patch 25: force_1h_cache - gKe 函数完整
+  25: (f) =>
+    /function [\w$]{1,8}\(e\)\{if\(it\(process\.env\.FORCE_PROMPT_CACHING_5M\)\)return!1;if\(it\(process\.env\.ENABLE_PROMPT_CACHING_1H\)/.test(f)
+      ? 1 : 0,
 };
 
 /**
- * 每个 patch 的 "已 patched" signature 检测.
- * hits==0 时用此判断: 是"已 patched" (patched signature 存在) 还是 "上游/broken" (什么都没).
+ * 每个 patch 的 patched signature. 已 patched 后应该匹配.
+ * 用于区分 already_applied (patched signature 存在) vs broken (都不在).
  */
-const countPatchedSignatures = (file: string, id: number): number => {
-  switch (id) {
-    // anchor+tail 类: 已 patched 后 anchor 消失, tail 保留. 直接靠 hits==0 判断,
-    // 若同时 tail 存在附近说明 patched (但难验证具体位置). 简化: 若 anchor 不在,
-    // 且原始 CYBER_RISK 关键字之一"...defensive security..." 也不在 → obsolete/broken;
-    // 关键字之一还在 → applied.
-    // Python status_map 用不同 signature 判每个 patch. TS 我们直接靠 anchor 存在与否判 hits:
-    // - hits > 0 → applicable
-    // - hits == 0 + obsolete meta → obsolete
-    // - hits == 0 + !obsolete → already_applied (乐观假设)
-    default:
-      return 1; // 视为 patched
+const PATCHED_SIGNATURES: Record<number, (file: string) => number> = {
+  // patch 1-11, 14, 15: anchor+tail 类, patched 后 anchor 消失 + 起止引号被空格包围.
+  // 精确判定复杂, 靠 status heuristic: 若整段 CYBER 相关都不在文件里, 有可能是 patched.
+
+  // patch 16: patched signature: return!0/* ... */
+  16: (f) =>
+    /function [\w$]{1,8}\(\)\{return!0\/\*[\s\S]{0,300}?\*\/\}/.test(f) ? 1 : 0,
+
+  // patch 17: /*xxx*/ 替换 xhigh→high 判定
+  17: (f) => /\/\*x+\*\//.test(f) ? 1 : 0,
+
+  // patch 18: /claude-...[.-]N/.test(...) 新形式
+  18: (f) => /\/claude-[a-z]+-4\[\.-\][15678]\/\.test\(/.test(f) ? 1 : 0,
+
+  // patch 22: b_c 中和 return null
+  22: (f) =>
+    /function [\w$]{1,8}\(e\)\{return null\/\*[\s\S]{0,400}?\*\/\}/.test(f) ? 1 : 0,
+
+  // patch 23: Yen 中和 return kc()
+  23: (f) =>
+    /function [\w$]{1,8}\(\)\{return [\w$]{1,8}\(\)\/\*[\s\S]{0,80}?\*\/\}/.test(f)
+      ? 1 : 0,
+
+  // patch 24: Jen 中和 return!1
+  24: (f) =>
+    /function [\w$]{1,8}\(\)\{return!1\/\*[\s\S]{0,80}?\*\/\}/.test(f) ? 1 : 0,
+
+  // patch 25: gKe 中和 return!it(FORCE_PROMPT_CACHING_5M)
+  25: (f) =>
+    /function [\w$]{1,8}\(e\)\{return!it\(process\.env\.FORCE_PROMPT_CACHING_5M\)/.test(f)
+      ? 1 : 0,
+};
+
+const countHits = (file: string, id: number): number => {
+  // anchor+tail 类 patch (2-11, 14-15) 用 anchor 常量直接匹配
+  const at = ANCHOR_TAIL_PATCHES.find((p) => p.id === id);
+  if (at) return file.includes(at.anchor) ? 1 : 0;
+
+  const fn = ANCHOR_SIGNATURES[id];
+  return fn ? fn(file) : 0;
+};
+
+const countPatchedSignature = (file: string, id: number): number => {
+  // patch 1 anchor+tail: 已 patched 时 anchor 完全消失 (被空格覆盖).
+  // 无法直接检测 patched signature, 用启发式: 若原关键字 "authorized security testing"
+  // 完全不在, 视为 patched. 但要排除 CC 版本重构导致 anchor 也消失的情况.
+  const at = ANCHOR_TAIL_PATCHES.find((p) => p.id === id);
+  if (at || id === 1) {
+    // For anchor+tail patches: if anchor is absent, we assume patched (best-effort).
+    // Broken 判定需要额外结构 signature — 保守起见: anchor 不在 → 视为 patched.
+    return 1;
   }
+
+  const fn = PATCHED_SIGNATURES[id];
+  return fn ? fn(file) : 0;
 };
 
 /**
@@ -139,26 +182,22 @@ export const cspCheck = (file: string): CspCheckRow[] => {
   const rows: CspCheckRow[] = [];
   for (const meta of CSP_PATCH_META) {
     const hits = countHits(file, meta.id);
+    const patchedHits = countPatchedSignature(file, meta.id);
     let state: CspPatchState;
+
     if (hits > 0) {
+      // anchor 命中 = 可 apply
       state = 'applicable';
+    } else if (meta.obsolete) {
+      // 显式标记的 obsolete patch (patch 12/19/20/21)
+      state = 'obsolete';
+    } else if (patchedHits > 0) {
+      // anchor 不在 + patched signature 在 = 已 patch
+      state = 'already_applied';
     } else {
-      // hits==0: patched or upstream removed
-      // obsolete meta 优先 (Python 语义)
-      if (meta.obsolete) {
-        state = 'obsolete';
-      } else {
-        // 无 anchor + 未标 obsolete = 假设已 patch (乐观)
-        // Python 用 count_patch_status 精确判 pending/applied,
-        // TS 简化: hits==0 + 非 obsolete → already_applied.
-        // 未来若 patch broken (anchor 消失但没 patch 过) 也会误报 already_applied,
-        // 但 fullCrossCheck 保证只要跑过 apply 就是等价的.
-        state = 'already_applied';
-      }
+      // anchor 不在 + patched signature 也不在 = 上游改结构, 失效
+      state = 'broken';
     }
-    // 但要区分 broken: 如果 patch 未 obsolete, hits==0, 且 patched signature 也不在,
-    // 说明上游改结构了 → broken.
-    // 简化: 需要外部提供 pristine baseline; 无 pristine 情况下不判 broken.
     rows.push({
       id: meta.id,
       name: meta.name,
@@ -168,8 +207,6 @@ export const cspCheck = (file: string): CspCheckRow[] => {
       markedObsolete: meta.obsolete,
     });
   }
-  // 内联使用 signature helper 消除未使用告警 (未来 pristine 支持)
-  countPatchedSignatures(file, 0);
   return rows;
 };
 
@@ -201,7 +238,37 @@ export const summarize = (rows: CspCheckRow[]): CspCheckSummary => ({
 });
 
 /**
- * 格式化为表格字符串 (TTY-friendly, 用 ANSI 颜色).
+ * 计算字符串在终端的显示宽度 (CJK 字符=2, 其他=1).
+ * 用于表格对齐 — .length 不能正确处理中文.
+ */
+const displayWidth = (s: string): number => {
+  let w = 0;
+  for (const ch of s) {
+    const code = ch.codePointAt(0) ?? 0;
+    // CJK ranges (合并 hiragana/katakana/hangul/CJK unified/full-width punct)
+    const isWide =
+      (code >= 0x1100 && code <= 0x115f) || // Hangul Jamo
+      (code >= 0x2e80 && code <= 0x9fff) || // CJK Radicals, Kangxi, CJK Unified
+      (code >= 0xa000 && code <= 0xa4cf) || // Yi
+      (code >= 0xac00 && code <= 0xd7a3) || // Hangul Syllables
+      (code >= 0xf900 && code <= 0xfaff) || // CJK Compat Ideographs
+      (code >= 0xfe30 && code <= 0xfe4f) || // CJK Compat Forms
+      (code >= 0xff00 && code <= 0xff60) || // Full-width forms
+      (code >= 0xffe0 && code <= 0xffe6) || // Full-width signs
+      (code >= 0x20000 && code <= 0x2fffd); // CJK Extension B+
+    w += isWide ? 2 : 1;
+  }
+  return w;
+};
+
+const padToWidth = (s: string, targetWidth: number): string => {
+  const w = displayWidth(s);
+  if (w >= targetWidth) return s;
+  return s + ' '.repeat(targetWidth - w);
+};
+
+/**
+ * 格式化为表格字符串 (TTY-friendly, ANSI 颜色, CJK 宽度感知).
  */
 export const formatTable = (rows: CspCheckRow[]): string => {
   const RESET = '\x1b[0m';
@@ -218,18 +285,22 @@ export const formatTable = (rows: CspCheckRow[]): string => {
   };
 
   const lines: string[] = [];
-  lines.push(
-    `#   层      名称                                命中     状态`
-  );
-  lines.push(
-    '─'.repeat(70)
-  );
+  const header =
+    padToWidth('#', 4) +
+    padToWidth('层', 8) +
+    padToWidth('名称', 40) +
+    padToWidth('命中', 7) +
+    '状态';
+  lines.push(header);
+  lines.push('─'.repeat(70));
   for (const r of rows) {
-    const idStr = String(r.id).padEnd(4);
-    const layer = r.layer.padEnd(7);
-    const name = r.name.padEnd(36);
-    const hits = String(r.hits).padEnd(7);
-    lines.push(`${idStr}${layer} ${name}${hits}${stateLabel[r.state]}`);
+    lines.push(
+      padToWidth(String(r.id), 4) +
+        padToWidth(r.layer, 8) +
+        padToWidth(r.name, 40) +
+        padToWidth(String(r.hits), 7) +
+        stateLabel[r.state]
+    );
   }
   return lines.join('\n');
 };
