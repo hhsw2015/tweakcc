@@ -380,6 +380,34 @@ const main = async () => {
     });
 
   program
+    .command('csp-cleanup')
+    .description(
+      'codex-session-patcher: remove old CC versions / stale .bak / lock residue (frees disk)'
+    )
+    .action(async () => {
+      const { cleanupOldVersions, findCurrentClaudeExe, formatBytes } =
+        await import('./patches/csp/cleanup');
+      const current = findCurrentClaudeExe();
+      if (!current) {
+        console.log('csp-cleanup: no claude binary found in ~/.local/share/claude/versions/');
+        process.exit(0);
+      }
+      console.log(`csp-cleanup: keeping ${current}`);
+      const deleted = cleanupOldVersions(current);
+      if (deleted.length === 0) {
+        console.log('csp-cleanup: nothing to remove');
+      } else {
+        let total = 0;
+        for (const d of deleted) {
+          console.log(`  removed  ${formatBytes(d.size).padStart(8)}  ${d.path}`);
+          total += d.size;
+        }
+        console.log(`csp-cleanup: freed ${formatBytes(total)} (${deleted.length} files)`);
+      }
+      process.exit(0);
+    });
+
+  program
     .command('adhoc-patch')
     .description('Apply an ad-hoc patch to Claude Code')
     .option(

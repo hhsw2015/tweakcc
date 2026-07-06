@@ -1537,6 +1537,24 @@ export const applyCustomization = async (
     cfg.changesApplied = true;
   });
 
+  // csp: 应用后清理老版本 binary / stale .bak / lock 残留 (释放磁盘)
+  // 对应 Python patcher cleanup_old_baks (每次 --apply 自动调)
+  try {
+    const { cleanupOldVersions, formatBytes } = await import('./csp/cleanup');
+    if (ccInstInfo.cliPath) {
+      const deleted = cleanupOldVersions(ccInstInfo.cliPath);
+      if (deleted.length > 0) {
+        const total = deleted.reduce((s, d) => s + d.size, 0);
+        console.log(
+          `[csp-cleanup] freed ${formatBytes(total)} (${deleted.length} old version/bak files removed)`
+        );
+      }
+    }
+  } catch (e) {
+    // 静默 — cleanup 失败不影响 apply 主流程
+    console.error(`[csp-cleanup] warning: ${(e as Error).message}`);
+  }
+
   return {
     config: updatedConfig,
     results: allResults,
