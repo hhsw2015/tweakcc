@@ -8,11 +8,21 @@ import { applyAllCspPatches } from './index';
 // - 用 TS 版 applyAllCspPatches 全应用
 // - 与 Python patcher 完整输出 (/tmp/python-full-patched.bin) 字节比对
 
-const PRISTINE = '/tmp/claude-original/package/claude';
-const PY_FULL = '/tmp/python-full-patched.bin';
+const PRISTINE = process.env.CSP_PRISTINE_BIN ?? '/tmp/claude-original/package/claude';
+const PY_FULL = process.env.CSP_PY_FULL_BIN ?? '/tmp/python-full-patched.bin';
 
 const sha256Buf = (b: Buffer): string => createHash('sha256').update(b).digest('hex');
 const hasFiles = existsSync(PRISTINE) && existsSync(PY_FULL);
+
+if (!hasFiles) {
+  // 明确警告: 该测试是本模块最关键的字节等价保证. skip 会掩盖 regression.
+  console.warn(
+    `[csp/fullCrossCheck] WARNING: fixture missing — skipping FULL binary cross-check.\n` +
+    `  Expected: ${PRISTINE} and ${PY_FULL}\n` +
+    `  Override with CSP_PRISTINE_BIN / CSP_PY_FULL_BIN env vars.\n` +
+    `  Embedded fixture test still runs (embeddedFixture.test.ts).`
+  );
+}
 
 describe.skipIf(!hasFiles)('csp: full binary cross-check', () => {
   it('TS-full-patched matches Python-full-patched byte-for-byte', () => {

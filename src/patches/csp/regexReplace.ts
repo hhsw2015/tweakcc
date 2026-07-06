@@ -20,9 +20,11 @@ export interface RegexReplaceOptions {
   allowShortPad?: boolean;
 }
 
+// Default to `true` so behavior mirrors Python (Python always fills pad with
+// spaces regardless of length; only fails when pad_len < 0).
 export const applyRegexReplace = (
   file: string,
-  { pattern, build, allowShortPad = false }: RegexReplaceOptions
+  { pattern, build, allowShortPad = true }: RegexReplaceOptions
 ): string | null => {
   // 需要 global flag 才能 finditer
   const flags = pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g';

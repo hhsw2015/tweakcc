@@ -44,8 +44,13 @@ export const applyAnchorTailNeutralize = (
 
     const anchorEnd = pos + anchor.length;
     const tailPos = result.indexOf(tail, anchorEnd);
-    if (tailPos === -1 || tailPos - anchorEnd > tailSearchMax) {
-      // 该处 anchor 后找不到 tail, 跳过继续
+    // Python 语义: data.find(tail, start, start + tail_search_max) — tail 必须
+    // 完整落在 [anchorEnd, anchorEnd + tailSearchMax) 内, tail 起点+长度都要在窗内
+    if (
+      tailPos === -1 ||
+      tailPos + tail.length > anchorEnd + tailSearchMax
+    ) {
+      // 该处 anchor 后找不到 tail (在窗内), 跳过继续
       searchFrom = anchorEnd;
       continue;
     }

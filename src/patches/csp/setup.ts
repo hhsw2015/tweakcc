@@ -141,6 +141,30 @@ export interface CspSetupResult {
   alias: 'installed' | 'skipped' | 'not_applicable';
 }
 
+const safeWrite = (
+  path: string,
+  content: string,
+  mode?: number
+): { ok: true } | { ok: false; error: string } => {
+  try {
+    if (mode !== undefined) fs.writeFileSync(path, content, { mode });
+    else fs.writeFileSync(path, content);
+    return { ok: true };
+  } catch (e: unknown) {
+    const err = e as NodeJS.ErrnoException;
+    if (err.code === 'EACCES' || err.code === 'EPERM') {
+      return {
+        ok: false,
+        error: `Permission denied writing ${path}: ${err.message}`,
+      };
+    }
+    if (err.code === 'EROFS') {
+      return { ok: false, error: `Read-only filesystem: ${path}` };
+    }
+    return { ok: false, error: `Write failed for ${path}: ${err.message}` };
+  }
+};
+
 export const cspSetup = (): CspSetupResult => {
   const result: CspSetupResult = {
     wrapper: 'skipped',
@@ -149,30 +173,47 @@ export const cspSetup = (): CspSetupResult => {
   };
 
   // 1. wrapper
-  fs.mkdirSync(path.dirname(WRAPPER_PATH), { recursive: true });
+  try {
+    fs.mkdirSync(path.dirname(WRAPPER_PATH), { recursive: true });
+  } catch (e: unknown) {
+    const err = e as NodeJS.ErrnoException;
+    if (err.code !== 'EEXIST') {
+      console.error(`csp-setup: mkdir ${path.dirname(WRAPPER_PATH)} failed: ${err.message}`);
+    }
+  }
   const wrapperContent = buildWrapperScript();
   const wrapperExists = fs.existsSync(WRAPPER_PATH);
   if (!wrapperExists || fs.readFileSync(WRAPPER_PATH, 'utf-8') !== wrapperContent) {
-    fs.writeFileSync(WRAPPER_PATH, wrapperContent, { mode: 0o755 });
-    result.wrapper = wrapperExists ? 'updated' : 'created';
+    const w = safeWrite(WRAPPER_PATH, wrapperContent, 0o755);
+    if (w.ok) result.wrapper = wrapperExists ? 'updated' : 'created';
+    else console.error(`csp-setup: wrapper: ${w.error}`);
   }
 
   // 2. override.md (只在不存在时写默认, 避免覆盖用户自定义)
-  fs.mkdirSync(path.dirname(OVERRIDE_MD_PATH), { recursive: true });
+  try {
+    fs.mkdirSync(path.dirname(OVERRIDE_MD_PATH), { recursive: true });
+  } catch (e: unknown) {
+    const err = e as NodeJS.ErrnoException;
+    if (err.code !== 'EEXIST') {
+      console.error(`csp-setup: mkdir ${path.dirname(OVERRIDE_MD_PATH)} failed: ${err.message}`);
+    }
+  }
   if (!fs.existsSync(OVERRIDE_MD_PATH)) {
-    fs.writeFileSync(OVERRIDE_MD_PATH, DEFAULT_OVERRIDE_MD);
-    result.overrideMd = 'created';
+    const w = safeWrite(OVERRIDE_MD_PATH, DEFAULT_OVERRIDE_MD);
+    if (w.ok) result.overrideMd = 'created';
+    else console.error(`csp-setup: override.md: ${w.error}`);
   }
 
   // 3. shell alias (macOS/Linux only)
   if (process.platform === 'darwin' || process.platform === 'linux') {
     const rcPath = getShellRcPath();
-    let content = fs.existsSync(rcPath) ? fs.readFileSync(rcPath, 'utf-8') : '';
+    const content = fs.existsSync(rcPath) ? fs.readFileSync(rcPath, 'utf-8') : '';
     if (!content.includes(ALIAS_MARKER)) {
       const block = buildAliasBlock();
       const sep = content && !content.endsWith('\n') ? '\n' : '';
-      fs.writeFileSync(rcPath, content + sep + '\n' + block + '\n');
-      result.alias = 'installed';
+      const w = safeWrite(rcPath, content + sep + '\n' + block + '\n');
+      if (w.ok) result.alias = 'installed';
+      else console.error(`csp-setup: shell alias: ${w.error}`);
     }
   } else {
     result.alias = 'not_applicable';

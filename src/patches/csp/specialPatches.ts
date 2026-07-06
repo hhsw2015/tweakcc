@@ -75,35 +75,37 @@ const HM_MODEL_KEYS: Array<[string, string]> = [
 const escapeRegex = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 export const writeHmNormalizeDot = (file: string): string => {
-  let out = file;
-  let anyMatched = false;
+  // Python 语义: 对 8 个 model key 各自在 pristine file 上做 regex 扫描 (不用
+  // 已经改过的中间态), 收集所有 edit 后统一应用. TS 版本用同样的 discovery-first
+  // apply-last 语义避免 key 重叠时 double-patch.
+  type Edit = { start: number; end: number; replacement: string };
+  const allEdits: Edit[] = [];
   for (const [oldSeg, newSeg] of HM_MODEL_KEYS) {
-    const pattern = new RegExp(
+    const rx = new RegExp(
       `(\\w)\\.includes\\("claude-${escapeRegex(oldSeg)}"\\)`,
       'g'
     );
-    const rx = new RegExp(pattern.source, 'g');
-    const edits: Array<{ start: number; end: number; replacement: string }> = [];
     let m: RegExpExecArray | null;
-    while ((m = rx.exec(out)) !== null) {
+    while ((m = rx.exec(file)) !== null) {
       const orig = m[0];
       const varName = m[1];
-      // new form: /claude-<newSeg>/.test(<var>)
       const core = `/claude-${newSeg}/.test(${varName})`;
       const pad = orig.length - core.length;
       if (pad < 0) continue;
       const replacement = core + ' '.repeat(pad);
       if (replacement.length !== orig.length) continue;
-      edits.push({ start: m.index, end: m.index + orig.length, replacement });
+      allEdits.push({ start: m.index, end: m.index + orig.length, replacement });
       if (rx.lastIndex === m.index) rx.lastIndex = m.index + 1;
     }
-    if (edits.length === 0) continue;
-    anyMatched = true;
-    for (const e of edits.reverse()) {
-      out = out.slice(0, e.start) + e.replacement + out.slice(e.end);
-    }
   }
-  return anyMatched ? out : file;
+  if (allEdits.length === 0) return file;
+  // 按 offset 降序, 反向应用 (避免偏移干扰)
+  allEdits.sort((a, b) => b.start - a.start);
+  let out = file;
+  for (const e of allEdits) {
+    out = out.slice(0, e.start) + e.replacement + out.slice(e.end);
+  }
+  return out;
 };
 
 // ---------- patch #22: unlock_sdk_url_host (b_c) ----------

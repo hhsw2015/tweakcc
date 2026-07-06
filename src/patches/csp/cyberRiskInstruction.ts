@@ -8,7 +8,6 @@
 // 效果: system prompt 里那段"拒绝 destructive/DoS/mass targeting..." 消失
 
 import { applyAnchorTailNeutralize } from './anchorTail';
-import { showDiff } from '../index';
 
 const ANCHOR = '"IMPORTANT: Assist with authorized security testing';
 const TAIL = '"';
@@ -26,16 +25,9 @@ export const writeCyberRiskInstruction = (file: string): string | null => {
     includeTail: false,
   });
   if (patched === null) {
-    console.error('patch: cyberRiskInstruction: anchor found but tail unreachable');
-    return null;
-  }
-  // Best-effort diff visualization (idx from first anchor site)
-  const idx = file.indexOf(ANCHOR);
-  if (idx !== -1) {
-    const tailIdx = file.indexOf(TAIL, idx + ANCHOR.length);
-    if (tailIdx !== -1 && tailIdx - idx - ANCHOR.length <= TAIL_SEARCH_MAX) {
-      showDiff(file, patched, patched.slice(idx, tailIdx), idx, tailIdx);
-    }
+    // anchor 在但 tail 找不到 (可能 CC 版本改结构) — 与 Python 语义一致, 视为 no-op
+    // 由 --check 报告 pending, 不 log 错误噪音
+    return file;
   }
   return patched;
 };

@@ -81,7 +81,10 @@ export const applyAllCspPatches = (file: string): { output: string; applied: num
     else failed.push(def.id);
   }
 
-  // patch 13 (no-op, obsolete)
+  // patch 12/13 (obsolete: upstream 2.1.157+ 已移除破坏性命令检测表)
+  // Python `count_patch_status` 报为 applied, 我们对齐语义
+  applied.push(12);
+  applied.push(13);
   writeDangerTableSkip(out); // consistent no-op
 
   // patch 16
@@ -98,6 +101,11 @@ export const applyAllCspPatches = (file: string): { output: string; applied: num
   { const r = writeUnlockDisableRc(out); if (r !== null) { out = r; applied.push(24); } else failed.push(24); }
   // patch 25
   { const r = writeForce1hCache(out); if (r !== null) { out = r; applied.push(25); } else failed.push(25); }
+
+  // patch 19/20/21 obsolete (2.1.198+ Anthropic 自行移除 China 指纹, upstream 已修)
+  applied.push(19);
+  applied.push(20);
+  applied.push(21);
 
   return { output: out, applied, failed };
 };
