@@ -93,15 +93,17 @@ export const runUpgradeAndPatch = (args: string[]): UpgradeResult => {
     stdio: 'inherit',
     env: process.env,
   });
-  if (applyR.status !== 0) {
-    result.applyError = `tweakcc --apply exited ${applyR.status}`;
-  } else {
-    result.applyRan = true;
+  if (applyR.status !== 0 || applyR.error) {
+    const errCode = applyR.error?.message ?? `exited ${applyR.status ?? 'unknown'}`;
+    result.applyError = `tweakcc --apply failed (${errCode})`;
+    console.error(
+      `\n[csp-upgrade] ${result.applyError}. Skipping status table since binary was not patched.`
+    );
+    return result;
   }
-  // tweakcc --apply 内部已打印每 patch 状态 (applied/failed/skipped/pending)
-  // 若用户想更详细分类, 见其 stdout 上面部分
+  result.applyRan = true;
 
-  // 显示 csp-check 状态表
+  // 显示 csp-check 状态表 (仅在 apply 成功后)
   const exe = findCurrentClaudeExe();
   if (exe && fs.existsSync(exe)) {
     console.log('\n[csp-upgrade] csp-check status:\n');

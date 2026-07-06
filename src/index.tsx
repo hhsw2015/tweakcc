@@ -394,10 +394,14 @@ const main = async () => {
     )
     .allowExcessArguments(true)
     .allowUnknownOption(true)
-    .action(async (cmd: string, _opts, command) => {
+    .action(async (cmd: string, _opts, _command) => {
       const { runUpgradeAndPatch } = await import('./patches/csp/upgrade');
-      // 收集用户额外传入的 args
-      const args = [cmd, ...command.args.slice(1)];
+      // process.argv: [node, index.mjs, 'csp-upgrade', cmd, ...rest]
+      // 收集 cmd 之后所有 arg (positional + unknown options) 透传给 real claude
+      const cmdIdx = process.argv.indexOf('csp-upgrade');
+      const rest =
+        cmdIdx >= 0 ? process.argv.slice(cmdIdx + 1).filter((a) => a !== cmd) : [];
+      const args = [cmd, ...rest];
       const r = runUpgradeAndPatch(args);
       process.exit(r.applyError ? 1 : 0);
     });

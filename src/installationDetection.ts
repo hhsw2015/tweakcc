@@ -778,7 +778,7 @@ export async function findClaudeCodeInstallation(
     scored.sort((a, b) => b.score - a.score);
     const best = scored[0].c;
     console.error(
-      `[csp] auto-selected installation: ${best.path} (v${best.version}, ${best.kind})`
+      `[csp] auto-selected installation: ${best.path} (v${best.version ?? 'unknown'}, ${best.kind})`
     );
     console.error(
       `[csp] override with TWEAKCC_CC_INSTALLATION_PATH env var or config.json`
@@ -786,7 +786,7 @@ export async function findClaudeCodeInstallation(
     return toInstallationInfo(
       best.path,
       best.kind,
-      best.version,
+      best.version ?? 'unknown',
       'search-paths'
     );
   }
