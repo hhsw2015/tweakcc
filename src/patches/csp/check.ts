@@ -244,18 +244,27 @@ const ANCHOR_SIGNATURES: Record<number, (file: string) => number> = {
       : 0,
 
   // patch 26: scrub_metadata - pMe() 完整 device_id+account_uuid+session_id 结构
+  // 注: Ie.CLAUDE_CODE_REMOTE 里的 Ie 是 minified var, 用 [\w$]{1,4} 兼容 rebundle
   26: f =>
-    /let [\w$]{1,4}=\{\.\.\.[\w$]{1,4},device_id:[\w$]{1,4}\(\),account_uuid:it\(Ie\.CLAUDE_CODE_REMOTE\)&&Ie\.CLAUDE_CODE_ACCOUNT_UUID\|\|[\w$]{1,4}\(\)\?\.accountUuid\|\|"",session_id:[\w$]{1,4}\(\)\};return\{user_id:[\w$]{1,4}\(/.test(
+    /let [\w$]{1,4}=\{\.\.\.[\w$]{1,4},device_id:[\w$]{1,4}\(\),account_uuid:[\w$]{1,4}\([\w$]{1,4}\.CLAUDE_CODE_REMOTE\)&&[\w$]{1,4}\.CLAUDE_CODE_ACCOUNT_UUID\|\|[\w$]{1,4}\(\)\?\.accountUuid\|\|"",session_id:[\w$]{1,4}\(\)\};return\{user_id:[\w$]{1,4}\(/.test(
       f
     )
       ? 1
       : 0,
 
   // patch 27: disable_telemetry - 任一 G/I_/pto pristine 结构存在
+  // 三个入口任一 pristine → 可 apply. minifier 会重命名 G/I_/pto/pdn/Fj/qre/xje 等,
+  // 全部参数化.
   27: f =>
-    /function G\(e,t\)\{let n=pdn;if\(n\.sink===null\)/.test(f) ||
-    /async function I_\(e,t\)\{let n=pdn;/.test(f) ||
-    /function pto\(e\)\{if\(!Fj\(\)\)return;if\(!qre\|\|xje/.test(f)
+    /function [\w$]{1,4}\(e,t\)\{let n=[\w$]{1,4};if\(n\.sink===null\)\{n\.eventQueue\.push\(\{eventName:e,metadata:t,async:!1\}\)/.test(
+      f
+    ) ||
+    /async function [\w$]{1,4}\(e,t\)\{let n=[\w$]{1,4};if\(n\.sink===null\)\{n\.eventQueue\.push\(\{eventName:e,metadata:t,async:!0\}\)/.test(
+      f
+    ) ||
+    /function [\w$]{1,4}\(e\)\{if\(![\w$]{1,4}\(\)\)return;if\(![\w$]{1,4}\|\|[\w$]{1,4}\("firstParty"\)\)return;let t=[\w$]{1,4}\(\),\{accountUuid:n,organizationUuid:r\}=[\w$]{1,4}\(!0\),o=\{event_type:"GrowthbookExperimentEvent"/.test(
+      f
+    )
       ? 1
       : 0,
 };
@@ -312,11 +321,15 @@ const PATCHED_SIGNATURES: Record<number, (file: string) => number> = {
       ? 1
       : 0,
 
-  // patch 27: G/I_/pto 中和 signature - 任一 no-op body + 长 pad
+  // patch 27: G/I_/pto 中和 signature.
+  // 注: applier writeDisableTelemetry 已改成 all-or-nothing, 三个必须全 apply
+  // 否则整体返回 null. 所以正常路径下, 到这里检查时状态只有两种:
+  //   - 三个都 pristine (applier 未跑或跑失败) — anchor OR 会命中 → applicable
+  //   - 三个都 patched — 下面 OR 命中任一 → already_applied
+  // 参数化 minified names (G/I_/pto 会 rebundle 变名).
   27: f =>
-    /function G\(\)\{\/\*[\s\S]{0,200}?\*\/\}/.test(f) ||
-    /async function I_\(\)\{\/\*[\s\S]{0,200}?\*\/\}/.test(f) ||
-    /function pto\(\)\{\/\*[\s\S]{0,700}?\*\/\}/.test(f)
+    /async function [\w$]{1,4}\(\)\{\/\*[\s\S]{0,200}?\*\/\}/.test(f) ||
+    /function [\w$]{1,4}\(\)\{\/\*[\s\S]{0,700}?\*\/\}/.test(f)
       ? 1
       : 0,
 };

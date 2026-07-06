@@ -38,13 +38,15 @@ describe('csp #26: scrubMetadata (pMe)', () => {
     expect(writeScrubMetadata('random content')).toBeNull();
   });
 
-  it('accepts arbitrary minified identifier names', () => {
+  it('accepts arbitrary minified identifier names (incl. it/Ie renamed)', () => {
     const alt = PRISTINE_ORIG.replace(/\br=/g, 'z=')
       .replace(/\.{3}e,/g, '...q,')
       .replace(/Hj\(\)/g, 'a1()')
       .replace(/Cc\(\)/g, 'b2()')
       .replace(/Pt\(\)/g, 'c3()')
       .replace(/De\(/g, 'd4(')
+      .replace(/account_uuid:it\(/g, 'account_uuid:x9(')
+      .replace(/Ie\.CLAUDE_CODE/g, 'y8.CLAUDE_CODE')
       .replace('user_id:d4(r)', 'user_id:d4(z)');
     const input = wrap(alt);
     const output = writeScrubMetadata(input);

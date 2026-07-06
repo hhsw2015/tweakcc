@@ -160,9 +160,10 @@ export const writeForce1hCache = (file: string): string | null => {
 // HitCC XLe() = 本项目 pMe():
 // 原: let r={...e,device_id:Hj(),account_uuid:it(Ie.CLAUDE_CODE_REMOTE)&&Ie.CLAUDE_CODE_ACCOUNT_UUID||Cc()?.accountUuid||"",session_id:Pt()};return{user_id:De(r)}
 // 新: 剥 device_id + account_uuid, 保 session_id (caching/rate-limit 依赖) 和 CLAUDE_CODE_EXTRA_METADATA (用户 escape hatch)
+// minified names (`it`, `Ie`) 都用 [\w$]{1,4} 兼容 rebundle.
 export const writeScrubMetadata = (file: string): string | null => {
   const pattern =
-    /let ([\w$]{1,4})=\{\.\.\.([\w$]{1,4}),device_id:([\w$]{1,4})\(\),account_uuid:it\(Ie\.CLAUDE_CODE_REMOTE\)&&Ie\.CLAUDE_CODE_ACCOUNT_UUID\|\|([\w$]{1,4})\(\)\?\.accountUuid\|\|"",session_id:([\w$]{1,4})\(\)\};return\{user_id:([\w$]{1,4})\(\1\)\}/g;
+    /let ([\w$]{1,4})=\{\.\.\.([\w$]{1,4}),device_id:([\w$]{1,4})\(\),account_uuid:[\w$]{1,4}\([\w$]{1,4}\.CLAUDE_CODE_REMOTE\)&&[\w$]{1,4}\.CLAUDE_CODE_ACCOUNT_UUID\|\|([\w$]{1,4})\(\)\?\.accountUuid\|\|"",session_id:([\w$]{1,4})\(\)\};return\{user_id:([\w$]{1,4})\(\1\)\}/g;
   return applyRegexReplace(file, {
     pattern,
     build: m => ({
@@ -178,47 +179,36 @@ export const writeScrubMetadata = (file: string): string | null => {
 //   - I_(e,t): async 版
 //   - pto(e): GrowthBook experiment event (含 device_id + account_uuid + session_id)
 // 保留 GrowthBook fetch (feature-flag 分发), 只断"上传"方向.
+//
+// **All-or-nothing**: 三个子 patch 必须全部中和, 否则返回 null.
+// 部分应用 = 剩下的 sink 仍在漏 telemetry, 违反 patch 意图, 应视为失败.
 export const writeDisableTelemetry = (file: string): string | null => {
-  let out = file;
-  let changed = false;
-
-  // G(e,t): sync
   const gPattern =
-    /function G\(e,t\)\{let n=pdn;if\(n\.sink===null\)\{n\.eventQueue\.push\(\{eventName:e,metadata:t,async:!1\}\);return\}n\.sink\.logEvent\(e,t\)\}/g;
-  const gResult = applyRegexReplace(out, {
-    pattern: gPattern,
-    build: () => ({ body: `function G(){`, tail: '}' }),
-  });
-  if (gResult !== null) {
-    out = gResult;
-    changed = true;
-  }
-
-  // I_(e,t): async
+    /function ([\w$]{1,4})\(e,t\)\{let n=([\w$]{1,4});if\(n\.sink===null\)\{n\.eventQueue\.push\(\{eventName:e,metadata:t,async:!1\}\);return\}n\.sink\.logEvent\(e,t\)\}/g;
   const iPattern =
-    /async function I_\(e,t\)\{let n=pdn;if\(n\.sink===null\)\{n\.eventQueue\.push\(\{eventName:e,metadata:t,async:!0\}\);return\}await n\.sink\.logEventAsync\(e,t\)\}/g;
-  const iResult = applyRegexReplace(out, {
-    pattern: iPattern,
-    build: () => ({ body: `async function I_(){`, tail: '}' }),
-  });
-  if (iResult !== null) {
-    out = iResult;
-    changed = true;
-  }
-
-  // pto(e): GrowthBook experiment
+    /async function ([\w$]{1,4})\(e,t\)\{let n=([\w$]{1,4});if\(n\.sink===null\)\{n\.eventQueue\.push\(\{eventName:e,metadata:t,async:!0\}\);return\}await n\.sink\.logEventAsync\(e,t\)\}/g;
   const ptoPattern =
-    /function pto\(e\)\{if\(!Fj\(\)\)return;if\(!qre\|\|xje\("firstParty"\)\)return;let t=Hj\(\),\{accountUuid:n,organizationUuid:r\}=Vlt\(!0\),o=\{event_type:"GrowthbookExperimentEvent",event_id:cto\.randomUUID\(\),experiment_id:e\.experimentId,variation_id:e\.variationId,\.\.\.t&&\{device_id:t\},\.\.\.n&&\{account_uuid:n\},\.\.\.r&&\{organization_uuid:r\},\.\.\.e\.userAttributes&&\{session_id:e\.userAttributes\.sessionId,user_attributes:De\(\{appVersion:e\.userAttributes\.appVersion\}\)\},\.\.\.e\.experimentMetadata&&\{experiment_metadata:De\(e\.experimentMetadata\)\},environment:vzd\(\)\},s=new Date;qre\.emit\(\{timestamp:s,observedTimestamp:s,body:"growthbook_experiment",attributes:o\}\)\}/g;
-  const ptoResult = applyRegexReplace(out, {
-    pattern: ptoPattern,
-    build: () => ({ body: `function pto(){`, tail: '}' }),
-  });
-  if (ptoResult !== null) {
-    out = ptoResult;
-    changed = true;
-  }
+    /function ([\w$]{1,4})\(e\)\{if\(!([\w$]{1,4})\(\)\)return;if\(!([\w$]{1,4})\|\|([\w$]{1,4})\("firstParty"\)\)return;let t=([\w$]{1,4})\(\),\{accountUuid:n,organizationUuid:r\}=([\w$]{1,4})\(!0\),o=\{event_type:"GrowthbookExperimentEvent",event_id:([\w$]{1,4})\.randomUUID\(\),experiment_id:e\.experimentId,variation_id:e\.variationId,\.\.\.t&&\{device_id:t\},\.\.\.n&&\{account_uuid:n\},\.\.\.r&&\{organization_uuid:r\},\.\.\.e\.userAttributes&&\{session_id:e\.userAttributes\.sessionId,user_attributes:([\w$]{1,4})\(\{appVersion:e\.userAttributes\.appVersion\}\)\},\.\.\.e\.experimentMetadata&&\{experiment_metadata:\8\(e\.experimentMetadata\)\},environment:([\w$]{1,4})\(\)\},s=new Date;\3\.emit\(\{timestamp:s,observedTimestamp:s,body:"growthbook_experiment",attributes:o\}\)\}/g;
 
-  return changed ? out : null;
+  const gResult = applyRegexReplace(file, {
+    pattern: gPattern,
+    build: (m) => ({ body: `function ${m[1]}(){`, tail: '}' }),
+  });
+  if (gResult === null) return null;
+
+  const iResult = applyRegexReplace(gResult, {
+    pattern: iPattern,
+    build: (m) => ({ body: `async function ${m[1]}(){`, tail: '}' }),
+  });
+  if (iResult === null) return null;
+
+  const ptoResult = applyRegexReplace(iResult, {
+    pattern: ptoPattern,
+    build: (m) => ({ body: `function ${m[1]}(){`, tail: '}' }),
+  });
+  if (ptoResult === null) return null;
+
+  return ptoResult;
 };
 
 // ---------- OBSOLETE patch #19-21 (China fingerprint), 保留元数据 ----------
