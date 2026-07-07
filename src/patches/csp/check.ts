@@ -235,34 +235,34 @@ const ANCHOR_SIGNATURES: Record<number, (file: string) => number> = {
       ? 1
       : 0,
 
-  // patch 25: force_1h_cache - gKe 函数完整
+  // patch 25: force_1h_cache - gKe 函数完整 (bool-coerce helper 2.1.202 由 `it` 改 `ut`)
   25: f =>
-    /function [\w$]{1,8}\(e\)\{if\(it\(process\.env\.FORCE_PROMPT_CACHING_5M\)\)return!1;if\(it\(process\.env\.ENABLE_PROMPT_CACHING_1H\)/.test(
+    /function [\w$]{1,8}\(e\)\{if\([\w$]{1,4}\(process\.env\.FORCE_PROMPT_CACHING_5M\)\)return!1;if\([\w$]{1,4}\(process\.env\.ENABLE_PROMPT_CACHING_1H\)/.test(
       f
     )
       ? 1
       : 0,
 
-  // patch 26: scrub_metadata - pMe() 完整 device_id+account_uuid+session_id 结构
-  // 注: Ie.CLAUDE_CODE_REMOTE 里的 Ie 是 minified var, 用 [\w$]{1,4} 兼容 rebundle
+  // patch 26: scrub_metadata - pMe/dLe. 2.1.201: 无 parent_session_id;
+  // 2.1.202+: 结构里插了 parent_session_id. 两种都命中就报 applicable.
   26: f =>
-    /let [\w$]{1,4}=\{\.\.\.[\w$]{1,4},device_id:[\w$]{1,4}\(\),account_uuid:[\w$]{1,4}\([\w$]{1,4}\.CLAUDE_CODE_REMOTE\)&&[\w$]{1,4}\.CLAUDE_CODE_ACCOUNT_UUID\|\|[\w$]{1,4}\(\)\?\.accountUuid\|\|"",session_id:[\w$]{1,4}\(\)\};return\{user_id:[\w$]{1,4}\(/.test(
+    /device_id:[\w$]{1,4}\(\),account_uuid:[\w$]{1,4}\([\w$]{1,4}\.CLAUDE_CODE_REMOTE\)&&[\w$]{1,4}\.CLAUDE_CODE_ACCOUNT_UUID\|\|[\w$]{1,4}\(\)\?\.accountUuid\|\|"",session_id:[\w$]{1,4}\(\)/.test(
       f
     )
       ? 1
       : 0,
 
-  // patch 27: disable_telemetry - 任一 G/I_/pto pristine 结构存在
-  // 三个入口任一 pristine → 可 apply. minifier 会重命名 G/I_/pto/pdn/Fj/qre/xje 等,
-  // 全部参数化.
+  // patch 27: disable_telemetry - G/I_/pto pristine 结构.
+  // 2.1.202 local var reshuffle (n→r, pdn→ipr, I_→My, pto→kzn). 三个结构任一
+  // pristine → applicable. 全参数化 local var LHS.
   27: f =>
-    /function [\w$]{1,4}\(e,t\)\{let n=[\w$]{1,4};if\(n\.sink===null\)\{n\.eventQueue\.push\(\{eventName:e,metadata:t,async:!1\}\)/.test(
+    /function [\w$]{1,4}\(e,t\)\{let [\w$]{1,4}=[\w$]{1,4};if\([\w$]{1,4}\.sink===null\)\{[\w$]{1,4}\.eventQueue\.push\(\{eventName:e,metadata:t,async:!1\}\)/.test(
       f
     ) ||
-    /async function [\w$]{1,4}\(e,t\)\{let n=[\w$]{1,4};if\(n\.sink===null\)\{n\.eventQueue\.push\(\{eventName:e,metadata:t,async:!0\}\)/.test(
+    /async function [\w$]{1,4}\(e,t\)\{let [\w$]{1,4}=[\w$]{1,4};if\([\w$]{1,4}\.sink===null\)\{[\w$]{1,4}\.eventQueue\.push\(\{eventName:e,metadata:t,async:!0\}\)/.test(
       f
     ) ||
-    /function [\w$]{1,4}\(e\)\{if\(![\w$]{1,4}\(\)\)return;if\(![\w$]{1,4}\|\|[\w$]{1,4}\("firstParty"\)\)return;let t=[\w$]{1,4}\(\),\{accountUuid:n,organizationUuid:r\}=[\w$]{1,4}\(!0\),o=\{event_type:"GrowthbookExperimentEvent"/.test(
+    /function [\w$]{1,4}\(e\)\{if\(![\w$]{1,4}\(\)\)return;if\(![\w$]{1,4}\|\|[\w$]{1,4}\("firstParty"\)\)return;let [\w$]{1,4}=[\w$]{1,4}\(\),\{accountUuid:[\w$]{1,4},organizationUuid:[\w$]{1,4}\}=[\w$]{1,4}\(!0\),[\w$]{1,4}=\{event_type:"GrowthbookExperimentEvent"/.test(
       f
     )
       ? 1
@@ -305,17 +305,20 @@ const PATCHED_SIGNATURES: Record<number, (file: string) => number> = {
   24: f =>
     /function [\w$]{1,8}\(\)\{return!1\/\*[\s\S]{0,80}?\*\/\}/.test(f) ? 1 : 0,
 
-  // patch 25: gKe 中和 return!it(FORCE_PROMPT_CACHING_5M)
+  // patch 25: gKe 中和 - 直接返 !process.env.FORCE_PROMPT_CACHING_5M
   25: f =>
-    /function [\w$]{1,8}\(e\)\{return!it\(process\.env\.FORCE_PROMPT_CACHING_5M\)/.test(
+    /function [\w$]{1,8}\(e\)\{return!process\.env\.FORCE_PROMPT_CACHING_5M/.test(
       f
     )
       ? 1
       : 0,
 
-  // patch 26: pMe 中和 - session_id only, /* pad */ 尾
+  // patch 26: pMe/dLe 中和 - session_id 后立即闭合 (无 device_id/account_uuid).
+  // 两种变体:
+  //   2.1.201 legacy: let X={...Y,session_id:F()};return{user_id:G(X)}/*
+  //   2.1.202+ parent: let P=null,X={...Y,session_id:F(),...P&&{parent_session_id:P}};return{user_id:G(X)}/*
   26: f =>
-    /let [\w$]{1,4}=\{\.\.\.[\w$]{1,4},session_id:[\w$]{1,4}\(\)\};return\{user_id:[\w$]{1,4}\([\w$]{1,4}\)\}\/\*/.test(
+    /let [\w$]{1,4}=(?:null,[\w$]{1,4}=)?\{\.\.\.[\w$]{1,4},session_id:[\w$]{1,4}\(\)(?:,\.\.\.[\w$]{1,4}&&\{parent_session_id:[\w$]{1,4}\})?\};return\{user_id:[\w$]{1,4}\([\w$]{1,4}\)\}\/\*/.test(
       f
     )
       ? 1
@@ -395,8 +398,24 @@ export const cspCheck = (file: string): CspCheckRow[] => {
 
 /**
  * 从文件路径读并 check.
+ * 若是 native binary, 优先抽 JS 段扫; 抽不出来才退回读整 binary.
+ * (整 binary 的数据段 / Bun snapshot 常量表可能保留 anchor 字面量副本,
+ *  直接扫会误报 "命中 = 可应用". 只有 JS runtime 段的判定才准.)
  */
 export const cspCheckFile = (cliPath: string): CspCheckRow[] => {
+  // Lazy require 避 esm/cjs 循环 (nativeInstallation 依赖 LIEF)
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
+    const { extractClaudeJsFromNativeInstallation } = require('../../nativeInstallation') as {
+      extractClaudeJsFromNativeInstallation: (
+        p: string
+      ) => { data: Buffer | null };
+    };
+    const ext = extractClaudeJsFromNativeInstallation(cliPath);
+    if (ext.data) return cspCheck(ext.data.toString('utf8'));
+  } catch {
+    // fallthrough
+  }
   const data = fs.readFileSync(cliPath, 'latin1');
   return cspCheck(data);
 };

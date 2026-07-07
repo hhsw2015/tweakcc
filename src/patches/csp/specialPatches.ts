@@ -144,30 +144,55 @@ export const writeUnlockDisableRc = (file: string): string | null => {
 };
 
 // ---------- patch #25: force_1h_cache (gKe) ----------
+// 2.1.202 minifier 把 `it()` bool-coerce helper 重命名成 `ut()`, 所以
+// 所有 `[\w$]{1,4}\(process\.env\.XXX\)` 位置都参数化. build 里 truthy 检查用
+// 内嵌 `!!` 而不是依赖某个 minified helper 名, 保证跨版本稳定.
 export const writeForce1hCache = (file: string): string | null => {
   const pattern =
-    /function ([\w$]{1,8})\(e\)\{if\(it\(process\.env\.FORCE_PROMPT_CACHING_5M\)\)return!1;if\(it\(process\.env\.ENABLE_PROMPT_CACHING_1H\)\|\|mr\(\)==="bedrock"&&it\(process\.env\.ENABLE_PROMPT_CACHING_1H_BEDROCK\)\)return!0;if\(![\w$]{1,8}\(\)\|\|[\w$]{1,8}\.isUsingOverage\)return!1;let t=[\w$]{1,8}\(\);if\(t===null\)t=[\w$]{1,4}\("tengu_prompt_cache_1h_config",\{allowlist:\[[^\]]{1,300}\]\}\)\.allowlist\?\?\[\],[\w$]{1,8}\(t\);return e!==void 0&&t\.some\(\([\w$]{1,3}\)=>[\w$]{1,3}\.endsWith\("\*"\)\?e\.startsWith\([\w$]{1,3}\.slice\(0,-1\)\):e===[\w$]{1,3}\)\}/g;
+    /function ([\w$]{1,8})\(e\)\{if\([\w$]{1,4}\(process\.env\.FORCE_PROMPT_CACHING_5M\)\)return!1;if\([\w$]{1,4}\(process\.env\.ENABLE_PROMPT_CACHING_1H\)\|\|[\w$]{1,4}\(\)==="bedrock"&&[\w$]{1,4}\(process\.env\.ENABLE_PROMPT_CACHING_1H_BEDROCK\)\)return!0;if\(![\w$]{1,8}\(\)\|\|[\w$]{1,8}\.isUsingOverage\)return!1;let t=[\w$]{1,8}\(\);if\(t===null\)t=[\w$]{1,4}\("tengu_prompt_cache_1h_config",\{allowlist:\[[^\]]{1,300}\]\}\)\.allowlist\?\?\[\],[\w$]{1,8}\(t\);return e!==void 0&&t\.some\(\([\w$]{1,3}\)=>[\w$]{1,3}\.endsWith\("\*"\)\?e\.startsWith\([\w$]{1,3}\.slice\(0,-1\)\):e===[\w$]{1,3}\)\}/g;
   return applyRegexReplace(file, {
     pattern,
     build: m => ({
-      body: `function ${m[1]}(e){return!it(process.env.FORCE_PROMPT_CACHING_5M)`,
+      body: `function ${m[1]}(e){return!process.env.FORCE_PROMPT_CACHING_5M`,
       tail: '}',
     }),
   });
 };
 
-// ---------- patch #26: scrub_metadata_user_id (pMe) ----------
-// HitCC XLe() = 本项目 pMe():
-// 原: let r={...e,device_id:Hj(),account_uuid:it(Ie.CLAUDE_CODE_REMOTE)&&Ie.CLAUDE_CODE_ACCOUNT_UUID||Cc()?.accountUuid||"",session_id:Pt()};return{user_id:De(r)}
-// 新: 剥 device_id + account_uuid, 保 session_id (caching/rate-limit 依赖) 和 CLAUDE_CODE_EXTRA_METADATA (用户 escape hatch)
-// minified names (`it`, `Ie`) 都用 [\w$]{1,4} 兼容 rebundle.
+// ---------- patch #26: scrub_metadata_user_id (pMe / dLe) ----------
+// HitCC XLe(). 覆盖两种上游结构:
+//   2.1.201: let r={...e,device_id:Hj(),account_uuid:it(Ie.CLAUDE_CODE_REMOTE)&&Ie.CLAUDE_CODE_ACCOUNT_UUID||Cc()?.accountUuid||"",session_id:Pt()};return{user_id:De(r)}
+//   2.1.202: let r=PL(),o={...e,device_id:k8(),account_uuid:ut(ke.CLAUDE_CODE_REMOTE)&&ke.CLAUDE_CODE_ACCOUNT_UUID||bc()?.accountUuid||"",session_id:Pt(),...r&&{parent_session_id:r}};return{user_id:He(o)}
+//
+// 结构差异:
+//   - 2.1.202 引入 parent_session 前缀 `let r=PL(),` (可选)
+//   - object holder 变量名 (r / o) 不固定
+//   - 尾部可能有 `,...r&&{parent_session_id:r}` (跟 parent 分支联动, 可选)
+//
+// 用两个不同 regex 覆盖两种; 保留 session_id + parent_session_id (subagent
+// lineage 内部关联, 服务端已通过 API key 知道账号) + CLAUDE_CODE_EXTRA_METADATA
+// escape hatch. 剥掉真的 fingerprint 面: device_id + account_uuid.
 export const writeScrubMetadata = (file: string): string | null => {
-  const pattern =
-    /let ([\w$]{1,4})=\{\.\.\.([\w$]{1,4}),device_id:([\w$]{1,4})\(\),account_uuid:[\w$]{1,4}\([\w$]{1,4}\.CLAUDE_CODE_REMOTE\)&&[\w$]{1,4}\.CLAUDE_CODE_ACCOUNT_UUID\|\|([\w$]{1,4})\(\)\?\.accountUuid\|\|"",session_id:([\w$]{1,4})\(\)\};return\{user_id:([\w$]{1,4})\(\1\)\}/g;
-  return applyRegexReplace(file, {
-    pattern,
+  // 2.1.202+: let X=Y(),Z={...e,...device_id...session_id:...(),...X&&{parent_session_id:X}};return{user_id:F(Z)}
+  const patternWithParent =
+    /let ([\w$]{1,4})=[\w$]{1,4}\(\),([\w$]{1,4})=\{\.\.\.([\w$]{1,4}),device_id:[\w$]{1,4}\(\),account_uuid:[\w$]{1,4}\([\w$]{1,4}\.CLAUDE_CODE_REMOTE\)&&[\w$]{1,4}\.CLAUDE_CODE_ACCOUNT_UUID\|\|[\w$]{1,4}\(\)\?\.accountUuid\|\|"",session_id:([\w$]{1,4})\(\),\.\.\.\1&&\{parent_session_id:\1\}\};return\{user_id:([\w$]{1,4})\(\2\)\}/g;
+  const withParent = applyRegexReplace(file, {
+    pattern: patternWithParent,
     build: m => ({
-      body: `let ${m[1]}={...${m[2]},session_id:${m[5]}()};return{user_id:${m[6]}(${m[1]})}`,
+      // m[1]=parent var, m[2]=obj var, m[3]=extra spread, m[4]=session_id fn, m[5]=stringify fn
+      body: `let ${m[1]}=null,${m[2]}={...${m[3]},session_id:${m[4]}(),...${m[1]}&&{parent_session_id:${m[1]}}};return{user_id:${m[5]}(${m[2]})}`,
+      tail: '',
+    }),
+  });
+  if (withParent !== null) return withParent;
+
+  // 2.1.201 legacy shape: let X={...e,...session_id:...()};return{user_id:F(X)}
+  const patternLegacy =
+    /let ([\w$]{1,4})=\{\.\.\.([\w$]{1,4}),device_id:[\w$]{1,4}\(\),account_uuid:[\w$]{1,4}\([\w$]{1,4}\.CLAUDE_CODE_REMOTE\)&&[\w$]{1,4}\.CLAUDE_CODE_ACCOUNT_UUID\|\|[\w$]{1,4}\(\)\?\.accountUuid\|\|"",session_id:([\w$]{1,4})\(\)\};return\{user_id:([\w$]{1,4})\(\1\)\}/g;
+  return applyRegexReplace(file, {
+    pattern: patternLegacy,
+    build: m => ({
+      body: `let ${m[1]}={...${m[2]},session_id:${m[3]}()};return{user_id:${m[4]}(${m[1]})}`,
       tail: '',
     }),
   });
@@ -183,12 +208,16 @@ export const writeScrubMetadata = (file: string): string | null => {
 // **All-or-nothing**: 三个子 patch 必须全部中和, 否则返回 null.
 // 部分应用 = 剩下的 sink 仍在漏 telemetry, 违反 patch 意图, 应视为失败.
 export const writeDisableTelemetry = (file: string): string | null => {
+  // 全参数化: 函数名 + local var LHS 名 + 引用的 minified helpers 都用 [\w$]{1,4}.
+  // backreference 保 local var 一致.
+  // 2.1.202 local var reshuffle: `let n=pdn` → `let r=ipr`. pto 里
+  // accountUuid/organizationUuid 也可能绑不同 var 名. 结构不变.
   const gPattern =
-    /function ([\w$]{1,4})\(e,t\)\{let n=([\w$]{1,4});if\(n\.sink===null\)\{n\.eventQueue\.push\(\{eventName:e,metadata:t,async:!1\}\);return\}n\.sink\.logEvent\(e,t\)\}/g;
+    /function ([\w$]{1,4})\(e,t\)\{let ([\w$]{1,4})=[\w$]{1,4};if\(\2\.sink===null\)\{\2\.eventQueue\.push\(\{eventName:e,metadata:t,async:!1\}\);return\}\2\.sink\.logEvent\(e,t\)\}/g;
   const iPattern =
-    /async function ([\w$]{1,4})\(e,t\)\{let n=([\w$]{1,4});if\(n\.sink===null\)\{n\.eventQueue\.push\(\{eventName:e,metadata:t,async:!0\}\);return\}await n\.sink\.logEventAsync\(e,t\)\}/g;
+    /async function ([\w$]{1,4})\(e,t\)\{let ([\w$]{1,4})=[\w$]{1,4};if\(\2\.sink===null\)\{\2\.eventQueue\.push\(\{eventName:e,metadata:t,async:!0\}\);return\}await \2\.sink\.logEventAsync\(e,t\)\}/g;
   const ptoPattern =
-    /function ([\w$]{1,4})\(e\)\{if\(!([\w$]{1,4})\(\)\)return;if\(!([\w$]{1,4})\|\|([\w$]{1,4})\("firstParty"\)\)return;let t=([\w$]{1,4})\(\),\{accountUuid:n,organizationUuid:r\}=([\w$]{1,4})\(!0\),o=\{event_type:"GrowthbookExperimentEvent",event_id:([\w$]{1,4})\.randomUUID\(\),experiment_id:e\.experimentId,variation_id:e\.variationId,\.\.\.t&&\{device_id:t\},\.\.\.n&&\{account_uuid:n\},\.\.\.r&&\{organization_uuid:r\},\.\.\.e\.userAttributes&&\{session_id:e\.userAttributes\.sessionId,user_attributes:([\w$]{1,4})\(\{appVersion:e\.userAttributes\.appVersion\}\)\},\.\.\.e\.experimentMetadata&&\{experiment_metadata:\8\(e\.experimentMetadata\)\},environment:([\w$]{1,4})\(\)\},s=new Date;\3\.emit\(\{timestamp:s,observedTimestamp:s,body:"growthbook_experiment",attributes:o\}\)\}/g;
+    /function ([\w$]{1,4})\(e\)\{if\(![\w$]{1,4}\(\)\)return;if\(!([\w$]{1,4})\|\|[\w$]{1,4}\("firstParty"\)\)return;let ([\w$]{1,4})=[\w$]{1,4}\(\),\{accountUuid:([\w$]{1,4}),organizationUuid:([\w$]{1,4})\}=[\w$]{1,4}\(!0\),([\w$]{1,4})=\{event_type:"GrowthbookExperimentEvent",event_id:[\w$]{1,4}\.randomUUID\(\),experiment_id:e\.experimentId,variation_id:e\.variationId,\.\.\.\3&&\{device_id:\3\},\.\.\.\4&&\{account_uuid:\4\},\.\.\.\5&&\{organization_uuid:\5\},\.\.\.e\.userAttributes&&\{session_id:e\.userAttributes\.sessionId,user_attributes:[\w$]{1,4}\(\{appVersion:e\.userAttributes\.appVersion\}\)\},\.\.\.e\.experimentMetadata&&\{experiment_metadata:[\w$]{1,4}\(e\.experimentMetadata\)\},environment:[\w$]{1,4}\(\)\},([\w$]{1,4})=new Date;\2\.emit\(\{timestamp:\7,observedTimestamp:\7,body:"growthbook_experiment",attributes:\6\}\)\}/g;
 
   const gResult = applyRegexReplace(file, {
     pattern: gPattern,

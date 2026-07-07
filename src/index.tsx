@@ -124,11 +124,14 @@ function printPatchResults(
   for (const group of groupOrder) {
     const groupResults = byGroup.get(group)!;
 
-    // Filter based on --show-unchanged (but always show applied, failed, or explicitly requested)
+    // Filter based on --show-unchanged (but always show applied, failed, or explicitly requested).
+    // csp anchor+tail 的 no-op (anchor 已被中和 or 上游移除) 也显示, 以便用户
+    // 直观看到该 patch 未 skip、只是无需再动 — 不做静默.
     const filtered = groupResults.filter(
       r =>
         r.applied ||
         r.failed ||
+        (r.group === PatchGroup.CSP && !r.skipped) ||
         isShowUnchanged() ||
         (patchFilter && patchFilter.includes(r.id))
     );

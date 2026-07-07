@@ -65,7 +65,11 @@ export const ANCHOR_TAIL_PATCHES: AnchorTailPatchDef[] = [
     id: 7,
     name: 'Bash git 限制',
     desc: '工具描述中的 git 安全提示',
-    anchor: '  - For git commands:\n    - Prefer to create a new commit',
+    // 2.1.202 上游把这段 prompt 从连续字符串拆成 `i=[...]` 数组 + template
+    // interpolation, 原 anchor `  - For git commands:\n    - Prefer to create...`
+    // 不再作为连续字面量存在. 新 anchor 直接从数组第一个字符串开头取, 中和
+    // 覆盖整个数组内容 (三条 git 建议), 保留起止 `"` 使数组语法合法.
+    anchor: 'Prefer to create a new commit rather than amending',
     tail: 'investigate and fix the underlying issue.',
     tailSearchMax: 800,
     includeTail: true,
@@ -133,7 +137,7 @@ export const applyAnchorTailPatch = (
   file: string,
   def: AnchorTailPatchDef
 ): string => {
-  if (!file.includes(def.anchor)) return file;
+  if (!file.includes(def.anchor)) return file; // 已中和 / 上游移除 → no-op
   const patched = applyAnchorTailNeutralize(file, {
     anchor: def.anchor,
     tail: def.tail,
@@ -141,6 +145,24 @@ export const applyAnchorTailPatch = (
     includeTail: def.includeTail,
   });
   return patched ?? file;
+};
+
+/**
+ * Apply 包装: 兼容旧调用约定 (返回 string), 但把 "anchor 不在" 与
+ * "找不到 tail" 分开. anchor 不在 → 返 file (视为已 patched no-op).
+ * 找不到 tail → 返 null (真失败).
+ */
+export const applyAnchorTailPatchOrNull = (
+  file: string,
+  def: AnchorTailPatchDef
+): string | null => {
+  if (!file.includes(def.anchor)) return file; // no-op
+  return applyAnchorTailNeutralize(file, {
+    anchor: def.anchor,
+    tail: def.tail,
+    tailSearchMax: def.tailSearchMax,
+    includeTail: def.includeTail,
+  });
 };
 
 /**

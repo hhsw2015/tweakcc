@@ -116,7 +116,7 @@ import { writeKeybindingCustomization } from './keybindingCustomization';
 import { writeCyberRiskInstruction as csp_writeCyberRiskInstruction } from './csp/cyberRiskInstruction';
 import {
   ANCHOR_TAIL_PATCHES as CSP_ANCHOR_TAIL,
-  applyAnchorTailPatch as csp_applyAnchorTailPatch,
+  applyAnchorTailPatchOrNull as csp_applyAnchorTailPatchOrNull,
 } from './csp/anchorTailPatches';
 import {
   writeForceV0True as csp_writeForceV0True,
@@ -1150,40 +1150,40 @@ export const applyCustomization = async (
       fn: (c: string) => csp_writeCyberRiskInstruction(c) ?? c,
     },
     'csp-02-url-generation': {
-      fn: (c: string) => csp_applyAnchorTailPatch(c, CSP_ANCHOR_TAIL[0]),
+      fn: (c: string) => csp_applyAnchorTailPatchOrNull(c, CSP_ANCHOR_TAIL[0]),
     },
     'csp-03-exec-actions-compact': {
-      fn: (c: string) => csp_applyAnchorTailPatch(c, CSP_ANCHOR_TAIL[1]),
+      fn: (c: string) => csp_applyAnchorTailPatchOrNull(c, CSP_ANCHOR_TAIL[1]),
     },
     'csp-04-exec-actions-full': {
-      fn: (c: string) => csp_applyAnchorTailPatch(c, CSP_ANCHOR_TAIL[2]),
+      fn: (c: string) => csp_applyAnchorTailPatchOrNull(c, CSP_ANCHOR_TAIL[2]),
     },
     'csp-05-owasp': {
-      fn: (c: string) => csp_applyAnchorTailPatch(c, CSP_ANCHOR_TAIL[3]),
+      fn: (c: string) => csp_applyAnchorTailPatchOrNull(c, CSP_ANCHOR_TAIL[3]),
     },
     'csp-06-git-safety': {
-      fn: (c: string) => csp_applyAnchorTailPatch(c, CSP_ANCHOR_TAIL[4]),
+      fn: (c: string) => csp_applyAnchorTailPatchOrNull(c, CSP_ANCHOR_TAIL[4]),
     },
     'csp-07-bash-git': {
-      fn: (c: string) => csp_applyAnchorTailPatch(c, CSP_ANCHOR_TAIL[5]),
+      fn: (c: string) => csp_applyAnchorTailPatchOrNull(c, CSP_ANCHOR_TAIL[5]),
     },
     'csp-08-prompt-injection': {
-      fn: (c: string) => csp_applyAnchorTailPatch(c, CSP_ANCHOR_TAIL[6]),
+      fn: (c: string) => csp_applyAnchorTailPatchOrNull(c, CSP_ANCHOR_TAIL[6]),
     },
     'csp-09-sandbox-default': {
-      fn: (c: string) => csp_applyAnchorTailPatch(c, CSP_ANCHOR_TAIL[7]),
+      fn: (c: string) => csp_applyAnchorTailPatchOrNull(c, CSP_ANCHOR_TAIL[7]),
     },
     'csp-10-sandbox-paths': {
-      fn: (c: string) => csp_applyAnchorTailPatch(c, CSP_ANCHOR_TAIL[8]),
+      fn: (c: string) => csp_applyAnchorTailPatchOrNull(c, CSP_ANCHOR_TAIL[8]),
     },
     'csp-11-sandbox-policy': {
-      fn: (c: string) => csp_applyAnchorTailPatch(c, CSP_ANCHOR_TAIL[9]),
+      fn: (c: string) => csp_applyAnchorTailPatchOrNull(c, CSP_ANCHOR_TAIL[9]),
     },
     'csp-14-cyber-risk-data': {
-      fn: (c: string) => csp_applyAnchorTailPatch(c, CSP_ANCHOR_TAIL[10]),
+      fn: (c: string) => csp_applyAnchorTailPatchOrNull(c, CSP_ANCHOR_TAIL[10]),
     },
     'csp-15-applescript': {
-      fn: (c: string) => csp_applyAnchorTailPatch(c, CSP_ANCHOR_TAIL[11]),
+      fn: (c: string) => csp_applyAnchorTailPatchOrNull(c, CSP_ANCHOR_TAIL[11]),
     },
     'csp-16-force-v0': {
       fn: (c: string) => csp_writeForceV0True(c) ?? c,

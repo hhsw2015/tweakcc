@@ -13,6 +13,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { findCurrentClaudeExe } from './cleanup';
 import { cspCheck, formatTable, summarize } from './check';
+import { extractClaudeJsFromNativeInstallation } from '../../nativeInstallation';
 
 /**
  * 读当前 CC 版本. 通过 binary path 里的目录名 (~/.local/share/claude/versions/X.Y.Z).
@@ -103,11 +104,21 @@ export const runUpgradeAndPatch = (args: string[]): UpgradeResult => {
   }
   result.applyRan = true;
 
-  // 显示 csp-check 状态表 (仅在 apply 成功后)
+  // 显示 csp-check 状态表 (仅在 apply 成功后).
+  // 关键: 扫 apply 后的 JS 段, 不扫 native binary. binary 数据段 / Bun snapshot
+  // 内联常量表可能保留 anchor 字面量 (JS runtime 不会用到它们), 直接读 binary
+  // 会误报 "anchor 命中 = 可应用", 让用户以为 patch 没生效.
   const exe = findCurrentClaudeExe();
   if (exe && fs.existsSync(exe)) {
     console.log('\n[csp-upgrade] csp-check status:\n');
-    const data = fs.readFileSync(exe, 'latin1');
+    // 优先从 native binary 抽 JS 段; 抽不出来 (npm 装 / 结构变) 时退回读整 binary
+    let data: string;
+    const extracted = extractClaudeJsFromNativeInstallation(exe);
+    if (extracted.data) {
+      data = extracted.data.toString('utf8');
+    } else {
+      data = fs.readFileSync(exe, 'latin1');
+    }
     const rows = cspCheck(data);
     console.log(formatTable(rows));
     const s = summarize(rows);
