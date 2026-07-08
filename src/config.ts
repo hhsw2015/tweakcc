@@ -84,10 +84,26 @@ export const getConfigDir = (): string => {
 export const CONFIG_DIR = getConfigDir();
 export const CONFIG_FILE = path.join(CONFIG_DIR, 'config.json');
 export const CLIJS_BACKUP_FILE = path.join(CONFIG_DIR, 'cli.js.backup');
-export const NATIVE_BINARY_BACKUP_FILE = path.join(
+
+// Legacy native-binary backup location (~/.tweakcc/native-binary.backup).
+// Kept only for one-shot migration: on next apply, if this file exists we move
+// it to the new versioned path in ~/.local/share/claude/versions/. New writes
+// always go to `getVersionedPristinePath(nativeInstallationPath)`.
+export const LEGACY_NATIVE_BINARY_BACKUP_FILE = path.join(
   CONFIG_DIR,
   'native-binary.backup'
 );
+
+/**
+ * Return the versioned pristine backup path for a given native installation.
+ * Convention: `<versions-dir>/<version>.pristine` — sits next to the actual
+ * CC binary so cleanup and inspection are one directory, and semantics
+ * ("this is Anthropic's untouched build") are explicit rather than reusing
+ * CC's own `.bak` (which is "previous patched version", not pristine).
+ */
+export const getVersionedPristinePath = (nativeInstallationPath: string): string => {
+  return `${nativeInstallationPath}.pristine`;
+};
 export const SYSTEM_PROMPTS_DIR = path.join(CONFIG_DIR, 'system-prompts');
 export const SYSTEM_REMINDERS_DIR = path.join(CONFIG_DIR, 'system-reminders');
 export const PROMPT_CACHE_DIR = path.join(CONFIG_DIR, 'prompt-data-cache');

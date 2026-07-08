@@ -19,7 +19,8 @@ export const TWEAKCC_VERSION: string = (() => {
 
 import {
   CONFIG_DIR,
-  NATIVE_BINARY_BACKUP_FILE,
+  LEGACY_NATIVE_BINARY_BACKUP_FILE,
+  getVersionedPristinePath,
   updateConfigFile,
 } from '../config';
 import { ClaudeCodeInstallationInfo, TweakccConfig } from '../types';
@@ -909,22 +910,30 @@ export const applyCustomization = async (
     // For native installations: restore the binary, then extract to memory
     await restoreNativeBinaryFromBackup(ccInstInfo);
 
-    // Extract from backup if it exists, otherwise from the native installation
-    let backupExists = false;
+    // Extract from pristine backup if it exists, otherwise from the native
+    // installation itself. Prefer versioned pristine (new location); fall back
+    // to legacy ~/.tweakcc/native-binary.backup during migration.
+    const versionedPristine = getVersionedPristinePath(
+      ccInstInfo.nativeInstallationPath
+    );
+    let pathToExtractFrom = ccInstInfo.nativeInstallationPath;
+    let source: 'versioned-pristine' | 'legacy-backup' | 'installation' =
+      'installation';
     try {
-      await fs.stat(NATIVE_BINARY_BACKUP_FILE);
-      backupExists = true;
+      await fs.stat(versionedPristine);
+      pathToExtractFrom = versionedPristine;
+      source = 'versioned-pristine';
     } catch {
-      // Backup doesn't exist, extract from native installation
+      try {
+        await fs.stat(LEGACY_NATIVE_BINARY_BACKUP_FILE);
+        pathToExtractFrom = LEGACY_NATIVE_BINARY_BACKUP_FILE;
+        source = 'legacy-backup';
+      } catch {
+        /* neither backup — extract from installed binary directly */
+      }
     }
 
-    const pathToExtractFrom = backupExists
-      ? NATIVE_BINARY_BACKUP_FILE
-      : ccInstInfo.nativeInstallationPath;
-
-    debug(
-      `Extracting claude.js from ${backupExists ? 'backup' : 'native installation'}: ${pathToExtractFrom}`
-    );
+    debug(`Extracting claude.js from ${source}: ${pathToExtractFrom}`);
 
     const {
       data: claudeJsBuffer,

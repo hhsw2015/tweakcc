@@ -3,8 +3,9 @@
 // 对应 Python cleanup_old_baks — 每次 apply 后调用, 释放磁盘 (每个 CC binary 200MB+)
 //
 // 规则:
-//   保留:  当前 binary + 当前 .bak
-//   删除:  非当前的 .bak / lock 残留 / 旧 binary
+//   保留:  当前 binary + 当前 .pristine (tweakcc 备份, 唯一真 pristine 源)
+//   删除:  非当前版本的一切 (binary / .pristine / .bak / .locked-)
+//          + 当前版本的 .bak (CC 官方备份, 是"上次 patched 版", 不是 pristine, 我们不用)
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -16,13 +17,14 @@ export interface DeletedFile {
 }
 
 /**
- * 清理旧版本 binary / .bak / lock 残留. 只保留 currentExe 和 currentExe.bak.
+ * 清理旧版本 binary / .bak / .pristine / lock 残留.
+ * 保留: currentExe + currentExe.pristine (tweakcc 备份).
  * 返回删除文件清单.
  */
 export const cleanupOldVersions = (currentExe: string): DeletedFile[] => {
   const versionsDir = path.dirname(currentExe);
   const currentBasename = path.basename(currentExe);
-  const currentBak = currentBasename + '.bak';
+  const currentPristine = currentBasename + '.pristine';
   const deleted: DeletedFile[] = [];
 
   let entries: string[];
@@ -33,17 +35,11 @@ export const cleanupOldVersions = (currentExe: string): DeletedFile[] => {
   }
 
   for (const name of entries) {
-    const isOldBak = name.endsWith('.bak') && name !== currentBak;
-    const isLock = name.includes('.locked-') || name.endsWith('.locked-by-running');
-    // 旧版本 binary: 不是当前, 不是 .bak, 不是 lock
-    const isOldVersion =
-      name !== currentBasename &&
-      name !== currentBak &&
-      !name.endsWith('.bak') &&
-      !name.includes('.locked-');
+    // 保留列表: 当前 binary + 当前 pristine (tweakcc 唯一 backup)
+    if (name === currentBasename || name === currentPristine) continue;
 
-    if (!(isOldBak || isLock || isOldVersion)) continue;
-
+    // 其他一切 — .bak (CC 官方旧备份, 非 pristine, 我们不用),
+    // 其他版本的 binary/.pristine/.bak, lock 残留 — 都清
     const fullPath = path.join(versionsDir, name);
     try {
       const stat = fs.statSync(fullPath);
@@ -77,9 +73,14 @@ export const findCurrentClaudeExe = (): string | null => {
     return null;
   }
 
-  // 过滤: 不是 .bak, 不是 .locked, 是文件
+  // 过滤: 不是 .bak / .pristine / .locked, 是文件
   const candidates = entries
-    .filter((n) => !n.endsWith('.bak') && !n.includes('.locked-'))
+    .filter(
+      (n) =>
+        !n.endsWith('.bak') &&
+        !n.endsWith('.pristine') &&
+        !n.includes('.locked-')
+    )
     .filter((n) => {
       try {
         return fs.statSync(path.join(versionsDir, n)).isFile();

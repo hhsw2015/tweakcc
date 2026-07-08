@@ -40,7 +40,8 @@ vi.mock('node:fs/promises', () => ({
 
 vi.mock('../config', () => ({
   CONFIG_DIR: '/tmp/tweakcc-test-config',
-  NATIVE_BINARY_BACKUP_FILE: '/tmp/tweakcc-test-config/native.backup',
+  LEGACY_NATIVE_BINARY_BACKUP_FILE: '/tmp/tweakcc-test-config/native.backup',
+  getVersionedPristinePath: (p: string) => `${p}.pristine`,
   SYSTEM_REMINDERS_DIR: '/tmp/tweakcc-test-config/system-reminders',
   updateConfigFile: vi.fn(async updateFn => {
     const config = { changesApplied: false } as TweakccConfig;

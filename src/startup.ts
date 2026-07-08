@@ -7,7 +7,8 @@ import {
 import { doesFileExist } from './utils';
 import {
   CLIJS_BACKUP_FILE,
-  NATIVE_BINARY_BACKUP_FILE,
+  LEGACY_NATIVE_BINARY_BACKUP_FILE,
+  getVersionedPristinePath,
   readConfigFile,
 } from './config';
 import { debug } from './utils';
@@ -92,17 +93,32 @@ export async function completeStartupCheck(
     hasBackedUp = true;
   }
 
-  // Backup native binary if we don't have any backup yet (for native installations)
+  // Backup native binary if we don't have any backup yet (for native installations).
+  // Look for versioned pristine (new location) first, then legacy backup (migration).
   let hasBackedUpNativeBinary = false;
-  if (
-    ccInstInfo.nativeInstallationPath &&
-    !(await doesFileExist(NATIVE_BINARY_BACKUP_FILE))
-  ) {
-    debug(
-      `startupCheck: ${NATIVE_BINARY_BACKUP_FILE} not found; backing up native binary`
+  if (ccInstInfo.nativeInstallationPath) {
+    const versionedPristine = getVersionedPristinePath(
+      ccInstInfo.nativeInstallationPath
     );
-    await backupNativeBinary(ccInstInfo);
-    hasBackedUpNativeBinary = true;
+    const hasNewBackup = await doesFileExist(versionedPristine);
+    const hasLegacyBackup = await doesFileExist(
+      LEGACY_NATIVE_BINARY_BACKUP_FILE
+    );
+    if (!hasNewBackup && !hasLegacyBackup) {
+      debug(
+        `startupCheck: no native binary backup at ${versionedPristine} or legacy path; backing up`
+      );
+      await backupNativeBinary(ccInstInfo);
+      hasBackedUpNativeBinary = true;
+    } else if (!hasNewBackup && hasLegacyBackup) {
+      // Legacy backup exists but new versioned one doesn't — trigger migration
+      // (backupNativeBinary handles the rename).
+      debug(
+        `startupCheck: legacy backup found, migrating to versioned pristine`
+      );
+      await backupNativeBinary(ccInstInfo);
+      hasBackedUpNativeBinary = true;
+    }
   }
 
   // If the installed CC version is different from what we have backed up, clear out our backup
@@ -124,8 +140,15 @@ export async function completeStartupCheck(
       debug(
         `startupCheck: real version (${realVersion}) != backed up version (${backedUpVersion}); backing up native binary`
       );
-      if (await doesFileExist(NATIVE_BINARY_BACKUP_FILE)) {
-        await fs.unlink(NATIVE_BINARY_BACKUP_FILE);
+      const versionedPristine = getVersionedPristinePath(
+        ccInstInfo.nativeInstallationPath
+      );
+      // Purge stale pristines from any prior version (both new and legacy loc)
+      if (await doesFileExist(versionedPristine)) {
+        await fs.unlink(versionedPristine);
+      }
+      if (await doesFileExist(LEGACY_NATIVE_BINARY_BACKUP_FILE)) {
+        await fs.unlink(LEGACY_NATIVE_BINARY_BACKUP_FILE);
       }
       await backupNativeBinary(ccInstInfo);
     }

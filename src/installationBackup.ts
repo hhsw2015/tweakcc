@@ -3,7 +3,8 @@ import fs from 'node:fs/promises';
 import {
   CLIJS_BACKUP_FILE,
   ensureConfigDir,
-  NATIVE_BINARY_BACKUP_FILE,
+  LEGACY_NATIVE_BINARY_BACKUP_FILE,
+  getVersionedPristinePath,
   updateConfigFile,
 } from './config';
 import { clearAllAppliedHashes } from './systemPromptHashIndex';
@@ -46,7 +47,10 @@ export const backupClijs = async (ccInstInfo: ClaudeCodeInstallationInfo) => {
 };
 
 /**
- * Backs up the native installation binary to the config directory.
+ * Backs up the native installation binary next to itself as `<binary>.pristine`.
+ * If the legacy `~/.tweakcc/native-binary.backup` exists we prefer to migrate
+ * it (rename in-place) instead of re-copying — the legacy file was already the
+ * pristine binary from before tweakcc first ran, so it is authoritative.
  */
 export const backupNativeBinary = async (
   ccInstInfo: ClaudeCodeInstallationInfo
@@ -55,12 +59,46 @@ export const backupNativeBinary = async (
     return;
   }
 
-  await ensureConfigDir();
-  debug(`Backing up native binary to ${NATIVE_BINARY_BACKUP_FILE}`);
-  await atomicCopyFile(
-    ccInstInfo.nativeInstallationPath,
-    NATIVE_BINARY_BACKUP_FILE
+  const pristinePath = getVersionedPristinePath(
+    ccInstInfo.nativeInstallationPath
   );
+
+  await ensureConfigDir();
+
+  // Migration: legacy backup exists → move it to the versioned path, delete
+  // the old location. Skip if the new path already has a copy (would clobber
+  // a newer pristine with an older one).
+  if (
+    (await doesFileExist(LEGACY_NATIVE_BINARY_BACKUP_FILE)) &&
+    !(await doesFileExist(pristinePath))
+  ) {
+    debug(
+      `Migrating legacy backup ${LEGACY_NATIVE_BINARY_BACKUP_FILE} → ${pristinePath}`
+    );
+    try {
+      await fs.rename(LEGACY_NATIVE_BINARY_BACKUP_FILE, pristinePath);
+    } catch {
+      // Cross-device or perms — fall back to copy+unlink.
+      await atomicCopyFile(LEGACY_NATIVE_BINARY_BACKUP_FILE, pristinePath);
+      try {
+        await fs.unlink(LEGACY_NATIVE_BINARY_BACKUP_FILE);
+      } catch {
+        /* best-effort */
+      }
+    }
+  } else {
+    // Legacy stale duplicate: pristine already exists at new path, remove old.
+    if (await doesFileExist(LEGACY_NATIVE_BINARY_BACKUP_FILE)) {
+      try {
+        await fs.unlink(LEGACY_NATIVE_BINARY_BACKUP_FILE);
+      } catch {
+        /* best-effort */
+      }
+    }
+    debug(`Backing up native binary to ${pristinePath}`);
+    await atomicCopyFile(ccInstInfo.nativeInstallationPath, pristinePath);
+  }
+
   await updateConfigFile(config => {
     config.changesApplied = false;
     config.ccVersion = ccInstInfo.version;
@@ -124,17 +162,28 @@ export const restoreNativeBinaryFromBackup = async (
     return false;
   }
 
-  if (!(await doesFileExist(NATIVE_BINARY_BACKUP_FILE))) {
+  // Prefer versioned pristine (new location). Fall back to legacy
+  // ~/.tweakcc/native-binary.backup so users mid-migration can still restore.
+  const pristinePath = getVersionedPristinePath(
+    ccInstInfo.nativeInstallationPath
+  );
+  let backupSource: string | null = null;
+  if (await doesFileExist(pristinePath)) {
+    backupSource = pristinePath;
+  } else if (await doesFileExist(LEGACY_NATIVE_BINARY_BACKUP_FILE)) {
+    backupSource = LEGACY_NATIVE_BINARY_BACKUP_FILE;
+  }
+  if (!backupSource) {
     debug('restoreNativeBinaryFromBackup: No backup file exists, skipping');
     return false;
   }
 
   debug(
-    `Restoring native binary from backup to ${ccInstInfo.nativeInstallationPath}`
+    `Restoring native binary from ${backupSource} → ${ccInstInfo.nativeInstallationPath}`
   );
 
   // Read the backup content
-  const backupContent = await fs.readFile(NATIVE_BINARY_BACKUP_FILE);
+  const backupContent = await fs.readFile(backupSource);
 
   // Replace the file, breaking hard links and preserving permissions
   await replaceFileBreakingHardLinks(
