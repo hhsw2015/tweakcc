@@ -11,7 +11,7 @@
 import { spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { findCurrentClaudeExe } from './cleanup';
+import { findCurrentClaudeExe, cleanupOldVersions, formatBytes } from './cleanup';
 import { cspCheck, formatTable, summarize } from './check';
 import { extractClaudeJsFromNativeInstallation } from '../../nativeInstallation';
 
@@ -79,6 +79,8 @@ export const runUpgradeAndPatch = (args: string[]): UpgradeResult => {
 
   if (result.versionBefore === result.versionAfter) {
     console.log(`[csp-upgrade] version unchanged (${result.versionAfter}), no patch needed`);
+    // 版本没变也要清: 用户 install 前可能手工装过旧版留在 versions/, 属于磁盘垃圾
+    cleanupOldVersionsWithLog();
     return result;
   }
 
@@ -137,5 +139,22 @@ export const runUpgradeAndPatch = (args: string[]): UpgradeResult => {
     }
   }
 
+  cleanupOldVersionsWithLog();
+
   return result;
+};
+
+// 清旧 binary + .bak + lock 残留. 每个 CC binary 200MB+, 不清会堆爆磁盘.
+const cleanupOldVersionsWithLog = (): void => {
+  const exe = findCurrentClaudeExe();
+  if (!exe) return;
+  const deleted = cleanupOldVersions(exe);
+  if (deleted.length === 0) return;
+  const total = deleted.reduce((a, d) => a + d.size, 0);
+  console.log(
+    `\n[csp-upgrade] cleaned ${deleted.length} old file(s), freed ${formatBytes(total)}`
+  );
+  for (const d of deleted) {
+    console.log(`  - ${d.path} (${formatBytes(d.size)})`);
+  }
 };
