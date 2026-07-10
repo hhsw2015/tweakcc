@@ -292,19 +292,23 @@ export const clearCaches = (): void => {
  * Find the Text component variable name from Ink
  */
 export const findTextComponent = (fileContents: string): string | undefined => {
-  // Legacy Ink Text (pre-2.1.204): destructure in param list
+  // Method 1 (CC 2.1.204+): the Ink Text component is now React-Compiler
+  // memoized. color/backgroundColor/dimColor/bold props are destructured
+  // out of the body AFTER a memo-cache guard rather than in the params:
+  //   function h(P){let $=X.c(31),...;if($[0]!==P)({color:A,backgroundColor:B,
+  //   dimColor:C,bold:D,...}=P)...}
+  const memoCachePattern =
+    /\bfunction ([$\w]+)\([$\w]+\)\{let [$\w]+=[$\w.]+\(\d+\)(?:,[$\w]+){0,20};if\([$\w]+\[0\]!==[$\w]+\)\(\{color:[$\w]+,backgroundColor:[$\w]+,dimColor:[$\w]+,bold:[$\w]+/;
+  const memoMatch = fileContents.match(memoCachePattern);
+  if (memoMatch) return memoMatch[1];
+
+  // Method 2 (CC <= 2.1.202): the minified Text component destructures its props
+  // directly in the signature:
   //   function X({color:A,backgroundColor:B,dimColor:C=!1,bold:D=!1,...})
   const legacyPattern =
     /\bfunction ([$\w]+).{0,80}color:[$\w]+,backgroundColor:[$\w]+,dimColor:[$\w]+(?:=![01])?,bold:[$\w]+(?:=![01])?/;
   const legacyMatch = fileContents.match(legacyPattern);
   if (legacyMatch) return legacyMatch[1];
-
-  // 2.1.204+: React 19 useMemoCache wrapper hoists destructure into body:
-  //   function h(gvc){let ixi=Lvc.c(31),...;if(ixi[0]!==gvc)({color:cxi,backgroundColor:axi,dimColor:yvc,bold:_vc,italic:bvc,underline:Tvc,strikethrough:Svc,inverse:Evc,wrap:vvc,children:lxi,...sxi}=gvc)
-  const memoCachePattern =
-    /\bfunction ([$\w]+)\([$\w]+\)\{let [$\w]+=[$\w.]+\(\d+\)(?:,[$\w]+){0,20};if\([$\w]+\[0\]!==[$\w]+\)\(\{color:[$\w]+,backgroundColor:[$\w]+,dimColor:[$\w]+,bold:[$\w]+/;
-  const memoMatch = fileContents.match(memoCachePattern);
-  if (memoMatch) return memoMatch[1];
 
   console.log('patch: findTextComponent: failed to find text component');
   return undefined;

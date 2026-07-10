@@ -46,17 +46,19 @@ export const writeThinkingVisibility = (oldFile: string): string | null => {
     return oldFile;
   }
 
-  // Unified pattern that matches three shapes:
-  //   pre-2.1.18:  case"thinking":  if(!V&&!I) return null;  ...isTranscriptMode:V,...
-  //   2.1.18+:     case"thinking":{ if(!D&&!H) return null;  ...isTranscriptMode:D,...
-  //   2.1.204+:    case"thinking":{ if(!cit&&!BY){return null} ...isTranscriptMode:cit,...
-  //     ^ return-null 被 { } 包裹, 分号缺失
+  // Unified pattern that matches all three formats:
   // - Group 1: `case"thinking":` (+/- `{`)
-  // - Group 2: `if(...){return null}` or `if(...) return null;` (early return)
-  // - Group 3: from group2 到 `isTranscriptMode:`
-  // - Then var 名 + `,` (换成 `true,`)
+  // - Group 2: the early return we want to remove.
+  //   pre-2.1.18:  `if(!V&&!I)return null;`
+  //   2.1.18+:     `if(!D&&!H)return null;` (case body wrapped in `{}`)
+  //   2.1.204+:    `if(!cit&&!BY){return null}` (braces, no trailing semicolon)
+  //   Anchored on the two negated vars so the lazy body can't span to an
+  //   unrelated `return null` (e.g. the separate `case"thinking":` spinner-icon
+  //   block that has no early return).
+  // - Group 3: Everything from `{` or return up to `isTranscriptMode:`
+  // - Then the variable name followed by comma (replaced with `true,`)
   const pattern =
-    /(case"thinking":\{?)(if\(.+?\)\{?return null\}?;?)(.{0,400}isTranscriptMode:).+?,/;
+    /(case"thinking":\{?)(if\(![$\w]+&&![$\w]+\)\{?return null\}?;?)(.{0,400}isTranscriptMode:).+?,/;
 
   const match = oldFile.match(pattern);
 
