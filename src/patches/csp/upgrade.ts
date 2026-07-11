@@ -77,17 +77,27 @@ export const runUpgradeAndPatch = (args: string[]): UpgradeResult => {
     return result;
   }
 
-  if (result.versionBefore === result.versionAfter) {
-    console.log(`[csp-upgrade] version unchanged (${result.versionAfter}), no patch needed`);
-    // 版本没变也要清: 用户 install 前可能手工装过旧版留在 versions/, 属于磁盘垃圾
-    cleanupOldVersionsWithLog();
-    return result;
+  // 无脑跑 apply, 不靠版本号比对判断.
+  //
+  // 理由: 版本号比对有多重时序陷阱:
+  //   - findCurrentClaudeExe 按语义版本取最大, install 之前 versions/ 可能已有
+  //     新版 (用户手工装过 / 上次中断), 让 versionBefore == versionAfter
+  //   - install 内部先下新版存盘再更新链接, 时序上难以区分 "跑之前状态" 与
+  //     "跑之后状态"
+  //   - 用户手工跑过一次 raw binary install 后再跑 wrapper, wrapper 完全 miss
+  //
+  // apply 本身幂等: patched anchor 不再匹配的话就 no-op, 不会重复破坏.
+  // 所以每次 install 之后无条件 apply 更稳.
+  result.upgraded = result.versionBefore !== result.versionAfter;
+  if (result.upgraded) {
+    console.log(
+      `\n[csp-upgrade] version changed: ${result.versionBefore} → ${result.versionAfter}`
+    );
+  } else {
+    console.log(
+      `\n[csp-upgrade] version unchanged (${result.versionAfter}), re-applying patches (install may have overwritten binary)`
+    );
   }
-
-  result.upgraded = true;
-  console.log(
-    `\n[csp-upgrade] version changed: ${result.versionBefore} → ${result.versionAfter}`
-  );
   console.log(`[csp-upgrade] auto-applying patches...\n`);
 
   // 调 tweakcc --apply (installationDetection 自动挑最新 native binary, 无需 env)
