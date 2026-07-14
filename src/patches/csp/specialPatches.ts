@@ -114,11 +114,21 @@ export const writeHmNormalizeDot = (file: string): string => {
 };
 
 // ---------- patch #22: unlock_sdk_url_host (b_c) ----------
+// 2.1.209+ 改了 return shape: 从 `return "错误消息"` 变成
+// `return {code:"...",reason:"错误消息"}`. 两种 shape 都覆盖.
 export const writeUnlockSdkUrlHost = (file: string): string | null => {
-  const pattern =
+  const patternLegacy =
     /function ([\w$]{1,8})\(e\)\{let t;try\{t=new URL\(e\)\}catch\{return`could not parse \$\{[\w$]{1,8}\(e\)\} as a URL`\}if\([\w$]{1,8}\.has\(t\.hostname\)\)\{if\(t\.protocol!=="wss:"&&t\.protocol!=="https:"\)return`scheme \$\{[\w$]{1,8}\(t\.protocol\)\} is not permitted for host \$\{[\w$]{1,8}\(t\.hostname\)\}; only wss:\/\/ and https:\/\/ are accepted`;return null\}return`host \$\{[\w$]{1,8}\(t\.hostname\)\} is not an approved Anthropic endpoint`\}/g;
+  const legacy = applyRegexReplace(file, {
+    pattern: patternLegacy,
+    build: m => ({ body: `function ${m[1]}(e){return null`, tail: '}' }),
+  });
+  if (legacy !== null) return legacy;
+
+  const patternObj =
+    /function ([\w$]{1,8})\(e\)\{let t;try\{t=new URL\(e\)\}catch\{return\{code:"unparseable",reason:`could not parse \$\{[\w$]{1,8}\(e\)\} as a URL`\}\}if\([\w$]{1,8}\.has\(t\.hostname\)\)\{if\(t\.protocol!=="wss:"&&t\.protocol!=="https:"\)return\{code:"bad_scheme",reason:`scheme \$\{[\w$]{1,8}\(t\.protocol\)\} is not permitted for host \$\{[\w$]{1,8}\(t\.hostname\)\}; only wss:\/\/ and https:\/\/ are accepted`\};return null\}return\{code:"not_allowlisted",reason:`host \$\{[\w$]{1,8}\(t\.hostname\)\} is not an approved Anthropic endpoint`\}\}/g;
   return applyRegexReplace(file, {
-    pattern,
+    pattern: patternObj,
     build: m => ({ body: `function ${m[1]}(e){return null`, tail: '}' }),
   });
 };
@@ -212,10 +222,12 @@ export const writeDisableTelemetry = (file: string): string | null => {
   // backreference 保 local var 一致.
   // 2.1.202 local var reshuffle: `let n=pdn` → `let r=ipr`. pto 里
   // accountUuid/organizationUuid 也可能绑不同 var 名. 结构不变.
+  // 2.1.209+: 队列 push 从 inline `n.eventQueue.push({...})` 抽成 helper
+  // `X(n, {...})`. 两种 shape 都吃.
   const gPattern =
-    /function ([\w$]{1,4})\(e,t\)\{let ([\w$]{1,4})=[\w$]{1,4};if\(\2\.sink===null\)\{\2\.eventQueue\.push\(\{eventName:e,metadata:t,async:!1\}\);return\}\2\.sink\.logEvent\(e,t\)\}/g;
+    /function ([\w$]{1,4})\(e,t\)\{let ([\w$]{1,4})=[\w$]{1,4};if\(\2\.sink===null\)\{(?:\2\.eventQueue\.push\(\{eventName:e,metadata:t,async:!1\}\)|[\w$]{1,4}\(\2,\{eventName:e,metadata:t,async:!1\}\));return\}\2\.sink\.logEvent\(e,t\)\}/g;
   const iPattern =
-    /async function ([\w$]{1,4})\(e,t\)\{let ([\w$]{1,4})=[\w$]{1,4};if\(\2\.sink===null\)\{\2\.eventQueue\.push\(\{eventName:e,metadata:t,async:!0\}\);return\}await \2\.sink\.logEventAsync\(e,t\)\}/g;
+    /async function ([\w$]{1,4})\(e,t\)\{let ([\w$]{1,4})=[\w$]{1,4};if\(\2\.sink===null\)\{(?:\2\.eventQueue\.push\(\{eventName:e,metadata:t,async:!0\}\)|[\w$]{1,4}\(\2,\{eventName:e,metadata:t,async:!0\}\));return\}await \2\.sink\.logEventAsync\(e,t\)\}/g;
   const ptoPattern =
     /function ([\w$]{1,4})\(e\)\{if\(![\w$]{1,4}\(\)\)return;if\(!([\w$]{1,4})\|\|[\w$]{1,4}\("firstParty"\)\)return;let ([\w$]{1,4})=[\w$]{1,4}\(\),\{accountUuid:([\w$]{1,4}),organizationUuid:([\w$]{1,4})\}=[\w$]{1,4}\(!0\),([\w$]{1,4})=\{event_type:"GrowthbookExperimentEvent",event_id:[\w$]{1,4}\.randomUUID\(\),experiment_id:e\.experimentId,variation_id:e\.variationId,\.\.\.\3&&\{device_id:\3\},\.\.\.\4&&\{account_uuid:\4\},\.\.\.\5&&\{organization_uuid:\5\},\.\.\.e\.userAttributes&&\{session_id:e\.userAttributes\.sessionId,user_attributes:[\w$]{1,4}\(\{appVersion:e\.userAttributes\.appVersion\}\)\},\.\.\.e\.experimentMetadata&&\{experiment_metadata:[\w$]{1,4}\(e\.experimentMetadata\)\},environment:[\w$]{1,4}\(\)\},([\w$]{1,4})=new Date;\2\.emit\(\{timestamp:\7,observedTimestamp:\7,body:"growthbook_experiment",attributes:\6\}\)\}/g;
 

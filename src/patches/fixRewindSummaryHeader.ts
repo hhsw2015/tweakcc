@@ -33,9 +33,12 @@ const UP_TO_HEADER =
   'This session was rewound at your request, not a context overflow. The summary below covers the earlier portion up to your selected point; the recent messages are kept intact.';
 
 export const writeFixRewindSummaryHeader = (file: string): string | null => {
-  // The rewind summary message: content:<jR_ call>,isCompactSummary:!0,...<J>.length>0?{summarizeMetadata:{messagesSummarized:<j>.length,userContext:<O>,direction:<T>}}
+  // The rewind summary message: content:<summaryBuilderCall>,isCompactSummary:!0,...
+  // Legacy (pre-2.1.209): content:helper(a,!1,b,void 0,c),isCompactSummary:!0,...
+  // 2.1.209+: content:helper(a,{suppressFollowUpQuestions:!1,transcriptPath:b,replStateCleared:c}),isCompactSummary:!0,...
+  // 用非贪婪 `[^)]*?` 吸收参数, 匹配对第一个 `),` 停止.
   const pattern =
-    /content:([$\w]+\([$\w]+,!1,[$\w]+,void 0,[$\w]+\)),(isCompactSummary:!0,\.\.\.[$\w]+\.length>0\?\{summarizeMetadata:\{messagesSummarized:[$\w]+\.length,userContext:[$\w]+,direction:([$\w]+)\}\})/;
+    /content:([$\w]+\([$\w]+,(?:!1,[$\w]+,void 0,[$\w]+|\{[^}]{0,300}\})\)),(isCompactSummary:!0,\.\.\.[$\w]+\.length>0\?\{summarizeMetadata:\{messagesSummarized:[$\w]+\.length,userContext:[$\w]+,direction:([$\w]+)\}\})/;
   const match = file.match(pattern);
 
   if (!match || match.index === undefined) {

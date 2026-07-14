@@ -52,6 +52,19 @@ export const writeContextLimit = (oldFile: string): string | null => {
     );
   }
 
+  // CC 2.1.209: adds a 5th constant (probably 1M-token ceiling for 1M-context
+  // models): `var X=200000,Y=200000,Z=32000,W=128000,V=1e6;`
+  // Only the first two 200000s matter for the context-window override.
+  const patternWithMax =
+    /var ([\w$]+)=200000,([\w$]+)=200000,([\w$]+)=32000,([\w$]+)=(128000|64000),([\w$]+)=(1e6|1000000);/;
+  const matchWithMax = oldFile.match(patternWithMax);
+  if (matchWithMax) {
+    return oldFile.replace(
+      patternWithMax,
+      `var ${esc(matchWithMax[1])}=${OVERRIDE},${esc(matchWithMax[2])}=${OVERRIDE},${esc(matchWithMax[3])}=32000,${esc(matchWithMax[4])}=${matchWithMax[5]},${esc(matchWithMax[6])}=${matchWithMax[7]};`
+    );
+  }
+
   // Idempotent: if patched already, treat as no-op
   if (oldFile.includes('CLAUDE_CODE_CONTEXT_LIMIT')) {
     return oldFile;

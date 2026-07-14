@@ -211,9 +211,10 @@ const ANCHOR_SIGNATURES: Record<number, (file: string) => number> = {
       ? 1
       : 0,
 
-  // patch 22: unlock_sdk_url_host - b_c 函数完整
+  // patch 22: unlock_sdk_url_host - b_c 函数完整.
+  // 2.1.209+ 改 return shape 从 `return "..."` 到 `return {code:...,reason:"..."}`.
   22: f =>
-    /function [\w$]{1,8}\(e\)\{let t;try\{t=new URL\(e\)\}catch\{return`could not parse/.test(
+    /function [\w$]{1,8}\(e\)\{let t;try\{t=new URL\(e\)\}catch\{return(?:`could not parse|\{code:"unparseable",reason:`could not parse)/.test(
       f
     )
       ? 1
@@ -255,11 +256,12 @@ const ANCHOR_SIGNATURES: Record<number, (file: string) => number> = {
   // patch 27: disable_telemetry - G/I_/pto pristine 结构.
   // 2.1.202 local var reshuffle (n→r, pdn→ipr, I_→My, pto→kzn). 三个结构任一
   // pristine → applicable. 全参数化 local var LHS.
+  // 2.1.209+: eventQueue.push 抽成 helper `X(sink,...)`, 两种 shape 都识.
   27: f =>
-    /function [\w$]{1,4}\(e,t\)\{let [\w$]{1,4}=[\w$]{1,4};if\([\w$]{1,4}\.sink===null\)\{[\w$]{1,4}\.eventQueue\.push\(\{eventName:e,metadata:t,async:!1\}\)/.test(
+    /function [\w$]{1,4}\(e,t\)\{let [\w$]{1,4}=[\w$]{1,4};if\([\w$]{1,4}\.sink===null\)\{(?:[\w$]{1,4}\.eventQueue\.push|[\w$]{1,4}\([\w$]{1,4},)\{eventName:e,metadata:t,async:!1\}/.test(
       f
     ) ||
-    /async function [\w$]{1,4}\(e,t\)\{let [\w$]{1,4}=[\w$]{1,4};if\([\w$]{1,4}\.sink===null\)\{[\w$]{1,4}\.eventQueue\.push\(\{eventName:e,metadata:t,async:!0\}\)/.test(
+    /async function [\w$]{1,4}\(e,t\)\{let [\w$]{1,4}=[\w$]{1,4};if\([\w$]{1,4}\.sink===null\)\{(?:[\w$]{1,4}\.eventQueue\.push|[\w$]{1,4}\([\w$]{1,4},)\{eventName:e,metadata:t,async:!0\}/.test(
       f
     ) ||
     /function [\w$]{1,4}\(e\)\{if\(![\w$]{1,4}\(\)\)return;if\(![\w$]{1,4}\|\|[\w$]{1,4}\("firstParty"\)\)return;let [\w$]{1,4}=[\w$]{1,4}\(\),\{accountUuid:[\w$]{1,4},organizationUuid:[\w$]{1,4}\}=[\w$]{1,4}\(!0\),[\w$]{1,4}=\{event_type:"GrowthbookExperimentEvent"/.test(
@@ -287,9 +289,9 @@ const PATCHED_SIGNATURES: Record<number, (file: string) => number> = {
   // patch 18: /claude-...[.-]N/.test(...) 新形式
   18: f => (/\/claude-[a-z]+-4\[\.-\][15678]\/\.test\(/.test(f) ? 1 : 0),
 
-  // patch 22: b_c 中和 return null
+  // patch 22: b_c 中和 return null. 2.1.209 obj-return shape 更长, 放宽 pad 上限.
   22: f =>
-    /function [\w$]{1,8}\(e\)\{return null\/\*[\s\S]{0,400}?\*\/\}/.test(f)
+    /function [\w$]{1,8}\(e\)\{return null\/\*[\s\S]{0,800}?\*\/\}/.test(f)
       ? 1
       : 0,
 

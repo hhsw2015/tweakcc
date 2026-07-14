@@ -31,14 +31,24 @@ export const findChalkVar = (fileContents: string): string | undefined => {
 export const getModuleLoaderFunction = (
   fileContents: string
 ): string | undefined => {
-  // Native bundles: look for ,j=(H,$,A)=>{A=H!=null? pattern (module loader)
-  // This is distinct from other 3-param functions because of the H!=null check
-  const nativeLoaderPattern =
+  // Native bundles: look for ,j=(H,$,A)=>{A=H!=null? pattern (module loader).
+  // Discriminator: `H!=null` check on the first param. Body layout varies:
+  //   pre-2.1.209: `{A=H!=null?...}` (direct assignment to 3rd param)
+  //   2.1.209+:    `{var n=H!=null&&typeof H==="object";...H!=null?...}`
+  // Search the first ~3KB, and accept either shape.
+  const searchWindow = fileContents.slice(0, 3000);
+  const nativeLoaderPatternLegacy =
     /[,;]([$\w]+)=\([$\w]+,[$\w]+,[$\w]+\)=>\{[$\w]+=[$\w]+!=null\?/;
-  const nativeMatch = fileContents.slice(0, 2000).match(nativeLoaderPattern);
-  if (nativeMatch) {
-    return nativeMatch[1];
-  }
+  const legacyMatch = searchWindow.match(nativeLoaderPatternLegacy);
+  if (legacyMatch) return legacyMatch[1];
+
+  // 2.1.209+ shape — allow up to ~200 chars of body before hitting `!=null`.
+  // Second capture group ensures we anchor on the same first param name across
+  // the header and the null check.
+  const nativeLoaderPatternMemo =
+    /[,;]([$\w]+)=\(([$\w]+),[$\w]+,[$\w]+\)=>\{(?:(?!;)[^})]){0,200}\2!=null/;
+  const memoMatch = searchWindow.match(nativeLoaderPatternMemo);
+  if (memoMatch) return memoMatch[1];
 
   // NPM bundles: var T=(H,$,A)=>{ at the start
   // In newer versions there are more than one, and the one with the shortest name
@@ -68,9 +78,11 @@ export const getModuleLoaderFunction = (
 export const getReactModuleNameNonBun = (
   fileContents: string
 ): string | undefined => {
-  // Pattern: var X=Y((Z)=>{var W=Symbol.for("react.element") or "react.transitional.element"
+  // CC 2.1.209+: minifier emits `function(Z){...}` instead of `(Z)=>{...}`
+  //   var X=Y(function(Z){var W=Symbol.for("react.transitional.element")
+  // Pre-2.1.209 arrow form still supported.
   const pattern =
-    /var ([$\w]+)=[$\w]+\(\([$\w]+\)=>\{var [$\w]+=Symbol\.for\("react\.(transitional\.)?element"\)/;
+    /var ([$\w]+)=[$\w]+\((?:\([$\w]+\)=>|function\([$\w]+\))\{var [$\w]+=Symbol\.for\("react\.(transitional\.)?element"\)/;
   const match = fileContents.match(pattern);
   if (!match) {
     console.log(
@@ -109,8 +121,9 @@ export const getReactModuleFunctionBun = (
   }
 
   // Pattern: var X=Y((Z,W)=>{W.exports=reactModuleNameNonBun()
+  // 2.1.209+: also handle `function(Z,W){...}` shape.
   const pattern = new RegExp(
-    `var ([$\\w]+)=[$\\w]+\\(\\([$\\w]+,[$\\w]+\\)=>\\{[$\\w]+\\.exports=${escapeIdent(reactModuleNameNonBun)}\\(\\)`
+    `var ([$\\w]+)=[$\\w]+\\((?:\\([$\\w]+,[$\\w]+\\)=>|function\\([$\\w]+,[$\\w]+\\))\\{[$\\w]+\\.exports=${escapeIdent(reactModuleNameNonBun)}\\(\\)`
   );
   const match = fileContents.match(pattern);
   if (!match) {
