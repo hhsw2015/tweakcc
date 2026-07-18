@@ -21,13 +21,33 @@ export const writeDangerTableSkip = (file: string): string => {
 // 强制 v0() 直接 return true, 绕过 disableWorkflows/feature flag/settings 判定链
 // 原: function <fn>(){if(<fn>())return!1;if(!<fn>())return!1;let{available:X,defaultOn:Y}=<fn>();if(!X)return!1;return <fn>()??Y}
 // 新: function <fn>(){return!0/*<pad>*/}
+//
+// 2.1.212+ 上游把 v0() 拆成两个函数:
+//   KA()  — main entry (20+ callers), 逻辑同 legacy v0
+//   RNr() — secondary gate (3 callers, 简化 && 链)
+// 两个都要中和成 return!0 才能真正启用 workflows.
 export const writeForceV0True = (file: string): string | null => {
-  const pattern =
-    /function ([\w$]{1,8})\(\)\{if\([\w$]{1,8}\(\)\)return!1;if\(![\w$]{1,8}\(\)\)return!1;let\{available:[\w$]+,defaultOn:[\w$]+\}=[\w$]+\(\);if\(![\w$]+\)return!1;return [\w$]+\(\)\?\?[\w$]+\}/g;
-  return applyRegexReplace(file, {
-    pattern,
+  // Legacy tail: `return X()??Y}`. 2.1.212 tail: `return rL()?.settings.enableWorkflows??t}`.
+  // 用 [^}]{0,80} 兜底两种.
+  const patternLegacy =
+    /function ([\w$]{1,8})\(\)\{if\([\w$]{1,8}\(\)\)return!1;if\(![\w$]{1,8}\(\)\)return!1;let\{available:[\w$]+,defaultOn:[\w$]+\}=[\w$]+\(\);if\(![\w$]+\)return!1;return [^}]{1,80}\}/g;
+  const patternShortChain =
+    /function ([\w$]{1,8})\(\)\{return [\w$]{1,8}\(\)&&![\w$]{1,8}\(process\.env\.CLAUDE_CODE_DISABLE_WORKFLOWS\)&&[\w$]{1,8}\(\)\.available\}/g;
+
+  let out: string | null = file;
+  const legacyResult = applyRegexReplace(out ?? file, {
+    pattern: patternLegacy,
     build: m => ({ body: `function ${m[1]}(){return!0`, tail: '}' }),
   });
+  if (legacyResult !== null) out = legacyResult;
+
+  const shortResult = applyRegexReplace(out ?? file, {
+    pattern: patternShortChain,
+    build: m => ({ body: `function ${m[1]}(){return!0`, tail: '}' }),
+  });
+  if (shortResult !== null) out = shortResult;
+
+  return out === file ? null : out;
 };
 
 // ---------- patch #17: er() xhigh 不降级 ----------
@@ -159,7 +179,7 @@ export const writeUnlockDisableRc = (file: string): string | null => {
 // 内嵌 `!!` 而不是依赖某个 minified helper 名, 保证跨版本稳定.
 export const writeForce1hCache = (file: string): string | null => {
   const pattern =
-    /function ([\w$]{1,8})\(e\)\{if\([\w$]{1,4}\(process\.env\.FORCE_PROMPT_CACHING_5M\)\)return!1;if\([\w$]{1,4}\(process\.env\.ENABLE_PROMPT_CACHING_1H\)\|\|[\w$]{1,4}\(\)==="bedrock"&&[\w$]{1,4}\(process\.env\.ENABLE_PROMPT_CACHING_1H_BEDROCK\)\)return!0;if\(![\w$]{1,8}\(\)\|\|[\w$]{1,8}\.isUsingOverage\)return!1;let t=[\w$]{1,8}\(\);if\(t===null\)t=[\w$]{1,4}\("tengu_prompt_cache_1h_config",\{allowlist:\[[^\]]{1,300}\]\}\)\.allowlist\?\?\[\],[\w$]{1,8}\(t\);return e!==void 0&&t\.some\(\([\w$]{1,3}\)=>[\w$]{1,3}\.endsWith\("\*"\)\?e\.startsWith\([\w$]{1,3}\.slice\(0,-1\)\):e===[\w$]{1,3}\)\}/g;
+    /function ([\w$]{1,8})\(e\)\{if\([\w$]{1,4}\(process\.env\.FORCE_PROMPT_CACHING_5M\)\)return!1;if\([\w$]{1,4}\(process\.env\.ENABLE_PROMPT_CACHING_1H\)\|\|[\w$]{1,4}\(\)==="bedrock"&&[\w$]{1,4}\(process\.env\.ENABLE_PROMPT_CACHING_1H_BEDROCK\)\)return!0;if\(![\w$]{1,8}\(\)\|\|[\w$]{1,8}(?:\(\))?\.isUsingOverage\)return!1;let t=[\w$]{1,8}\(\);if\(t===null\)t=[\w$]{1,4}\("tengu_prompt_cache_1h_config",\{allowlist:\[[^\]]{1,300}\]\}\)\.allowlist\?\?\[\],[\w$]{1,8}\(t\);return e!==void 0&&t\.some\(\([\w$]{1,3}\)=>[\w$]{1,3}\.endsWith\("\*"\)\?e\.startsWith\([\w$]{1,3}\.slice\(0,-1\)\):e===[\w$]{1,3}\)\}/g;
   return applyRegexReplace(file, {
     pattern,
     build: m => ({
@@ -243,13 +263,14 @@ export const writeDisableTelemetry = (file: string): string | null => {
   });
   if (iResult === null) return null;
 
+  // pto (GrowthBook experiment event send) 2.1.212+ 上游整个 pto 函数已删,
+  // GrowthBook event 只在 exporter 内部 transformLogsToEvents 出现 — G/I_ 断掉
+  // 后没有代码路径调用它. pto 找不到时不当失败, 只是 no-op 视为可选.
   const ptoResult = applyRegexReplace(iResult, {
     pattern: ptoPattern,
     build: (m) => ({ body: `function ${m[1]}(){`, tail: '}' }),
   });
-  if (ptoResult === null) return null;
-
-  return ptoResult;
+  return ptoResult ?? iResult;
 };
 
 // ---------- OBSOLETE patch #19-21 (China fingerprint), 保留元数据 ----------

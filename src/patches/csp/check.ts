@@ -187,11 +187,15 @@ const ANCHOR_SIGNATURES: Record<number, (file: string) => number> = {
       ? 1
       : 0,
 
-  // patch 16: force_v0_true - 匹配 v0() 函数完整签名
+  // patch 16: force_v0_true - 匹配 v0() 函数完整签名.
+  // 2.1.212+ 上游重构: `function X(){return F()&&!G(env.CLAUDE_CODE_DISABLE_WORKFLOWS)&&H().available}`
   16: f =>
-    /function [\w$]{1,8}\(\)\{if\([\w$]{1,8}\(\)\)return!1;if\(![\w$]{1,8}\(\)\)return!1;let\{available:[\w$]+,defaultOn:[\w$]+\}/.test(
+    (/function [\w$]{1,8}\(\)\{if\([\w$]{1,8}\(\)\)return!1;if\(![\w$]{1,8}\(\)\)return!1;let\{available:[\w$]+,defaultOn:[\w$]+\}/.test(
       f
-    )
+    ) ||
+      /function [\w$]{1,8}\(\)\{return [\w$]{1,8}\(\)&&![\w$]{1,8}\(process\.env\.CLAUDE_CODE_DISABLE_WORKFLOWS\)&&[\w$]{1,8}\(\)\.available\}/.test(
+        f
+      ))
       ? 1
       : 0,
 
