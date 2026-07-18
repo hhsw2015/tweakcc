@@ -31,24 +31,14 @@ export const findChalkVar = (fileContents: string): string | undefined => {
 export const getModuleLoaderFunction = (
   fileContents: string
 ): string | undefined => {
-  // Native bundles: look for ,j=(H,$,A)=>{A=H!=null? pattern (module loader).
-  // Discriminator: `H!=null` check on the first param. Body layout varies:
-  //   pre-2.1.209: `{A=H!=null?...}` (direct assignment to 3rd param)
-  //   2.1.209+:    `{var n=H!=null&&typeof H==="object";...H!=null?...}`
-  // Search the first ~3KB, and accept either shape.
-  const searchWindow = fileContents.slice(0, 3000);
-  const nativeLoaderPatternLegacy =
+  // Native bundles: look for ,j=(H,$,A)=>{A=H!=null? pattern (module loader)
+  // This is distinct from other 3-param functions because of the H!=null check
+  const nativeLoaderPattern =
     /[,;]([$\w]+)=\([$\w]+,[$\w]+,[$\w]+\)=>\{[$\w]+=[$\w]+!=null\?/;
-  const legacyMatch = searchWindow.match(nativeLoaderPatternLegacy);
-  if (legacyMatch) return legacyMatch[1];
-
-  // 2.1.209+ shape — allow up to ~200 chars of body before hitting `!=null`.
-  // Second capture group ensures we anchor on the same first param name across
-  // the header and the null check.
-  const nativeLoaderPatternMemo =
-    /[,;]([$\w]+)=\(([$\w]+),[$\w]+,[$\w]+\)=>\{(?:(?!;)[^})]){0,200}\2!=null/;
-  const memoMatch = searchWindow.match(nativeLoaderPatternMemo);
-  if (memoMatch) return memoMatch[1];
+  const nativeMatch = fileContents.slice(0, 2000).match(nativeLoaderPattern);
+  if (nativeMatch) {
+    return nativeMatch[1];
+  }
 
   // NPM bundles: var T=(H,$,A)=>{ at the start
   // In newer versions there are more than one, and the one with the shortest name
@@ -78,9 +68,9 @@ export const getModuleLoaderFunction = (
 export const getReactModuleNameNonBun = (
   fileContents: string
 ): string | undefined => {
-  // CC 2.1.209+: minifier emits `function(Z){...}` instead of `(Z)=>{...}`
-  //   var X=Y(function(Z){var W=Symbol.for("react.transitional.element")
-  // Pre-2.1.209 arrow form still supported.
+  // Pattern: var X=Y((Z)=>{var W=Symbol.for("react.element") or "react.transitional.element"
+  // CC 2.1.210 switched the module wrapper from an arrow `(Z)=>{` to a function
+  // expression `function(Z){` — accept both.
   const pattern =
     /var ([$\w]+)=[$\w]+\((?:\([$\w]+\)=>|function\([$\w]+\))\{var [$\w]+=Symbol\.for\("react\.(transitional\.)?element"\)/;
   const match = fileContents.match(pattern);
@@ -121,7 +111,7 @@ export const getReactModuleFunctionBun = (
   }
 
   // Pattern: var X=Y((Z,W)=>{W.exports=reactModuleNameNonBun()
-  // 2.1.209+: also handle `function(Z,W){...}` shape.
+  // CC 2.1.210 uses a function expression `function(Z,W){` here too — accept both.
   const pattern = new RegExp(
     `var ([$\\w]+)=[$\\w]+\\((?:\\([$\\w]+,[$\\w]+\\)=>|function\\([$\\w]+,[$\\w]+\\))\\{[$\\w]+\\.exports=${escapeIdent(reactModuleNameNonBun)}\\(\\)`
   );
@@ -306,25 +296,26 @@ export const clearCaches = (): void => {
  */
 export const findTextComponent = (fileContents: string): string | undefined => {
   // Method 1 (CC 2.1.204+): the Ink Text component is now React-Compiler
-  // memoized. color/backgroundColor/dimColor/bold props are destructured
+  // memoized, so the color/backgroundColor/dimColor/bold props are destructured
   // out of the body AFTER a memo-cache guard rather than in the params:
   //   function h(P){let $=X.c(31),...;if($[0]!==P)({color:A,backgroundColor:B,
   //   dimColor:C,bold:D,...}=P)...}
-  const memoCachePattern =
-    /\bfunction ([$\w]+)\([$\w]+\)\{let [$\w]+=[$\w.]+\(\d+\)(?:,[$\w]+){0,20};if\([$\w]+\[0\]!==[$\w]+\)\(\{color:[$\w]+,backgroundColor:[$\w]+,dimColor:[$\w]+,bold:[$\w]+/;
-  const memoMatch = fileContents.match(memoCachePattern);
+  const memoizedTextPattern =
+    /function ([$\w]+)\([$\w]+\)\{let [$\w]+=[$\w]+\.c\(\d+\)[^;]{0,240};if\([$\w]+\[0\]!==[$\w]+\)\(\{color:[$\w]+,backgroundColor:[$\w]+,dimColor:[$\w]+,bold:[$\w]+/;
+  const memoMatch = fileContents.match(memoizedTextPattern);
   if (memoMatch) return memoMatch[1];
 
   // Method 2 (CC <= 2.1.202): the minified Text component destructures its props
   // directly in the signature:
   //   function X({color:A,backgroundColor:B,dimColor:C=!1,bold:D=!1,...})
-  const legacyPattern =
+  const textComponentPattern =
     /\bfunction ([$\w]+).{0,80}color:[$\w]+,backgroundColor:[$\w]+,dimColor:[$\w]+(?:=![01])?,bold:[$\w]+(?:=![01])?/;
-  const legacyMatch = fileContents.match(legacyPattern);
-  if (legacyMatch) return legacyMatch[1];
-
-  console.log('patch: findTextComponent: failed to find text component');
-  return undefined;
+  const match = fileContents.match(textComponentPattern);
+  if (!match) {
+    console.log('patch: findTextComponent: failed to find text component');
+    return undefined;
+  }
+  return match[1];
 };
 
 /**

@@ -91,16 +91,14 @@ export const writeAutoModeClassifierModel = (
   const pattern201 =
     /function\s+([$\w]+)\s*\(\s*\)\s*\{\s*let\s+([$\w]+)\s*=\s*[$\w]+\s*\(\s*\)\s*,\s*([$\w]+)\s*=\s*[$\w]+\s*\(\s*"tengu_auto_mode_config"\s*,\s*\{\s*\}\s*\)\s*,\s*([$\w]+)\s*=\s*[$\w]+\s*\(\s*\3\s*\?\.\s*modelByMainModel\s*\)\s*;\s*if\s*\(\s*\4\s*\)\s*return\s*\{\s*value\s*:\s*\4\s*,\s*src\s*:\s*"gb"\s*\}\s*;\s*if\s*\(\s*\3\s*\?\.\s*model\s*\)\s*return\s*\{\s*value\s*:\s*\3\s*\.\s*model\s*,\s*src\s*:\s*"gb"\s*\}\s*;\s*if\s*\(\s*[$\w]+\s*\(\s*\2\s*\)\s*\|\|\s*[$\w]+\s*\(\s*\2\s*\)\s*\)\s*return\s*\{\s*value\s*:\s*[$\w]+\s*\(\s*\2\s*\)\s*,\s*src\s*:\s*"default"\s*\}\s*;\s*return\s*\{\s*value\s*:\s*\2\s*,\s*src\s*:\s*"default"\s*\}\s*\}/;
 
-  // CC 2.1.210 shape: 2.1.201 前缀不变, 但 Fable/Mythos 分支替换为
-  // "demoted"-guarded external-default lookup, 尾部包 `Nds(e)` 而非裸 `e`:
-  //   function NAME(){let H=MAIN(),_=R("tengu_auto_mode_config",{}),q=HELPER(_?.modelByMainModel);
-  //     if(q)return{value:q,src:"gb"};
-  //     if(_?.model)return{value:_.model,src:"gb"};
-  //     if(FLAG!=="demoted"){let n=EXTERNAL(H);if(n)return{value:n,src:"default",externalDefault:!0}}
-  //     return{value:DEFAULT_RESOLVE(H),src:"default"}
-  //   }
+  // CC 2.1.210 shape: same helper-extracted linear chain as 2.1.201, but the
+  // inline Fable/Mythos branch (`if(ISFABLE(H)||ISMYTHOS(H))return{value:RESOLVE(H)…}`)
+  // was replaced by a demotion gate plus an external-default lookup, and the
+  // Fable/Mythos resolver moved into the final fallback's value:
+  //   function NAME(){let H=MAIN(),_=R("tengu_auto_mode_config",{}),q=HELPER(_?.modelByMainModel);if(q)return{value:q,src:"gb"};if(_?.model)return{value:_.model,src:"gb"};if(STATE!=="demoted"){let K=EXT(H);if(K)return{value:K,src:"default",externalDefault:!0}}return{value:RESOLVE(H),src:"default"}}
   const pattern210 =
     /function\s+([$\w]+)\s*\(\s*\)\s*\{\s*let\s+([$\w]+)\s*=\s*[$\w]+\s*\(\s*\)\s*,\s*([$\w]+)\s*=\s*[$\w]+\s*\(\s*"tengu_auto_mode_config"\s*,\s*\{\s*\}\s*\)\s*,\s*([$\w]+)\s*=\s*[$\w]+\s*\(\s*\3\s*\?\.\s*modelByMainModel\s*\)\s*;\s*if\s*\(\s*\4\s*\)\s*return\s*\{\s*value\s*:\s*\4\s*,\s*src\s*:\s*"gb"\s*\}\s*;\s*if\s*\(\s*\3\s*\?\.\s*model\s*\)\s*return\s*\{\s*value\s*:\s*\3\s*\.\s*model\s*,\s*src\s*:\s*"gb"\s*\}\s*;\s*if\s*\(\s*[$\w]+\s*!==\s*"demoted"\s*\)\s*\{\s*let\s+([$\w]+)\s*=\s*[$\w]+\s*\(\s*\2\s*\)\s*;\s*if\s*\(\s*\5\s*\)\s*return\s*\{\s*value\s*:\s*\5\s*,\s*src\s*:\s*"default"\s*,\s*externalDefault\s*:\s*!0\s*\}\s*\}\s*return\s*\{\s*value\s*:\s*[$\w]+\s*\(\s*\2\s*\)\s*,\s*src\s*:\s*"default"\s*\}\s*\}/;
+
   const match210 = oldFile.match(pattern210);
   if (match210 && match210.index !== undefined) {
     const [fullMatch, fnName] = match210;
