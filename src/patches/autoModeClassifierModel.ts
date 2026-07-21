@@ -91,6 +91,35 @@ export const writeAutoModeClassifierModel = (
   const pattern201 =
     /function\s+([$\w]+)\s*\(\s*\)\s*\{\s*let\s+([$\w]+)\s*=\s*[$\w]+\s*\(\s*\)\s*,\s*([$\w]+)\s*=\s*[$\w]+\s*\(\s*"tengu_auto_mode_config"\s*,\s*\{\s*\}\s*\)\s*,\s*([$\w]+)\s*=\s*[$\w]+\s*\(\s*\3\s*\?\.\s*modelByMainModel\s*\)\s*;\s*if\s*\(\s*\4\s*\)\s*return\s*\{\s*value\s*:\s*\4\s*,\s*src\s*:\s*"gb"\s*\}\s*;\s*if\s*\(\s*\3\s*\?\.\s*model\s*\)\s*return\s*\{\s*value\s*:\s*\3\s*\.\s*model\s*,\s*src\s*:\s*"gb"\s*\}\s*;\s*if\s*\(\s*[$\w]+\s*\(\s*\2\s*\)\s*\|\|\s*[$\w]+\s*\(\s*\2\s*\)\s*\)\s*return\s*\{\s*value\s*:\s*[$\w]+\s*\(\s*\2\s*\)\s*,\s*src\s*:\s*"default"\s*\}\s*;\s*return\s*\{\s*value\s*:\s*\2\s*,\s*src\s*:\s*"default"\s*\}\s*\}/;
 
+  // CC 2.1.216 shape: modelByMainModel + model 检查被合并成一行 (加了 validator
+  // 参数, 用 ?? 短路), 原来的两个 if(...)return{value:...} 分支消失:
+  //   function NAME(){let H=MAIN(),_=R("tengu_auto_mode_config",{}),
+  //     q=VALIDATE_MAP(_?.modelByMainModel,{vet:(n)=>VALIDATE(n,"modelByMainModel")})
+  //       ??VALIDATE(_?.model,"model");
+  //     if(q)return{value:q,src:"gb"};
+  //     if(STATE!=="demoted"){let K=EXT(H);if(K)return{value:K,src:"default",externalDefault:!0}}
+  //     return{value:RESOLVE(H),src:"default"}
+  //   }
+  const pattern216 =
+    /function\s+([$\w]+)\s*\(\s*\)\s*\{\s*let\s+([$\w]+)\s*=\s*[$\w]+\s*\(\s*\)\s*,\s*([$\w]+)\s*=\s*[$\w]+\s*\(\s*"tengu_auto_mode_config"\s*,\s*\{\s*\}\s*\)\s*,\s*([$\w]+)\s*=\s*[$\w]+\s*\(\s*\3\s*\?\.\s*modelByMainModel\s*,\s*\{[^}]{0,200}\}\s*\)\s*\?\?\s*[$\w]+\s*\(\s*\3\s*\?\.\s*model\s*,\s*"model"\s*\)\s*;\s*if\s*\(\s*\4\s*\)\s*return\s*\{\s*value\s*:\s*\4\s*,\s*src\s*:\s*"gb"\s*\}\s*;\s*if\s*\(\s*[$\w]+\s*!==\s*"demoted"\s*\)\s*\{\s*let\s+([$\w]+)\s*=\s*[$\w]+\s*\(\s*\2\s*\)\s*;\s*if\s*\(\s*\5\s*\)\s*return\s*\{\s*value\s*:\s*\5\s*,\s*src\s*:\s*"default"\s*,\s*externalDefault\s*:\s*!0\s*\}\s*\}\s*return\s*\{\s*value\s*:\s*[$\w]+\s*\(\s*\2\s*\)\s*,\s*src\s*:\s*"default"\s*\}\s*\}/;
+  const match216 = oldFile.match(pattern216);
+  if (match216 && match216.index !== undefined) {
+    const [fullMatch, fnName] = match216;
+    const replacement = `function ${fnName}(){return{value:"${modelId}",src:"default"}}`;
+    const newFile =
+      oldFile.slice(0, match216.index) +
+      replacement +
+      oldFile.slice(match216.index + fullMatch.length);
+    showDiff(
+      oldFile,
+      newFile,
+      replacement,
+      match216.index,
+      match216.index + fullMatch.length
+    );
+    return newFile;
+  }
+
   // CC 2.1.210 shape: same helper-extracted linear chain as 2.1.201, but the
   // inline Fable/Mythos branch (`if(ISFABLE(H)||ISMYTHOS(H))return{value:RESOLVE(H)…}`)
   // was replaced by a demotion gate plus an external-default lookup, and the
