@@ -4,7 +4,8 @@ import * as path from 'node:path';
 import {
   CLIJS_BACKUP_FILE,
   CONFIG_DIR,
-  NATIVE_BINARY_BACKUP_FILE,
+  LEGACY_NATIVE_BINARY_BACKUP_FILE,
+  getVersionedPristinePath,
 } from './config';
 import { extractClaudeJsFromNativeInstallation } from './nativeInstallationLoader';
 import { ClaudeCodeInstallationInfo } from './types';
@@ -98,18 +99,25 @@ export const resolvePristineBundle = async (
 
   const tried: string[] = [];
   if (ccInstInfo.nativeInstallationPath) {
+    const versionedPristine = getVersionedPristinePath(
+      ccInstInfo.nativeInstallationPath
+    );
     const candidates: Array<[string, () => Promise<PristineBundle | null>]> = [
       [
         NATIVE_ORIG_JS,
         () => readIfPristine(NATIVE_ORIG_JS, version, NATIVE_ORIG_JS),
       ],
       [
-        NATIVE_BINARY_BACKUP_FILE,
+        versionedPristine,
+        () => extractIfPristine(versionedPristine, version, versionedPristine),
+      ],
+      [
+        LEGACY_NATIVE_BINARY_BACKUP_FILE,
         () =>
           extractIfPristine(
-            NATIVE_BINARY_BACKUP_FILE,
+            LEGACY_NATIVE_BINARY_BACKUP_FILE,
             version,
-            NATIVE_BINARY_BACKUP_FILE
+            LEGACY_NATIVE_BINARY_BACKUP_FILE
           ),
       ],
       [
