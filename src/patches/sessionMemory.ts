@@ -30,27 +30,16 @@
 //  }
 // ```
 
-import { debug } from '../utils';
 import { showDiff, globalReplace } from './index';
+
+const LEGACY_EXTRACTION_GATE =
+  /function [$\w]+\(\)\{return [$\w]+\("tengu_session_memory"/;
 
 /**
  * Patch 1: Bypass tengu_session_memory flag check for extraction
- *
- * CC ≥ 2.1.128 promoted session memory past this gate — the flag
- * literal "tengu_session_memory" no longer appears in cli.js. When that
- * happens, treat the patch as a no-op (extraction is already always-on).
- * Only fail loud when the flag exists but the surrounding shape is new.
  */
 const patchExtraction = (file: string): string | null => {
-  if (!file.includes('"tengu_session_memory"')) {
-    debug(
-      'patch: sessionMemory: extraction gate already removed in this CC build — no-op'
-    );
-    return file;
-  }
-
-  const pattern = /function [$\w]+\(\)\{return [$\w]+\("tengu_session_memory"/;
-  const match = file.match(pattern);
+  const match = file.match(LEGACY_EXTRACTION_GATE);
 
   if (match && match.index !== undefined) {
     const insertIndex = match.index + match[0].indexOf('{') + 1;
@@ -96,17 +85,6 @@ const patchExtraction = (file: string): string | null => {
  *   if(fn("tengu_coral_fern",!1)){...}
  */
 const patchPastSessions = (file: string): string | null => {
-  // CC ≥ 2.1.148 removed past-session search entirely — the
-  // "tengu_coral_fern" flag literal no longer appears in cli.js. Treat
-  // the patch as a no-op; fail loud only when the flag still exists but
-  // the surrounding shape is new.
-  if (!file.includes('"tengu_coral_fern"')) {
-    debug(
-      'patch: sessionMemory: past-sessions gate already removed in this CC build — no-op'
-    );
-    return file;
-  }
-
   // Try new pattern first (CC ≥2.1.38): positive conditional block
   const newPattern = /if\([$\w]+\("tengu_coral_fern",!1\)\)\{/;
   const newMatch = file.match(newPattern);
@@ -163,22 +141,11 @@ const patchPastSessions = (file: string): string | null => {
 
 /**
  * Patch 3: Make per-section and total file token limits configurable via env vars
- *
- * Anchored on the "# Session Title" marker that used to appear next to
- * the constants. CC ≥ 2.1.128 refactored the session memory format and
- * the marker is gone — when that happens, skip the configurability tweak.
  */
 const patchTokenLimits = (
   file: string,
   logFailure: boolean = true
 ): string | null => {
-  if (!file.includes('# Session Title')) {
-    debug(
-      'patch: sessionMemory: token-limit anchor removed in this CC build — no-op'
-    );
-    return file;
-  }
-
   // Pattern matches: =2000 ... =12000 ... # Session Title
   const pattern =
     /(=)2000((?:.|\n){0,15}?=)12000((?:.|\n){0,20}# Session Title)/;
@@ -210,27 +177,11 @@ const patchTokenLimits = (
 
 /**
  * Patch 4: Make session memory update thresholds configurable via env vars
- *
- * The threshold property names disappeared in CC ≥ 2.1.128 (likely
- * renamed or moved to a different config object). Skip as no-op when
- * none of the property names appear; fail only when one matches but
- * the regex doesn't catch it.
  */
 const patchUpdateThresholds = (
   file: string,
   logFailure: boolean = true
 ): string | null => {
-  const anyPropPresent =
-    file.includes('minimumMessageTokensToInit') ||
-    file.includes('minimumTokensBetweenUpdate') ||
-    file.includes('toolCallsBetweenUpdates');
-  if (!anyPropPresent) {
-    debug(
-      'patch: sessionMemory: update threshold props removed in this CC build — no-op'
-    );
-    return file;
-  }
-
   let newFile = file;
 
   // Replace minimumMessageTokensToInit
@@ -274,7 +225,7 @@ export const writeSessionMemory = (oldFile: string): string | null => {
   let newFile = patchExtraction(oldFile);
   if (!newFile) return null;
 
-  const usedLegacyExtraction = newFile.includes('tengu_session_memory');
+  const usedLegacyExtraction = LEGACY_EXTRACTION_GATE.test(oldFile);
 
   const withPastSessions = patchPastSessions(newFile);
   if (!withPastSessions) {
