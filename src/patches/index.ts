@@ -31,6 +31,10 @@ import {
   repackNativeInstallation,
 } from '../nativeInstallationLoader';
 import { DEFAULT_SETTINGS } from '../defaultSettings';
+import {
+  assertPatchedBundleParses,
+  PatchedBundleParseError,
+} from './parseGate';
 
 // Notes to patch-writers:
 //
@@ -1604,6 +1608,22 @@ export const applyCustomization = async (
     );
     error.stack = error.message;
     throw error;
+  }
+
+  // ==========================================================================
+  // Verify the patched bundle parses before writing it
+  // ==========================================================================
+  try {
+    assertPatchedBundleParses(content);
+  } catch (err) {
+    if (!(err instanceof PatchedBundleParseError)) {
+      throw err;
+    }
+    debug(`Patched bundle failed to parse: ${String(err)}`);
+    await updateConfigFile(cfg => {
+      cfg.changesApplied = false;
+    });
+    throw err;
   }
 
   // ==========================================================================
