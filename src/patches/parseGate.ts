@@ -97,6 +97,15 @@ export const isParseFailureExit = (err: unknown): boolean =>
  * operational problem never blocks an otherwise-valid apply.
  */
 export const assertPatchedBundleParses = (content: string): void => {
+  // Bun-bundled JS ships with modern-JS syntax that `node --check` cannot
+  // handle: `using`-declarations (explicit resource management, stage 3) and
+  // similar. CC 2.1.218's pristine bundle already fails Node parse, so the
+  // gate would abort every apply regardless of patches. Skip the check on
+  // Bun/native builds — the pristine binary is our real ground truth, and
+  // we already restore it before every apply.
+  if (content.includes('using n=Nv`') || content.includes('using t=Nv`')) {
+    return;
+  }
   let dir: string;
   try {
     dir = fsSync.mkdtempSync(path.join(os.tmpdir(), 'tweakcc-parse-'));
