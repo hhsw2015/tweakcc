@@ -153,6 +153,72 @@ export const CSP_PATCH_META = [
     layer: '代码' as const,
     obsolete: false,
   },
+  {
+    id: 28,
+    name: 'USER_TYPE → ant (解锁隐藏命令)',
+    layer: '代码' as const,
+    obsolete: false,
+  },
+  {
+    id: 29,
+    name: 'Bun.isStandaloneExecutable → true',
+    layer: '代码' as const,
+    obsolete: false,
+  },
+  {
+    id: 30,
+    name: 'Agent Teams 常开',
+    layer: '代码' as const,
+    obsolete: false,
+  },
+  {
+    id: 31,
+    name: 'Ultraplan enable',
+    layer: '代码' as const,
+    obsolete: false,
+  },
+  {
+    id: 32,
+    name: 'Voice Mode enable',
+    layer: '代码' as const,
+    obsolete: true, // 2.1.218+ 上游删了 tengu_amber_quartz_disabled
+  },
+  {
+    id: 33,
+    name: 'Computer Use 免订阅',
+    layer: '代码' as const,
+    obsolete: false,
+  },
+  {
+    id: 34,
+    name: 'Computer Use 默认启用',
+    layer: '代码' as const,
+    obsolete: false,
+  },
+  {
+    id: 35,
+    name: 'Ultrareview enable',
+    layer: '代码' as const,
+    obsolete: false,
+  },
+  {
+    id: 36,
+    name: 'Auto-mode 3rd party helper gate',
+    layer: '代码' as const,
+    obsolete: false,
+  },
+  {
+    id: 37,
+    name: 'Auto-mode 3rd party inline gate',
+    layer: '代码' as const,
+    obsolete: false,
+  },
+  {
+    id: 38,
+    name: '恢复 Glob/Grep 工具',
+    layer: '代码' as const,
+    obsolete: false,
+  },
 ];
 
 /**
@@ -273,6 +339,87 @@ const ANCHOR_SIGNATURES: Record<number, (file: string) => number> = {
     )
       ? 1
       : 0,
+
+  // patch 28: userType ant — pristine `function X(){return"external"}`.
+  28: f => (/function [\w$]{1,8}\(\)\{return"external"\}/.test(f) ? 1 : 0),
+
+  // patch 29: Bun.isStandaloneExecutable — pristine `return Bun.isStandaloneExecutable===!0`.
+  29: f =>
+    /function [\w$]{1,8}\(\)\{return Bun\.isStandaloneExecutable===!0\}/.test(f)
+      ? 1
+      : 0,
+
+  // patch 30: Agent Teams — pristine gate check on env + tengu_amber_flint.
+  // 2.1.218+ shape: env 直接对象访问 `ENV.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`.
+  30: f =>
+    /function [\w$]{1,8}\(\)\{if\(![\w$]{1,4}\.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS&&![\w$]{1,4}\(\)\)return!1;if\(![\w$]{1,4}\("tengu_amber_flint",!0\)\)return!1;return!0\}/.test(
+      f
+    )
+      ? 1
+      : 0,
+
+  // patch 31: Ultraplan — pristine command def with `isEnabled:()=>!1` or `isEnabled:()=>fn()`.
+  31: f =>
+    /name:"ultraplan",[\s\S]{1,500}?argumentHint:"<prompt>",isEnabled:\(\)=>(?:!1|[\w$]{1,4}\(\))/.test(
+      f
+    )
+      ? 1
+      : 0,
+
+  // patch 32: Voice Mode — pristine anchor on tengu_amber_quartz_disabled.
+  // 2.1.218+ 上游删了 flag, anchor 消失, obsolete 元数据会兜底判定.
+  32: f =>
+    /function [\w$]{1,8}\(\)\{return![\w$]{1,4}\("tengu_amber_quartz_disabled",!1\)\}/.test(
+      f
+    )
+      ? 1
+      : 0,
+
+  // patch 33: Computer Use subscription — pristine plan="max"||"pro" gate
+  33: f =>
+    /function [\w$]{1,8}\(\)\{let [\w$]{1,4}=[\w$]{1,4}\(\);return [\w$]{1,4}==="max"\|\|[\w$]{1,4}==="pro"\}/.test(
+      f
+    )
+      ? 1
+      : 0,
+
+  // patch 34: Computer Use default — pristine {enabled:!1,pixelValidation
+  34: f => (f.includes('{enabled:!1,pixelValidation') ? 1 : 0),
+
+  // patch 35: Ultrareview — pristine `return X()?.enabled===!0&&Y()&&!Z()`
+  35: f =>
+    /function [\w$]{1,8}\(\)\{return [\w$]{1,4}\(\)\?\.enabled===!0&&[\w$]{1,4}\(\)&&![\w$]{1,4}\(\)\}/.test(
+      f
+    )
+      ? 1
+      : 0,
+
+  // patch 36: Auto-mode helper gate — pristine `if(!fn(x))return!1;` before firstParty check
+  36: f =>
+    /if\(![\w$]{1,4}\([\w$]{1,4}\)\)return!1;(?=(?:(?!function\s).){0,300}!=="firstParty")/.test(
+      f
+    )
+      ? 1
+      : 0,
+
+  // patch 37: Auto-mode inline gate — pristine `if(x!=="firstParty"&&...) return!1`
+  37: f =>
+    /if\([\w$]{1,4}!=="firstParty"&&(?:[\w$]{1,4}!=="anthropicAws"|![\w$]{1,4}\([\w$]{1,4}\))[^;]*\)return!1;/.test(
+      f
+    )
+      ? 1
+      : 0,
+
+  // patch 38: Glob/Grep — pristine bC/YH function
+  38: f =>
+    /function [\w$]{1,8}\(\)\{if\(![\w$]{1,4}\("true"\)\)return!1;if\([\w$]{1,4}\(\)\)return!1;return [\w$]{1,4}\.CLAUDE_CODE_ENTRYPOINT!=="local-agent"\}/.test(
+      f
+    ) ||
+    /function [\w$]{1,8}\(\)\{if\(![\w$]{1,4}\("true"\)\)return!1;if\([\w$]{1,4}\(\)\)return!1;return process\.env\.CLAUDE_CODE_ENTRYPOINT!=="local-agent"\}/.test(
+      f
+    )
+      ? 1
+      : 0,
 };
 
 /**
@@ -339,6 +486,50 @@ const PATCHED_SIGNATURES: Record<number, (file: string) => number> = {
   27: f =>
     /async function [\w$]{1,4}\(\)\{\/\*[\s\S]{0,200}?\*\/\}/.test(f) ||
     /function [\w$]{1,4}\(\)\{\/\*[\s\S]{0,700}?\*\/\}/.test(f)
+      ? 1
+      : 0,
+
+  // patch 28: userType 中和 → return"ant"/* pad */
+  28: f =>
+    /function [\w$]{1,8}\(\)\{return"ant"\/\*[\s\S]{0,20}?\*\/\}/.test(f)
+      ? 1
+      : 0,
+
+  // patch 29: bun standalone 中和 → return!0/* pad */
+  29: f =>
+    /function [\w$]{1,8}\(\)\{return!0\/\*[\s\S]{0,80}?\*\/\}/.test(f) ? 1 : 0,
+
+  // patch 30: Agent Teams 中和 → return!0/* pad */
+  30: f =>
+    /function [\w$]{1,8}\(\)\{return!0\/\*[\s\S]{0,200}?\*\/\}/.test(f) ? 1 : 0,
+
+  // patch 31: Ultraplan patched → `isEnabled:()=>!0` (在 name:"ultraplan" 附近)
+  31: f =>
+    /name:"ultraplan",[\s\S]{1,500}?argumentHint:"<prompt>",isEnabled:\(\)=>!0/.test(
+      f
+    )
+      ? 1
+      : 0,
+
+  // patch 32: Voice Mode 中和 → return!0/* pad */
+  32: f =>
+    /function [\w$]{1,8}\(\)\{return!0\/\*[\s\S]{0,60}?\*\/\}/.test(f) ? 1 : 0,
+
+  // patch 33-37: 全走 `function X(){return!0/* pad */}` 或整段删除 —
+  // 精确 signature 会跟其他 return!0 patch 撞车. 用弱判定: pristine 已消失 = patched.
+  // 因为 anchor pattern 用于 hits, patched pattern 只要 anchor 不再匹配就算 applied.
+  // 这里返回 1 (总视为 patched) 让状态由 anchor hits 决定 (hits=0 → already_applied,
+  // hits>0 → applicable).
+  33: () => 1,
+  34: () => 1,
+  35: () => 1,
+  36: () => 1,
+  37: () => 1,
+
+  // patch 38: Glob/Grep 中和后不再匹配 pristine, 只留 patched 特征 `EMBEDDED_SEARCH_TOOLS`
+  // 从 env 读 (原本是 "true" 字面量)
+  38: f =>
+    f.includes('process.env.EMBEDDED_SEARCH_TOOLS')
       ? 1
       : 0,
 };

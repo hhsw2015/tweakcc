@@ -277,6 +277,194 @@ export const writeDisableTelemetry = (file: string): string | null => {
 // 上游 2.1.198+ 已自行移除相关代码, 无需应用
 
 // ---------- 汇总 apply-all 入口 ----------
+// ---------- patch #28: userType_ant (from clawgod) ----------
+// 把 external user 标记翻成 Anthropic internal, 解锁隐藏 slash commands
+// (/share, /teleport, /issue, /bughunter, /admin 等 24+ 条).
+// 原: function X(){return"external"}
+// 新: function X(){return"ant"}
+export const writeUserTypeAnt = (file: string): string | null => {
+  const pattern = /function ([\w$]{1,8})\(\)\{return"external"\}/g;
+  return applyRegexReplace(file, {
+    pattern,
+    build: m => ({ body: `function ${m[1]}(){return"ant"`, tail: '}' }),
+  });
+};
+
+// ---------- patch #29: bun_standalone_true (from clawgod) ----------
+// Bun.isStandaloneExecutable 在 tweakcc 场景本身就是 true (咱 patch native
+// binary), 但为将来支持 plain-Bun 运行 patched cli.js 场景兜底: 让 fn 恒返 true.
+// 原: function X(){return Bun.isStandaloneExecutable===!0}
+// 新: function X(){return!0}
+export const writeBunStandaloneTrue = (file: string): string | null => {
+  const pattern =
+    /function ([\w$]{1,8})\(\)\{return Bun\.isStandaloneExecutable===!0\}/g;
+  return applyRegexReplace(file, {
+    pattern,
+    build: m => ({ body: `function ${m[1]}(){return!0`, tail: '}' }),
+  });
+};
+
+// ---------- patch #30: agent_teams_always_on (from clawgod) ----------
+// 强开 Agent Teams (multi-agent swarm), 绕 env + GrowthBook 双 gate.
+// 2.1.218+ shape (env 从 `it(process.env.X)` helper 变成 `Z.X` 直接访问):
+//   function X(){if(!ENV.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS&&!Y())return!1;
+//     if(!R("tengu_amber_flint",!0))return!1;return!0}
+export const writeAgentTeamsAlwaysOn = (file: string): string | null => {
+  const pattern =
+    /function ([\w$]{1,8})\(\)\{if\(![\w$]{1,4}\.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS&&![\w$]{1,4}\(\)\)return!1;if\(![\w$]{1,4}\("tengu_amber_flint",!0\)\)return!1;return!0\}/g;
+  return applyRegexReplace(file, {
+    pattern,
+    build: m => ({ body: `function ${m[1]}(){return!0`, tail: '}' }),
+  });
+};
+
+// ---------- patch #31: ultraplan_enable (from clawgod) ----------
+// Ultraplan (multi-agent planning via Claude Code Remote) 默认 gate off. 强开.
+// Shape: 命令定义里 `isEnabled:()=>!1` 或 `isEnabled:()=>helper()` 都改成 `isEnabled:()=>!0`.
+// anchor 用 `name:"ultraplan"` + `argumentHint:"<prompt>"` 双向锚定.
+export const writeUltraplanEnable = (file: string): string | null => {
+  const pattern =
+    /(name:"ultraplan",[\s\S]{1,500}?argumentHint:"<prompt>",isEnabled:\(\)=>)(?:!1|[\w$]{1,4}\(\))/g;
+  // 特殊: 长度可能不同 (原 `!1` 2字符, 或 `X()` 3+字符, 新 `!0` 2字符).
+  // 用 applyRegexReplace 需要等长, 手工做.
+  const matches = [...file.matchAll(pattern)];
+  if (matches.length === 0) return null;
+  let out = file;
+  let offset = 0;
+  for (const m of matches) {
+    if (m.index === undefined) continue;
+    const orig = m[0];
+    const prefix = m[1];
+    const newStr = `${prefix}!0`;
+    const start = m.index + offset;
+    const end = start + orig.length;
+    if (orig === newStr) continue; // idempotent
+    out = out.slice(0, start) + newStr + out.slice(end);
+    offset += newStr.length - orig.length;
+  }
+  return out === file ? null : out;
+};
+
+// ---------- patch #33: computer_use_subscription_bypass (from clawgod) ----------
+// 原: function X(){let plan=fn();return plan==="max"||plan==="pro"}
+// 新: 恒返 true (免 Max/Pro subscription)
+export const writeComputerUseSubscription = (file: string): string | null => {
+  const pattern =
+    /function ([\w$]{1,8})\(\)\{let [\w$]{1,4}=[\w$]{1,4}\(\);return [\w$]{1,4}==="max"\|\|[\w$]{1,4}==="pro"\}/g;
+  return applyRegexReplace(file, {
+    pattern,
+    build: m => ({ body: `function ${m[1]}(){return!0`, tail: '}' }),
+  });
+};
+
+// ---------- patch #34: computer_use_default_enabled (from clawgod) ----------
+// {enabled:!1,pixelValidation:...} → {enabled:!0,pixelValidation:...}.
+// 单值替换, 手工 (非等长).
+export const writeComputerUseDefaultEnabled = (
+  file: string
+): string | null => {
+  const anchor = '{enabled:!1,pixelValidation';
+  const replace = '{enabled:!0,pixelValidation';
+  if (!file.includes(anchor)) return null;
+  return file.replaceAll(anchor, replace);
+};
+
+// ---------- patch #35: ultrareview_enable_rqt (from clawgod) ----------
+// 原: function X(){return Y()?.enabled===!0&&Z()&&!W()}
+// 新: 恒返 true
+export const writeUltrareviewEnable = (file: string): string | null => {
+  const pattern =
+    /function ([\w$]{1,8})\(\)\{return [\w$]{1,4}\(\)\?\.enabled===!0&&[\w$]{1,4}\(\)&&![\w$]{1,4}\(\)\}/g;
+  return applyRegexReplace(file, {
+    pattern,
+    build: m => ({ body: `function ${m[1]}(){return!0`, tail: '}' }),
+  });
+};
+
+// ---------- patch #36: auto_mode_3rd_party_helper (from clawgod) ----------
+// 移除 `if(!helper(param))return!1;` provider gate (2.1.158+ 引入).
+// 非等长 (删除整段) — 手工处理.
+export const writeAutoModeHelperGate = (file: string): string | null => {
+  const pattern =
+    /if\(!([\w$]{1,4})\(([\w$]{1,4})\)\)return!1;(?=(?:(?!function\s).){0,300}!=="firstParty")/g;
+  const matches = [...file.matchAll(pattern)];
+  if (matches.length === 0) return null;
+  let out = file;
+  let offset = 0;
+  for (const m of matches) {
+    if (m.index === undefined) continue;
+    const start = m.index + offset;
+    const end = start + m[0].length;
+    out = out.slice(0, start) + out.slice(end);
+    offset -= m[0].length;
+  }
+  return out === file ? null : out;
+};
+
+// ---------- patch #37: auto_mode_3rd_party_inline (from clawgod) ----------
+// 移除 `if(X!=="firstParty"&&(X!=="anthropicAws"|!fn(X)) && (...))return!1;`
+// 非等长 — 手工.
+export const writeAutoModeInlineGate = (file: string): string | null => {
+  const pattern =
+    /if\(([\w$]{1,4})!=="firstParty"&&(?:\1!=="anthropicAws"|![\w$]{1,4}\(\1\))[^;]*\)return!1;/g;
+  const matches = [...file.matchAll(pattern)];
+  if (matches.length === 0) return null;
+  let out = file;
+  let offset = 0;
+  for (const m of matches) {
+    if (m.index === undefined) continue;
+    const start = m.index + offset;
+    const end = start + m[0].length;
+    out = out.slice(0, start) + out.slice(end);
+    offset -= m[0].length;
+  }
+  return out === file ? null : out;
+};
+
+// ---------- patch #38: restore_glob_grep (from clawgod) ----------
+// Bun compile 把 `EMBEDDED_SEARCH_TOOLS` env inline 成 "true" 字面量,
+// 导致 bC()/YH() 恒返 true, 隐藏内置 Glob/Grep. 反 inline + 加 bfs/ugrep
+// 可用性检测.
+// 2.1.218+ shape: `Z.CLAUDE_CODE_ENTRYPOINT` (env registry 代理).
+// Legacy shape: `process.env.CLAUDE_CODE_ENTRYPOINT`.
+export const writeRestoreGlobGrep = (file: string): string | null => {
+  // 2.1.218+ 用 Z.CLAUDE_CODE_ENTRYPOINT (env registry proxy)
+  const pattern212 =
+    /function ([\w$]{1,8})\(\)\{if\(!([\w$]{1,4})\("true"\)\)return!1;if\([\w$]{1,4}\(\)\)return!1;return ([\w$]{1,4})\.CLAUDE_CODE_ENTRYPOINT!=="local-agent"\}/g;
+  const matches212 = [...file.matchAll(pattern212)];
+  if (matches212.length > 0) {
+    let out = file;
+    let offset = 0;
+    for (const m of matches212) {
+      if (m.index === undefined) continue;
+      const orig = m[0];
+      const [, fn, envCheck, envProxy] = m;
+      // Body 里 EMBEDDED_SEARCH_TOOLS 从 process.env 读, 让 helper 真读环境变量;
+      // 再 attach bfs/ugrep 可用性预检.
+      const newBody = `function ${fn}(){if(!${envCheck}(process.env.EMBEDDED_SEARCH_TOOLS))return!1;if(typeof globalThis.__dpBinOk>"u"){try{var _w=process.platform==="win32"?"where":"which";require("child_process").execFileSync(_w,["bfs"],{timeout:2e3});require("child_process").execFileSync(_w,["ugrep"],{timeout:2e3});globalThis.__dpBinOk=!0}catch{globalThis.__dpBinOk=!1}}if(!globalThis.__dpBinOk)return!1;return ${envProxy}.CLAUDE_CODE_ENTRYPOINT!=="local-agent"}`;
+      const start = m.index + offset;
+      const end = start + orig.length;
+      out = out.slice(0, start) + newBody + out.slice(end);
+      offset += newBody.length - orig.length;
+    }
+    return out;
+  }
+  return null;
+};
+
+// ---------- patch #32: voice_mode_enable (OBSOLETE - 上游 2.1.218+ 已删 flag) ----------
+// 原目标: function X(){return!R("tengu_amber_quartz_disabled",!1)}
+// 上游 2.1.218 已从 binary 移除 `tengu_amber_quartz_disabled` 字面量, patch
+// 无 anchor 可锚. 标 obsolete, 若未来 flag 名换成别的可以复活.
+export const writeVoiceModeEnable = (file: string): string | null => {
+  const pattern =
+    /function ([\w$]{1,8})\(\)\{return![\w$]{1,4}\("tengu_amber_quartz_disabled",!1\)\}/g;
+  return applyRegexReplace(file, {
+    pattern,
+    build: m => ({ body: `function ${m[1]}(){return!0`, tail: '}' }),
+  });
+};
+
 export const applyAllSpecialPatches = (file: string): string => {
   let out = file;
   for (const fn of [
@@ -289,6 +477,17 @@ export const applyAllSpecialPatches = (file: string): string => {
     writeForce1hCache,
     writeScrubMetadata,
     writeDisableTelemetry,
+    writeUserTypeAnt,
+    writeBunStandaloneTrue,
+    writeAgentTeamsAlwaysOn,
+    writeUltraplanEnable,
+    writeVoiceModeEnable, // obsolete on 2.1.218+ but keep for pre-2.1.218
+    writeComputerUseSubscription,
+    writeComputerUseDefaultEnabled,
+    writeUltrareviewEnable,
+    writeAutoModeHelperGate,
+    writeAutoModeInlineGate,
+    writeRestoreGlobGrep,
   ]) {
     const r = fn(out);
     if (r !== null) out = r;

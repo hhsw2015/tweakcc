@@ -138,6 +138,17 @@ import {
   writeForce1hCache as csp_writeForce1hCache,
   writeScrubMetadata as csp_writeScrubMetadata,
   writeDisableTelemetry as csp_writeDisableTelemetry,
+  writeUserTypeAnt as csp_writeUserTypeAnt,
+  writeBunStandaloneTrue as csp_writeBunStandaloneTrue,
+  writeAgentTeamsAlwaysOn as csp_writeAgentTeamsAlwaysOn,
+  writeUltraplanEnable as csp_writeUltraplanEnable,
+  writeVoiceModeEnable as csp_writeVoiceModeEnable,
+  writeComputerUseSubscription as csp_writeComputerUseSubscription,
+  writeComputerUseDefaultEnabled as csp_writeComputerUseDefaultEnabled,
+  writeUltrareviewEnable as csp_writeUltrareviewEnable,
+  writeAutoModeHelperGate as csp_writeAutoModeHelperGate,
+  writeAutoModeInlineGate as csp_writeAutoModeInlineGate,
+  writeRestoreGlobGrep as csp_writeRestoreGlobGrep,
 } from './csp/specialPatches';
 import {
   restoreNativeBinaryFromBackup,
@@ -774,6 +785,83 @@ const PATCH_DEFINITIONS = [
     description:
       'G/I_/pto 中和 — 关掉 tengu_* + api_refusal + ClaudeCodeInternalEvent + GrowthbookExperimentEvent, 保留 feature-flag fetch (隐私)',
   },
+  {
+    id: 'csp-28-user-type-ant',
+    name: 'CSP #28 USER_TYPE → ant (隐藏命令解锁)',
+    group: PatchGroup.CSP,
+    description:
+      'function X(){return"external"} → return"ant". 解锁 /share /teleport /issue /bughunter 等 24+ 隐藏 slash commands (源: clawgod)',
+  },
+  {
+    id: 'csp-29-bun-standalone',
+    name: 'CSP #29 Bun.isStandaloneExecutable → true',
+    group: PatchGroup.CSP,
+    description:
+      'fv() 类 gate 恒返 true, 兼容 plain-Bun 运行 patched cli.js 场景 (源: clawgod)',
+  },
+  {
+    id: 'csp-30-agent-teams',
+    name: 'CSP #30 Agent Teams 常开',
+    group: PatchGroup.CSP,
+    description:
+      '强开 multi-agent swarm, 绕 env + tengu_amber_flint GrowthBook 双 gate (源: clawgod)',
+  },
+  {
+    id: 'csp-31-ultraplan',
+    name: 'CSP #31 Ultraplan enable',
+    group: PatchGroup.CSP,
+    description:
+      '强开 /ultraplan (multi-agent planning via Claude Code Remote), isEnabled:()=>!0 (源: clawgod)',
+  },
+  {
+    id: 'csp-32-voice-mode',
+    name: 'CSP #32 Voice Mode enable (obsolete 2.1.218+)',
+    group: PatchGroup.CSP,
+    description:
+      '强开 voice mode, 绕 tengu_amber_quartz_disabled kill. 2.1.218+ 上游删了该 flag, patch 变 no-op (源: clawgod)',
+  },
+  {
+    id: 'csp-33-computer-use-subscription',
+    name: 'CSP #33 Computer Use 免订阅',
+    group: PatchGroup.CSP,
+    description:
+      'plan="max"||"pro" gate 恒返 true, macOS 屏控免 Max/Pro 订阅 (源: clawgod)',
+  },
+  {
+    id: 'csp-34-computer-use-default',
+    name: 'CSP #34 Computer Use 默认启用',
+    group: PatchGroup.CSP,
+    description:
+      '{enabled:!1,pixelValidation:...} → {enabled:!0,...} (源: clawgod)',
+  },
+  {
+    id: 'csp-35-ultrareview',
+    name: 'CSP #35 Ultrareview enable',
+    group: PatchGroup.CSP,
+    description:
+      '强开 /ultrareview (自动 bug 挖掘), tengu_review_bughunter_config gate 中和 (源: clawgod)',
+  },
+  {
+    id: 'csp-36-automode-helper',
+    name: 'CSP #36 Auto-mode 3rd party helper gate',
+    group: PatchGroup.CSP,
+    description:
+      '移除 provider helper gate, 允许第三方 API 走 auto-mode (源: clawgod)',
+  },
+  {
+    id: 'csp-37-automode-inline',
+    name: 'CSP #37 Auto-mode 3rd party inline gate',
+    group: PatchGroup.CSP,
+    description:
+      '移除 inline firstParty/anthropicAws 检查, 第三方 API 全放行 (源: clawgod)',
+  },
+  {
+    id: 'csp-38-glob-grep',
+    name: 'CSP #38 恢复 Glob/Grep 工具',
+    group: PatchGroup.CSP,
+    description:
+      'Bun compile inline EMBEDDED_SEARCH_TOOLS="true" 导致内置 Glob/Grep 隐藏. 反 inline + bfs/ugrep 检测 (源: clawgod)',
+  },
 ] as const;
 
 /** Union type of all valid patch IDs */
@@ -1281,6 +1369,39 @@ export const applyCustomization = async (
     },
     'csp-27-disable-telemetry': {
       fn: (c: string) => csp_writeDisableTelemetry(c) ?? c,
+    },
+    'csp-28-user-type-ant': {
+      fn: (c: string) => csp_writeUserTypeAnt(c) ?? c,
+    },
+    'csp-29-bun-standalone': {
+      fn: (c: string) => csp_writeBunStandaloneTrue(c) ?? c,
+    },
+    'csp-30-agent-teams': {
+      fn: (c: string) => csp_writeAgentTeamsAlwaysOn(c) ?? c,
+    },
+    'csp-31-ultraplan': {
+      fn: (c: string) => csp_writeUltraplanEnable(c) ?? c,
+    },
+    'csp-32-voice-mode': {
+      fn: (c: string) => csp_writeVoiceModeEnable(c) ?? c,
+    },
+    'csp-33-computer-use-subscription': {
+      fn: (c: string) => csp_writeComputerUseSubscription(c) ?? c,
+    },
+    'csp-34-computer-use-default': {
+      fn: (c: string) => csp_writeComputerUseDefaultEnabled(c) ?? c,
+    },
+    'csp-35-ultrareview': {
+      fn: (c: string) => csp_writeUltrareviewEnable(c) ?? c,
+    },
+    'csp-36-automode-helper': {
+      fn: (c: string) => csp_writeAutoModeHelperGate(c) ?? c,
+    },
+    'csp-37-automode-inline': {
+      fn: (c: string) => csp_writeAutoModeInlineGate(c) ?? c,
+    },
+    'csp-38-glob-grep': {
+      fn: (c: string) => csp_writeRestoreGlobGrep(c) ?? c,
     },
     // Misc Configurable
     'patches-applied-indication': {

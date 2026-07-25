@@ -4,18 +4,18 @@ import { CSP_PATCH_META, cspCheck, summarize, formatTable } from './check';
 
 describe('csp: check status semantics', () => {
   it('meta covers 26 non-obsolete + obsolete entries', () => {
-    expect(CSP_PATCH_META).toHaveLength(26); // 27 minus patch 13 (danger_table_skip 跟随 12)
+    expect(CSP_PATCH_META).toHaveLength(37); // 38 minus patch 13 (danger_table_skip 跟随 12)
     const obsoleteIds = CSP_PATCH_META.filter(m => m.obsolete).map(m => m.id);
-    expect(obsoleteIds.sort()).toEqual([12, 19, 20, 21]);
+    expect(obsoleteIds.sort((a, b) => a - b)).toEqual([12, 19, 20, 21, 32]);
   });
 
   it('empty file → obsolete for marked, broken for others', () => {
     const rows = cspCheck('');
-    expect(rows).toHaveLength(26);
+    expect(rows).toHaveLength(37);
     // Marked obsolete (12/19/20/21): state = 'obsolete'
     const obsolete = rows.filter(r => r.state === 'obsolete');
     expect(obsolete.map(r => r.id).sort((a, b) => a - b)).toEqual([
-      12, 19, 20, 21,
+      12, 19, 20, 21, 32,
     ]);
     // Special patches (16/17/18/22-25) 使用 PATCHED_SIGNATURES 判定,
     // 空文件既无 anchor 也无 patched signature → broken
@@ -41,14 +41,19 @@ describe('csp: check status semantics', () => {
       .filter(r => r.state === 'broken')
       .map(r => r.id)
       .sort((a, b) => a - b);
-    expect(broken).toEqual([16, 17, 18, 22, 23, 24, 25, 26, 27]);
+    // patch 28-31 加了 anchor+patched signatures 走 special branch → broken on empty file
+    // patch 33-37 用 PATCHED_SIGNATURES: () => 1 (always patched heuristic), 不进 broken
+    // patch 38 anchor 找不到 + patched=0 → broken
+    expect(broken).toEqual([
+      16, 17, 18, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 38,
+    ]);
   });
 
   it('summarize returns counts', () => {
     const rows = cspCheck('');
     const s = summarize(rows);
-    expect(s.total).toBe(26);
-    expect(s.applicable + s.alreadyApplied + s.obsolete + s.broken).toBe(26);
+    expect(s.total).toBe(37);
+    expect(s.applicable + s.alreadyApplied + s.obsolete + s.broken).toBe(37);
   });
 
   it('formatTable produces multi-line output with header', () => {

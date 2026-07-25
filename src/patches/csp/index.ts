@@ -17,6 +17,17 @@ import {
   writeForce1hCache,
   writeScrubMetadata,
   writeDisableTelemetry,
+  writeUserTypeAnt,
+  writeBunStandaloneTrue,
+  writeAgentTeamsAlwaysOn,
+  writeUltraplanEnable,
+  writeVoiceModeEnable,
+  writeComputerUseSubscription,
+  writeComputerUseDefaultEnabled,
+  writeUltrareviewEnable,
+  writeAutoModeHelperGate,
+  writeAutoModeInlineGate,
+  writeRestoreGlobGrep,
 } from './specialPatches';
 
 export interface CspPatchMeta {
@@ -186,6 +197,72 @@ export const CSP_PATCH_META: CspPatchMeta[] = [
     layer: '代码',
     desc: 'G/I_/pto 中和 — 关掉 tengu_* + api_refusal + ClaudeCodeInternalEvent + GrowthbookExperimentEvent 全部上报, 保留 feature-flag fetch',
   },
+  {
+    id: 28,
+    name: 'USER_TYPE → ant (解锁隐藏命令)',
+    layer: '代码',
+    desc: 'function X(){return"external"} → return"ant". 解锁 /share /teleport /issue /bughunter 等 24+ 隐藏 slash commands (源: clawgod)',
+  },
+  {
+    id: 29,
+    name: 'Bun.isStandaloneExecutable → true',
+    layer: '代码',
+    desc: '让 fv() 类 gate 恒返 true, 兼容 plain-Bun 运行 patched cli.js 场景 (源: clawgod)',
+  },
+  {
+    id: 30,
+    name: 'Agent Teams 常开',
+    layer: '代码',
+    desc: '强开 multi-agent swarm, 绕 env + tengu_amber_flint GrowthBook 双 gate (源: clawgod)',
+  },
+  {
+    id: 31,
+    name: 'Ultraplan enable',
+    layer: '代码',
+    desc: '强开 /ultraplan (multi-agent planning via Claude Code Remote), isEnabled:()=>!0 (源: clawgod)',
+  },
+  {
+    id: 32,
+    name: 'Voice Mode enable (obsolete 2.1.218+)',
+    layer: '代码',
+    desc: '强开 voice mode, 绕 tengu_amber_quartz_disabled kill. 2.1.218+ 上游删了该 flag, patch 变 no-op (源: clawgod)',
+  },
+  {
+    id: 33,
+    name: 'Computer Use 免订阅',
+    layer: '代码',
+    desc: 'plan="max"||"pro" gate 恒返 true, macOS 屏控免 Max/Pro 订阅 (源: clawgod)',
+  },
+  {
+    id: 34,
+    name: 'Computer Use 默认启用',
+    layer: '代码',
+    desc: '{enabled:!1,pixelValidation:...} → {enabled:!0,...} (源: clawgod)',
+  },
+  {
+    id: 35,
+    name: 'Ultrareview enable',
+    layer: '代码',
+    desc: '强开 /ultrareview (自动 bug 挖掘), tengu_review_bughunter_config gate 中和 (源: clawgod)',
+  },
+  {
+    id: 36,
+    name: 'Auto-mode 3rd party helper gate',
+    layer: '代码',
+    desc: '移除 provider helper gate, 允许第三方 API 走 auto-mode (源: clawgod)',
+  },
+  {
+    id: 37,
+    name: 'Auto-mode 3rd party inline gate',
+    layer: '代码',
+    desc: '移除 inline firstParty/anthropicAws 检查, 第三方 API 全放行 (源: clawgod)',
+  },
+  {
+    id: 38,
+    name: '恢复 Glob/Grep 工具',
+    layer: '代码',
+    desc: 'Bun compile inline EMBEDDED_SEARCH_TOOLS="true" 导致内置 Glob/Grep 隐藏. 反 inline + bfs/ugrep 检测 (源: clawgod)',
+  },
 ];
 
 /**
@@ -296,6 +373,95 @@ export const applyAllCspPatches = (
       out = r;
       applied.push(27);
     } else failed.push(27);
+  }
+  // patch 28
+  {
+    const r = writeUserTypeAnt(out);
+    if (r !== null) {
+      out = r;
+      applied.push(28);
+    } else failed.push(28);
+  }
+  // patch 29
+  {
+    const r = writeBunStandaloneTrue(out);
+    if (r !== null) {
+      out = r;
+      applied.push(29);
+    } else failed.push(29);
+  }
+  // patch 30
+  {
+    const r = writeAgentTeamsAlwaysOn(out);
+    if (r !== null) {
+      out = r;
+      applied.push(30);
+    } else failed.push(30);
+  }
+  // patch 31
+  {
+    const r = writeUltraplanEnable(out);
+    if (r !== null) {
+      out = r;
+      applied.push(31);
+    } else failed.push(31);
+  }
+  // patch 32 (may be no-op on 2.1.218+ where flag was removed)
+  {
+    const r = writeVoiceModeEnable(out);
+    if (r !== null) {
+      out = r;
+      applied.push(32);
+    }
+    // No failure count — this patch is best-effort; upstream removed the anchor.
+  }
+  // patch 33
+  {
+    const r = writeComputerUseSubscription(out);
+    if (r !== null) {
+      out = r;
+      applied.push(33);
+    } else failed.push(33);
+  }
+  // patch 34
+  {
+    const r = writeComputerUseDefaultEnabled(out);
+    if (r !== null) {
+      out = r;
+      applied.push(34);
+    } else failed.push(34);
+  }
+  // patch 35
+  {
+    const r = writeUltrareviewEnable(out);
+    if (r !== null) {
+      out = r;
+      applied.push(35);
+    } else failed.push(35);
+  }
+  // patch 36
+  {
+    const r = writeAutoModeHelperGate(out);
+    if (r !== null) {
+      out = r;
+      applied.push(36);
+    } else failed.push(36);
+  }
+  // patch 37
+  {
+    const r = writeAutoModeInlineGate(out);
+    if (r !== null) {
+      out = r;
+      applied.push(37);
+    } else failed.push(37);
+  }
+  // patch 38
+  {
+    const r = writeRestoreGlobGrep(out);
+    if (r !== null) {
+      out = r;
+      applied.push(38);
+    } else failed.push(38);
   }
 
   // patch 19/20/21 obsolete (2.1.198+ Anthropic 自行移除 China 指纹, upstream 已修)
