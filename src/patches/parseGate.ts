@@ -103,7 +103,9 @@ export const assertPatchedBundleParses = (content: string): void => {
   // gate would abort every apply regardless of patches. Skip the check on
   // Bun/native builds — the pristine binary is our real ground truth, and
   // we already restore it before every apply.
-  if (content.includes('using n=Nv`') || content.includes('using t=Nv`')) {
+  // 2.1.218 用 Nv/Nv, 2.1.220+ helper 改名 Fv. 匹配任何 `using X=Y\``
+  // 只要 Y 是 2-3 chars 的 minified 名字, 都视为 Bun-bundled → 跳过 parse.
+  if (/using [\w$]{1,4}=[\w$]{1,4}`/.test(content)) {
     return;
   }
   let dir: string;

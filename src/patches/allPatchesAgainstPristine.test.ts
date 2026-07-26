@@ -79,6 +79,39 @@ import {
   writeStripEmptySystemReminders,
   writeClaudemdContextOncePerConversation,
 } from './systemReminders';
+// Fork-only patches (skrabe upstream 未加)
+import { writeInputChevronColor } from './inputChevronColor';
+import { writeSuppressRateLimitWarning } from './suppressRateLimitWarning';
+import { writeSessionColor } from './sessionColor';
+import { writeKeybindingCustomization } from './keybindingCustomization';
+// CSP patches (all 27, some obsolete)
+import { writeCyberRiskInstruction } from './csp/cyberRiskInstruction';
+import {
+  ANCHOR_TAIL_PATCHES,
+  applyAnchorTailPatchOrNull,
+} from './csp/anchorTailPatches';
+import {
+  writeForceV0True,
+  writeErNoDowngrade,
+  writeHmNormalizeDot,
+  writeUnlockSdkUrlHost,
+  writeUnlockRemoteGate,
+  writeUnlockDisableRc,
+  writeForce1hCache,
+  writeScrubMetadata,
+  writeDisableTelemetry,
+  writeUserTypeAnt,
+  writeBunStandaloneTrue,
+  writeAgentTeamsAlwaysOn,
+  writeUltraplanEnable,
+  writeVoiceModeEnable,
+  writeComputerUseSubscription,
+  writeComputerUseDefaultEnabled,
+  writeUltrareviewEnable,
+  writeAutoModeHelperGate,
+  writeAutoModeInlineGate,
+  writeRestoreGlobGrep,
+} from './csp/specialPatches';
 
 const ENABLED = process.env.TWEAKCC_PRISTINE_PATCHES === '1';
 
@@ -298,6 +331,45 @@ const INVOCATIONS: Record<PatchId, (src: string) => string | null> = {
   'suppress-deferred-tools': c => writeSuppressDeferredTools(c),
   'claudemd-context-once-per-conversation': c =>
     writeClaudemdContextOncePerConversation(c),
+  // Fork-only (skrabe upstream 未加)
+  'session-color': c => writeSessionColor(c),
+  'keybinding-customization': c => writeKeybindingCustomization(c),
+  'input-chevron-color': c => writeInputChevronColor(c, '#00ff00'),
+  'suppress-rate-limit-warning': c => writeSuppressRateLimitWarning(c),
+  // CSP patches
+  'csp-01-cyber-risk': c => writeCyberRiskInstruction(c),
+  'csp-02-url-generation': c => applyAnchorTailPatchOrNull(c, ANCHOR_TAIL_PATCHES[0]),
+  'csp-03-exec-actions-compact': c => applyAnchorTailPatchOrNull(c, ANCHOR_TAIL_PATCHES[1]),
+  'csp-04-exec-actions-full': c => applyAnchorTailPatchOrNull(c, ANCHOR_TAIL_PATCHES[2]),
+  'csp-05-owasp': c => applyAnchorTailPatchOrNull(c, ANCHOR_TAIL_PATCHES[3]),
+  'csp-06-git-safety': c => applyAnchorTailPatchOrNull(c, ANCHOR_TAIL_PATCHES[4]),
+  'csp-07-bash-git': c => applyAnchorTailPatchOrNull(c, ANCHOR_TAIL_PATCHES[5]),
+  'csp-08-prompt-injection': c => applyAnchorTailPatchOrNull(c, ANCHOR_TAIL_PATCHES[6]),
+  'csp-09-sandbox-default': c => applyAnchorTailPatchOrNull(c, ANCHOR_TAIL_PATCHES[7]),
+  'csp-10-sandbox-paths': c => applyAnchorTailPatchOrNull(c, ANCHOR_TAIL_PATCHES[8]),
+  'csp-11-sandbox-policy': c => applyAnchorTailPatchOrNull(c, ANCHOR_TAIL_PATCHES[9]),
+  'csp-14-cyber-risk-data': c => applyAnchorTailPatchOrNull(c, ANCHOR_TAIL_PATCHES[10]),
+  'csp-15-applescript': c => applyAnchorTailPatchOrNull(c, ANCHOR_TAIL_PATCHES[11]),
+  'csp-16-force-v0': c => writeForceV0True(c),
+  'csp-17-er-no-downgrade': c => writeErNoDowngrade(c),
+  'csp-18-hm-normalize': c => writeHmNormalizeDot(c),
+  'csp-22-sdk-url': c => writeUnlockSdkUrlHost(c),
+  'csp-23-remote-gate': c => writeUnlockRemoteGate(c),
+  'csp-24-disable-rc': c => writeUnlockDisableRc(c),
+  'csp-25-force-1h-cache': c => writeForce1hCache(c),
+  'csp-26-scrub-metadata': c => writeScrubMetadata(c),
+  'csp-27-disable-telemetry': c => writeDisableTelemetry(c),
+  'csp-28-user-type-ant': c => writeUserTypeAnt(c),
+  'csp-29-bun-standalone': c => writeBunStandaloneTrue(c),
+  'csp-30-agent-teams': c => writeAgentTeamsAlwaysOn(c),
+  'csp-31-ultraplan': c => writeUltraplanEnable(c),
+  'csp-32-voice-mode': c => writeVoiceModeEnable(c),
+  'csp-33-computer-use-subscription': c => writeComputerUseSubscription(c),
+  'csp-34-computer-use-default': c => writeComputerUseDefaultEnabled(c),
+  'csp-35-ultrareview': c => writeUltrareviewEnable(c),
+  'csp-36-automode-helper': c => writeAutoModeHelperGate(c),
+  'csp-37-automode-inline': c => writeAutoModeInlineGate(c),
+  'csp-38-glob-grep': c => writeRestoreGlobGrep(c),
 };
 
 /**
