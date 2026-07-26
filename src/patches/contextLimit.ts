@@ -2,13 +2,6 @@
 
 const OVERRIDE = '(+process.env.CLAUDE_CODE_CONTEXT_LIMIT||200000)';
 
-// String.replace treats `$$` in the replacement string as an escape for a
-// single `$`. When minified identifiers like `$$t` are spliced in via
-// backrefs, the `$$` collapses to `$` and the variable name changes — every
-// other reference then points to an undefined name. Escape by doubling every
-// `$` in captured identifiers before inlining them.
-const esc = (s: string): string => s.replace(/\$/g, '$$$$');
-
 export const writeContextLimit = (oldFile: string): string | null => {
   // CC >= ~2.1.18x split the single 200000 context-limit constant into TWO
   // adjacent ones: `var fkt=200000,KQ=200000,Akt=20000,MWu=32000,NWu=128000;`.
@@ -19,55 +12,45 @@ export const writeContextLimit = (oldFile: string): string | null => {
   // Because the window is `min(o-from-fkt, KQ)`, RAISING the limit requires
   // overriding BOTH (overriding only one leaves the window capped by the other).
   // Env-unset → both stay 200000 → identical to stock CC.
+  // Method 1 — CC >= ~2.1.21x: the 20000 constant was dropped from the group
+  // and a 1e6 (the 1M-context ceiling) appended, so the declaration reads
+  // `var _er=200000,bRe=200000,$Rg=32000,URg=128000,jRg=1e6;`. The first two
+  // keep their roles (per-model default / `source:"model-default"` window);
+  // the trailing three are max-output-default, max-output-upper and the 1M cap
+  // and are preserved verbatim.
+  const patternFive =
+    /var ([$\w]+)=200000,([$\w]+)=200000,([$\w]+)=(32000),([$\w]+)=(128000|64000),([$\w]+)=(1e6|1000000);/;
+  const matchFive = oldFile.match(patternFive);
+  if (matchFive) {
+    return oldFile.replace(
+      patternFive,
+      () =>
+        `var ${matchFive[1]}=${OVERRIDE},${matchFive[2]}=${OVERRIDE},${matchFive[3]}=${matchFive[4]},${matchFive[5]}=${matchFive[6]},${matchFive[7]}=${matchFive[8]};`
+    );
+  }
+
+  // Method 2 — CC ~2.1.18x-2.1.20x.
   const patternTwo =
-    /var ([\w$]+)=200000,([\w$]+)=200000,([\w$]+)=20000,([\w$]+)=32000,([\w$]+)=(128000|64000);/;
+    /var ([$\w]+)=200000,([$\w]+)=200000,([$\w]+)=20000,([$\w]+)=32000,([$\w]+)=(128000|64000);/;
   const matchTwo = oldFile.match(patternTwo);
   if (matchTwo) {
     return oldFile.replace(
       patternTwo,
-      `var ${esc(matchTwo[1])}=${OVERRIDE},${esc(matchTwo[2])}=${OVERRIDE},${esc(matchTwo[3])}=20000,${esc(matchTwo[4])}=32000,${esc(matchTwo[5])}=${matchTwo[6]};`
+      () =>
+        `var ${matchTwo[1]}=${OVERRIDE},${matchTwo[2]}=${OVERRIDE},${matchTwo[3]}=20000,${matchTwo[4]}=32000,${matchTwo[5]}=${matchTwo[6]};`
     );
   }
 
-  // Older CC (a single 200000 constant): keep the original behavior.
+  // Method 3 — older CC (a single 200000 constant).
   const patternOne =
-    /var ([\w$]+)=200000,([\w$]+)=20000,([\w$]+)=32000,([\w$]+)=(128000|64000);/;
+    /var ([$\w]+)=200000,([$\w]+)=20000,([$\w]+)=32000,([$\w]+)=(128000|64000);/;
   const matchOne = oldFile.match(patternOne);
   if (matchOne) {
     return oldFile.replace(
       patternOne,
-      `var ${esc(matchOne[1])}=${OVERRIDE},${esc(matchOne[2])}=20000,${esc(matchOne[3])}=32000,${esc(matchOne[4])}=${matchOne[5]};`
+      () =>
+        `var ${matchOne[1]}=${OVERRIDE},${matchOne[2]}=20000,${matchOne[3]}=32000,${matchOne[4]}=${matchOne[5]};`
     );
-  }
-
-  // CC 2.1.201: the 20000 constant was removed from the block.
-  // Actual shape: `var X=200000,Y=200000,Z=32000,W=128000;` (no 20000)
-  const patternTwoNoLower =
-    /var ([\w$]+)=200000,([\w$]+)=200000,([\w$]+)=32000,([\w$]+)=(128000|64000);/;
-  const matchTwoNoLower = oldFile.match(patternTwoNoLower);
-  if (matchTwoNoLower) {
-    return oldFile.replace(
-      patternTwoNoLower,
-      `var ${esc(matchTwoNoLower[1])}=${OVERRIDE},${esc(matchTwoNoLower[2])}=${OVERRIDE},${esc(matchTwoNoLower[3])}=32000,${esc(matchTwoNoLower[4])}=${matchTwoNoLower[5]};`
-    );
-  }
-
-  // CC 2.1.209: adds a 5th constant (probably 1M-token ceiling for 1M-context
-  // models): `var X=200000,Y=200000,Z=32000,W=128000,V=1e6;`
-  // Only the first two 200000s matter for the context-window override.
-  const patternWithMax =
-    /var ([\w$]+)=200000,([\w$]+)=200000,([\w$]+)=32000,([\w$]+)=(128000|64000),([\w$]+)=(1e6|1000000);/;
-  const matchWithMax = oldFile.match(patternWithMax);
-  if (matchWithMax) {
-    return oldFile.replace(
-      patternWithMax,
-      `var ${esc(matchWithMax[1])}=${OVERRIDE},${esc(matchWithMax[2])}=${OVERRIDE},${esc(matchWithMax[3])}=32000,${esc(matchWithMax[4])}=${matchWithMax[5]},${esc(matchWithMax[6])}=${matchWithMax[7]};`
-    );
-  }
-
-  // Idempotent: if patched already, treat as no-op
-  if (oldFile.includes('CLAUDE_CODE_CONTEXT_LIMIT')) {
-    return oldFile;
   }
 
   console.error('patch: contextLimit: failed to find context limit constants');
