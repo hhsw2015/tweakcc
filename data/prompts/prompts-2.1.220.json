@@ -1,5 +1,5 @@
 {
-  "version": null,
+  "version": "2.1.220",
   "prompts": [
     {
       "name": "Agent Prompt: Workflow script structured return note",
@@ -2325,6 +2325,39 @@
       "version": "2.1.178"
     },
     {
+      "name": "Data: Memory type \"user\" how-to-use",
+      "id": "data-memory-type-user-how-to-use",
+      "description": "how_to_use guidance for the user memory type",
+      "pieces": [
+        "    <how_to_use>Let these memories guide your behavior so that the user and other users in the project do not need to offer the same guidance twice.</how_to_use>"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
+    },
+    {
+      "name": "Data: Memory type \"user\" how-to-use (solo)",
+      "id": "data-memory-type-user-how-to-use-solo",
+      "description": "how_to_use guidance for the user memory type, single-user phrasing",
+      "pieces": [
+        "    <how_to_use>Let these memories guide your behavior so that the user does not need to offer the same guidance twice.</how_to_use>"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
+    },
+    {
+      "name": "Memory project-type how_to_use",
+      "id": "system-prompt-memory-project-how-to-use-2",
+      "description": "how_to_use guidance for the project memory type inside the injected memory system prompt (FDr types block).",
+      "pieces": [
+        "    <how_to_use>Use these memories to more fully understand the details and nuance behind the user's request and make better informed suggestions.</how_to_use>"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
+    },
+    {
       "name": "Memory project-type how_to_use",
       "id": "system-prompt-memory-project-how-to-use",
       "description": "how_to_use guidance for the project memory type inside the injected memory system prompt (FDr types block).",
@@ -2333,7 +2366,29 @@
       ],
       "identifiers": [],
       "identifierMap": {},
-      "version": "2.1.206"
+      "version": "2.1.220"
+    },
+    {
+      "name": "Data: Memory type \"reference\" how-to-use (variant)",
+      "id": "data-memory-type-reference-how-to-use-2",
+      "description": "how_to_use guidance for the reference memory type, second site",
+      "pieces": [
+        "    <how_to_use>When the user references an external system or information that may be in an external system.</how_to_use>"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
+    },
+    {
+      "name": "Data: Memory type \"reference\" how-to-use (variant)",
+      "id": "data-memory-type-reference-how-to-use-2",
+      "description": "how_to_use guidance for the reference memory type, second site",
+      "pieces": [
+        "    <how_to_use>When the user references an external system or information that may be in an external system.</how_to_use>"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
     },
     {
       "name": "System Prompt: User memory usage guidance",
@@ -2367,6 +2422,17 @@
       "identifiers": [],
       "identifierMap": {},
       "version": "2.1.178"
+    },
+    {
+      "name": "Data: Memory type \"project\" scope",
+      "id": "data-memory-type-project-scope",
+      "description": "scope declaration for the project memory type",
+      "pieces": [
+        "    <scope>private or team, but strongly bias toward team</scope>"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
     },
     {
       "name": "System Prompt: Feedback memory save guidance",
@@ -4162,6 +4228,17 @@
       "version": "2.1.205"
     },
     {
+      "name": "Skill: Keybindings context minimality rule",
+      "id": "skill-keybindings-context-minimal-override",
+      "description": "Tells the agent a context only needs to appear when something changes in it",
+      "pieces": [
+        "- A context only needs to appear in the user's file if they want to change something in that context"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
+    },
+    {
       "name": "Issue-title generator: API-errors rule",
       "id": "system-prompt-issue-title-generator-api-errors",
       "description": "Instruction line in the issue-title-generator systemPrompt noting LLM API errors come from the Anthropic API, not other providers.",
@@ -4173,6 +4250,17 @@
       "version": "2.1.206"
     },
     {
+      "name": "System Prompt: Do not store what CLAUDE.md documents",
+      "id": "system-prompt-memory-skip-claudemd-documented",
+      "description": "Memory what-not-to-save rule for content already in CLAUDE.md",
+      "pieces": [
+        "- Anything already documented in CLAUDE.md files."
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
+    },
+    {
       "name": "Issue-title generator: concise rule",
       "id": "system-prompt-issue-title-generator-concise",
       "description": "Instruction line in the issue-title-generator systemPrompt requiring a concise, specific, descriptive title.",
@@ -4182,6 +4270,17 @@
       "identifiers": [],
       "identifierMap": {},
       "version": "2.1.206"
+    },
+    {
+      "name": "System Prompt: GitHub issue title clarity rule",
+      "id": "system-prompt-github-issue-title-clarity",
+      "description": "Issue title should be direct and clear for developers",
+      "pieces": [
+        "- Be direct and clear for developers to understand the problem"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
     },
     {
       "name": "TaskList usage bullet",
@@ -4314,6 +4413,17 @@
       "identifiers": [],
       "identifierMap": {},
       "version": "2.1.178"
+    },
+    {
+      "name": "System Prompt: Do not store ephemeral task details",
+      "id": "system-prompt-memory-skip-ephemeral-task-details",
+      "description": "Memory what-not-to-save rule for in-progress and conversation state",
+      "pieces": [
+        "- Ephemeral task details: in-progress work, temporary state, current conversation context."
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
     },
     {
       "name": "Tool Description: Glob",
@@ -4533,6 +4643,17 @@
         "0": "READ_ONLY_SEARCHING_BASH_COMMANDS"
       },
       "version": "2.1.133"
+    },
+    {
+      "name": "System Prompt: GitHub issue title type prefix",
+      "id": "system-prompt-github-issue-title-type-prefix",
+      "description": "Issue title must lead with [Bug] or [Feature Request]",
+      "pieces": [
+        "- Include the type of issue [Bug] or [Feature Request] as the first thing in the title"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
     },
     {
       "name": "Memory: keep name/description/type updated",
@@ -4806,6 +4927,50 @@
         "0": "DATA_AGENT_IMPORT_APPLY_USER_ITEMS_OPTION_VAR_0"
       },
       "version": "2.1.214"
+    },
+    {
+      "name": "Skill: Keybindings use Edit for existing files",
+      "id": "skill-keybindings-use-edit-tool",
+      "description": "Directs the agent to Edit rather than Write an existing keybindings file",
+      "pieces": [
+        "- Use **Edit** tool for modifications to existing files"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
+    },
+    {
+      "name": "Skill: Keybindings use Write only when absent",
+      "id": "skill-keybindings-use-write-tool",
+      "description": "Directs the agent to Write only when the keybindings file does not exist",
+      "pieces": [
+        "- Use **Write** tool only if the file does not exist yet"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
+    },
+    {
+      "name": "System Prompt: GitHub issue title terminology",
+      "id": "system-prompt-github-issue-title-terminology",
+      "description": "Issue title should use software-appropriate technical terminology",
+      "pieces": [
+        "- Use technical terminology appropriate for a software issue"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
+    },
+    {
+      "name": "Skill: Keybindings user bindings are additive",
+      "id": "skill-keybindings-user-bindings-additive",
+      "description": "Explains user bindings append after defaults",
+      "pieces": [
+        "- User bindings are **additive** — they are appended after the default bindings"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
     },
     {
       "name": "User deny-rules permission context",
@@ -6139,6 +6304,17 @@
       "version": "2.1.53"
     },
     {
+      "name": "System Prompt: A memory claim is not current state",
+      "id": "system-prompt-memory-claim-vs-current-state",
+      "description": "Warns that a memory asserting X exists is not evidence X exists now",
+      "pieces": [
+        "\"The memory says X exists\" is not the same as \"X exists now.\""
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
+    },
+    {
       "name": "Recon: visibility redacted-count note",
       "id": "data-auto-mode-recon-visibility-redacted-count",
       "description": "Note in the auto-mode recon visibility section for names outside the display charset/visibility enum being redacted; part of the model-facing recon context.",
@@ -7316,6 +7492,17 @@
       "version": "2.1.210"
     },
     {
+      "name": "Skill: Keybindings chord syntax",
+      "id": "skill-keybindings-chords",
+      "description": "Describes space-separated chord keystrokes and their timeout",
+      "pieces": [
+        "**Chords**: Space-separated keystrokes, e.g. `ctrl+k ctrl+s` (1-second timeout between keystrokes)"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
+    },
+    {
       "name": "Keybindings errors-vs-warnings note",
       "id": "skill-keybindings-errors-vs-warnings",
       "description": "Keybindings skill fragment explaining the difference between blocking errors and non-blocking warnings.",
@@ -7325,6 +7512,17 @@
       "identifiers": [],
       "identifierMap": {},
       "version": "2.1.206"
+    },
+    {
+      "name": "Skill: Keybindings examples",
+      "id": "skill-keybindings-examples",
+      "description": "Example keystroke bindings",
+      "pieces": [
+        "**Examples**: `ctrl+shift+p`, `alt+enter`, `ctrl+k ctrl+n`"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
     },
     {
       "name": "System Prompt: Chrome browser MCP tools",
@@ -7412,6 +7610,17 @@
         "0": "SKILL_CLAUDE_CODE_HELP_SETTINGS_SUMMARY_VAR_0"
       },
       "version": "2.1.206"
+    },
+    {
+      "name": "Skill: Keybindings special keys",
+      "id": "skill-keybindings-special-keys",
+      "description": "Lists the recognised special key names",
+      "pieces": [
+        "**Special keys**: `escape`/`esc`, `enter`/`return`, `tab`, `space`, `backspace`, `delete`, `up`, `down`, `left`, `right`"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
     },
     {
       "name": "Memory: save step 1 with example names",
@@ -10511,6 +10720,17 @@
       "identifiers": [],
       "identifierMap": {},
       "version": "2.1.77"
+    },
+    {
+      "name": "Skill: Keybindings defaults-interaction heading",
+      "id": "skill-keybindings-interaction-heading",
+      "description": "Section heading for how user bindings interact with defaults",
+      "pieces": [
+        "## How User Bindings Interact with Defaults"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
     },
     {
       "name": "Skill: Code review keep it honest",
@@ -16755,6 +16975,17 @@
       "version": "2.1.178"
     },
     {
+      "name": "Skill: Keybindings invalid action fix",
+      "id": "skill-keybindings-invalid-action-fix",
+      "description": "Explains action values must be strings like \"app:help\" or null to unbind",
+      "pieces": [
+        "Actions must be strings like `\"app:help\"` or `null` to unbind"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
+    },
+    {
       "name": "Tool Description: onboarding step actions param",
       "id": "tool-parameter-computer-onboarding-step-actions",
       "description": "Param description for the onboarding/tooltip step 'actions' array (same schema as computer_batch.actions)",
@@ -17775,6 +18006,17 @@
       "version": "2.1.191"
     },
     {
+      "name": "Tool Parameter: Plain array of strings, no prose",
+      "id": "tool-parameter-array-of-strings-no-prose",
+      "description": "Requires a bare string array with no fence, prose or extra keys",
+      "pieces": [
+        "array of strings — no surrounding prose, no code fence, no other keys."
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
+    },
+    {
       "name": "Artifact Republished By Another Session",
       "id": "tool-result-artifact-republished-by-another-session",
       "description": "Model-facing ambient tool_result notifying the model that the artifact was republished by another session and to WebFetch the latest before editing or republishing.",
@@ -18183,6 +18425,17 @@
         "0": "SYSTEM_PROMPT_MCP_AUTH_COMPLETE_SILENT_RESULT_VAR_0"
       },
       "version": "2.1.178"
+    },
+    {
+      "name": "Tool Description: request_access scope note",
+      "id": "tool-description-request-access-scope-note",
+      "description": "Clarifies the approval authorizes only the specific action under review",
+      "pieces": [
+        "authorizes the SPECIFIC action under review — same operation, same "
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
     },
     {
       "name": "Tool Description: Chrome browser automation",
@@ -19007,6 +19260,28 @@
         "0": "SKILL_CODE_REVIEW_RE_REPORT_FINDINGS_WITH_OUTCOME_VAR_0"
       },
       "version": "2.1.206"
+    },
+    {
+      "name": "Tool Description: request_access retry note",
+      "id": "tool-description-request-access-retry-note",
+      "description": "Tells the agent to call request_access again immediately",
+      "pieces": [
+        "Call request_access again immediately — the next call will show "
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
+    },
+    {
+      "name": "Tool Description: request_teach_access retry note",
+      "id": "tool-description-request-teach-access-retry-note",
+      "description": "Tells the agent to call request_teach_access again immediately",
+      "pieces": [
+        "Call request_teach_access again immediately — the next call will "
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
     },
     {
       "name": "Tool Description: RemoteTrigger prompt",
@@ -20202,6 +20477,17 @@
       "identifiers": [],
       "identifierMap": {},
       "version": "2.1.191"
+    },
+    {
+      "name": "Tool Description: Artifact capabilities clearing note",
+      "id": "tool-description-artifact-capabilities-clear-note",
+      "description": "Clearing a stored capability declaration still needs the current contract",
+      "pieces": [
+        "clearing a stored declaration also needs the current "
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
     },
     {
       "name": "Computer-use read-tier click block",
@@ -21480,6 +21766,17 @@
       "version": "2.1.218"
     },
     {
+      "name": "Tool Description: report_validate counts only",
+      "id": "tool-description-report-validate-counts-only",
+      "description": "Restricts report_validate aggregation to counts, no names or paths",
+      "pieces": [
+        "counts only, no component names or paths."
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
+    },
+    {
       "name": "Tool Description: Cowork plugin creation",
       "id": "tool-description-cowork-plugin-creation",
       "description": "Describes the command for creating or customizing Cowork plugins for an organization",
@@ -22263,6 +22560,17 @@
       "version": "2.1.206"
     },
     {
+      "name": "System Prompt: Opus 5 do not call AgentTool unless requested",
+      "id": "system-prompt-opus5-no-agenttool-unless-requested",
+      "description": "Opus-5-only line telling the model not to call the Agent tool unless the user asked for it",
+      "pieces": [
+        "Do not call the AgentTool unless the user requested it"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
+    },
+    {
       "name": "System Reminder: Async agent launched",
       "id": "system-reminder-async-agent-launched",
       "description": "Model-facing reminder warning the model not to duplicate an asynchronously launched agent's work (same files/topics) and to take non-overlapping tasks. 2.1.193 reworded the opening (fuzzy-miss restore).",
@@ -22395,6 +22703,17 @@
       "identifiers": [],
       "identifierMap": {},
       "version": "2.1.141"
+    },
+    {
+      "name": "System Prompt: Opus 5 do not use workflows unless requested",
+      "id": "system-prompt-opus5-no-workflows-unless-requested",
+      "description": "Opus-5-only line telling the model not to use workflows or deep research unless the user asked",
+      "pieces": [
+        "Do not use workflows or deep-research unless the user requested it"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
     },
     {
       "name": "Data: Agent Import — Command Missing Prompt Field",
@@ -23165,6 +23484,17 @@
       "identifiers": [],
       "identifierMap": {},
       "version": "2.1.206"
+    },
+    {
+      "name": "Agent Prompt: Date parser invalid examples",
+      "id": "agent-prompt-date-parser-invalid-examples",
+      "description": "Examples of input the date parser must reject as INVALID",
+      "pieces": [
+        "Examples of INVALID input: partial dates like \"2025-01-\", lone numbers like \"13\", gibberish."
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
     },
     {
       "name": "NL date/time parser — valid examples",
@@ -25050,6 +25380,17 @@
       "identifiers": [],
       "identifierMap": {},
       "version": "2.1.165"
+    },
+    {
+      "name": "Agent Prompt: Date parser time-without-date rule",
+      "id": "agent-prompt-date-parser-time-without-date",
+      "description": "Use today as the date when the input carries only a time",
+      "pieces": [
+        "For times without dates, use today's date."
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
     },
     {
       "name": "Tool Parameter: Computer text",
@@ -26966,6 +27307,17 @@
       "version": "2.1.191"
     },
     {
+      "name": "Tool Description: Workflow args JSON-string warning",
+      "id": "tool-description-workflow-args-json-string-warning",
+      "description": "Warns a stringified list breaks args.filter in a workflow script",
+      "pieces": [
+        "JSON-encoded string — a stringified list breaks `args.filter`/"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
+    },
+    {
       "name": "Tool Parameter: ProposeSkills name",
       "id": "tool-parameter-proposeskills-name",
       "description": "zod .describe() for the ProposeSkills tool's per-proposal name field, telling the model to supply a kebab-case skill slug",
@@ -27038,6 +27390,17 @@
         "1": "TOOL_PARAMETER_MONITOR_TIMEOUT_VAR_1"
       },
       "version": "2.1.191"
+    },
+    {
+      "name": "Tool Description: write_files split large bundles",
+      "id": "tool-description-write-files-split-bundles",
+      "description": "Directs splitting large bundles across calls under one planId",
+      "pieces": [
+        "larger bundles across multiple write_files calls under the same planId)."
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
     },
     {
       "name": "Tool Parameter: Artifact force",
@@ -28003,6 +28366,17 @@
       "version": "2.1.206"
     },
     {
+      "name": "Tool Result: Memory write credential detected",
+      "id": "tool-result-memory-write-credential-detected",
+      "description": "Rejects a memory write whose content looks like a credential and asks for rotation",
+      "pieces": [
+        "memory content appears to contain a credential or API key; remove it before writing. If the credential is real, rotate it."
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
+    },
+    {
       "name": "Tool Parameter: ProposeSkills evidence",
       "id": "tool-parameter-proposeskills-evidence",
       "description": "Describes the evidence array in the ProposeSkills tool input schema, sent to the model as part of the tool definition.",
@@ -28500,6 +28874,17 @@
         "4": "TOOL_RESULT_ARTIFACT_MULTI_FILE_PUBLISH_UNAVAILABLE_VAR_4"
       },
       "version": "2.1.218"
+    },
+    {
+      "name": "Tool Result: Multi-file publish not enabled",
+      "id": "tool-result-multi-file-publish-not-enabled",
+      "description": "Tells the agent multi-file publish is unavailable for the account",
+      "pieces": [
+        "multi-file publish is not enabled for this account — publish a "
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
     },
     {
       "name": "Tool Result: Multiple Browsers None Selected",
@@ -31005,6 +31390,17 @@
       "version": "2.1.207"
     },
     {
+      "name": "Tool Description: teach_step batch actions",
+      "id": "tool-description-teach-step-batch-actions",
+      "description": "Directs packing as many actions as possible into each step",
+      "pieces": [
+        "Pack as many actions as possible into each step's `actions` array — the user waits through "
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
+    },
+    {
       "name": "Read page range exceeds max error",
       "id": "tool-result-read-page-range-exceeds-max",
       "description": "Read-tool validateInput error returned to the model when the page range exceeds the per-request maximum.",
@@ -31202,6 +31598,17 @@
       "identifiers": [],
       "identifierMap": {},
       "version": "2.1.191"
+    },
+    {
+      "name": "Tool Description: Glob pattern entry cap",
+      "id": "tool-description-glob-pattern-entry-cap",
+      "description": "Explains the 256-entry cap and to use broader globs",
+      "pieces": [
+        "pattern and max 256 entries — use broader globs to cover more "
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
     },
     {
       "name": "tool-result-pdf-file-read",
@@ -32405,6 +32812,17 @@
         "4": "TOOL_RESULT_ARTIFACT_PUBLISHED_VAR_4"
       },
       "version": "2.1.218"
+    },
+    {
+      "name": "Tool Description: Artifact contract author intent",
+      "id": "tool-description-artifact-contract-author-intent",
+      "description": "Pass the contract only when the author intends the behaviour change",
+      "pieces": [
+        "published page behaves — pass only when the author "
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
     },
     {
       "name": "Tool Result: Artifact publish blocked (reads disabled)",
@@ -33792,6 +34210,17 @@
         "0": "TOOL_RESULT_SENDFILE_PATH_NOT_READABLE_PERMISSIONS_VAR_0"
       },
       "version": "2.1.210"
+    },
+    {
+      "name": "Tool Description: MCP elicitation URL fallback",
+      "id": "tool-description-mcp-elicitation-url-fallback",
+      "description": "Explains the call errors with a URL to open when no elicitation hook resolves",
+      "pieces": [
+        "resolves, the call errors with the URL in the message — open it "
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
     },
     {
       "name": "MCP resource not found",
@@ -35862,6 +36291,17 @@
         "0": "TOOL_RESULT_BASH_WORKTREE_ISOLATION_GLOB_COMMAND_VAR_0"
       },
       "version": "2.1.218"
+    },
+    {
+      "name": "Tool Description: Split batches under one planId",
+      "id": "tool-description-split-batches-same-planid",
+      "description": "Directs splitting batches over 256 across calls with the same planId",
+      "pieces": [
+        "split larger batches across multiple calls under the same planId."
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
     },
     {
       "name": "Workshop Verifier: Unsafe srcset URL",
@@ -39411,6 +39851,17 @@
       "version": "2.1.191"
     },
     {
+      "name": "Tool Result: Artifact preflight slug mismatch",
+      "id": "tool-result-artifact-preflight-slug-mismatch",
+      "description": "Reports the server answered the upload preflight for a different artifact",
+      "pieces": [
+        "the server answered the upload preflight for a different "
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
+    },
+    {
       "name": "Tool Result: Artifact update not recognized",
       "id": "tool-result-artifact-update-not-recognized",
       "description": "Artifact publish/update failure returned to the model when the server does not recognize the artifact for updating.",
@@ -39420,6 +39871,17 @@
       "identifiers": [],
       "identifierMap": {},
       "version": "2.1.218"
+    },
+    {
+      "name": "Tool Result: Artifact deploy missing content",
+      "id": "tool-result-artifact-deploy-missing-content",
+      "description": "Reports the server kept seeing missing content at deploy time",
+      "pieces": [
+        "the server kept reporting missing content at deploy time "
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
     },
     {
       "name": "Memory file too large reason",
@@ -39841,6 +40303,17 @@
         "0": "SYSTEM_PROMPT_AUDIO_FILE_TRANSCRIPTION_NOTE_VAR_0"
       },
       "version": "2.1.202"
+    },
+    {
+      "name": "Tool Description: Sandbox bypass on explicit request",
+      "id": "tool-description-bash-sandbox-bypass-explicit-request",
+      "description": "First condition permitting dangerouslyDisableSandbox",
+      "pieces": [
+        "The user *explicitly* asks you to bypass sandbox"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
     },
     {
       "name": "Tool Result: AskUserQuestion answered (read carefully)",
@@ -40531,6 +41004,17 @@
         "2": "DATA_IMPORT_UNMAPPABLE_PROJECT_SCOPE_ITEMS_NOT_LISTED_VAR_2"
       },
       "version": "2.1.214"
+    },
+    {
+      "name": "System Prompt: Memory types intro line",
+      "id": "system-prompt-memory-types-intro-line",
+      "description": "Intro sentence for the discrete memory types list",
+      "pieces": [
+        "There are several discrete types of memory that you can store in your memory system:"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
     },
     {
       "name": "System Prompt: Types of memory overview",
@@ -41764,6 +42248,17 @@
       "version": "2.1.178"
     },
     {
+      "name": "Tool Description: Upload reads and encodes directly",
+      "id": "tool-description-upload-direct-read-note",
+      "description": "Explains file contents never enter the conversation",
+      "pieces": [
+        "tool reads, encodes, and uploads directly — contents never enter "
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
+    },
+    {
       "name": "System Prompt: System-Reminder Tag Disclaimer",
       "id": "system-prompt-system-reminder-tag-disclaimer",
       "description": "Tells the model that <system-reminder> and other tags in tool results/user messages come from the system and bear no direct relation to the message they appear in.",
@@ -42729,6 +43224,17 @@
       "version": "2.1.178"
     },
     {
+      "name": "Tool Description: Design system categorization",
+      "id": "tool-description-design-system-categorization",
+      "description": "Directs reuse of the source design system's own categorization",
+      "pieces": [
+        "Use the source design system's own categorization if it has one — "
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
+    },
+    {
       "name": "REPL module loading blocked",
       "id": "tool-result-repl-module-loading-blocked",
       "description": "Error returned to the model from the REPL when its code tries to load a module; advises using tool globals.",
@@ -43221,6 +43727,17 @@
       "identifiers": [],
       "identifierMap": {},
       "version": "2.1.178"
+    },
+    {
+      "name": "Tool Description: MCP wait intro",
+      "id": "tool-description-mcp-wait-intro",
+      "description": "Opening line of the MCP wait-for-servers tool description",
+      "pieces": [
+        "Wait for MCP servers that are still connecting and whose tools are not"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
     },
     {
       "name": "Loop wakeup-not-scheduled tool_result",
@@ -44073,6 +44590,17 @@
       "identifiers": [],
       "identifierMap": {},
       "version": "2.1.219"
+    },
+    {
+      "name": "Tool Result: Workshop page sidecar refused",
+      "id": "tool-result-workshop-page-sidecar-refused",
+      "description": "Refuses renderable or executable sidecar files on workshop pages",
+      "pieces": [
+        "workshop pages cannot ship renderable or executable sidecar files — "
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
     },
     {
       "name": "Workshop Sidecar History Contract Violation",
@@ -45162,6 +45690,17 @@
       "identifiers": [],
       "identifierMap": {},
       "version": "2.1.30"
+    },
+    {
+      "name": "Tool Description: teach_batch multiple calls",
+      "id": "tool-description-teach-batch-multiple-calls",
+      "description": "Explains teach_batch may be called repeatedly in one tour",
+      "pieces": [
+        "You can call teach_batch multiple times in one tour — treat each batch as one predictable "
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.220"
     },
     {
       "name": "Agent output check-tool hint",
