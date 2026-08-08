@@ -370,7 +370,6 @@ const main = async () => {
       console.log('csp setup complete:');
       console.log('  wrapper:           ' + r.wrapper);
       console.log('  override.md:       ' + r.overrideMd);
-      console.log('  override-safe.md:  ' + r.overrideSafeMd);
       console.log('  shell alias:       ' + r.alias);
       console.log('  npm shim:          ' + r.shim);
       process.exit(0);
@@ -388,7 +387,6 @@ const main = async () => {
       console.log('csp unsetup complete:');
       console.log('  wrapper:           ' + r.wrapper);
       console.log('  override.md:       ' + r.overrideMd);
-      console.log('  override-safe.md:  ' + r.overrideSafeMd);
       console.log('  shell alias:       ' + r.alias);
       console.log('  npm shim:          ' + r.shim);
       process.exit(0);
@@ -403,7 +401,6 @@ const main = async () => {
       console.log('csp status:');
       console.log('  wrapper:           ' + (s.wrapper ? 'installed' : 'missing'));
       console.log('  override.md:       ' + (s.overrideMd ? 'present' : 'missing'));
-      console.log('  override-safe.md:  ' + (s.overrideSafeMd ? 'present' : 'missing'));
       console.log('  shell alias:       ' + (s.alias ? 'installed' : 'missing'));
       console.log('  npm shim:          ' + s.shim);
       process.exit(0);
