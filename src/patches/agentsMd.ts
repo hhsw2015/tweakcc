@@ -24,7 +24,11 @@ export const writeAgentsMd = (
     return file;
   }
 
-  // Try the dir-flag null-check reader first (CC >=2.1.210)
+  // Try the switch-on-precomputed-result reader first (CC >=2.1.227)
+  const asyncV4 = writeAgentsMdAsyncSwitch(file, altNames);
+  if (asyncV4) return asyncV4;
+
+  // Try the dir-flag null-check reader next (CC 2.1.210..2.1.226)
   const asyncV3 = writeAgentsMdAsyncDirFlag(file, altNames);
   if (asyncV3) return asyncV3;
 
@@ -51,6 +55,64 @@ export const writeAgentsMd = (
 //     return rrg(i,e,t,r)}catch(n){return org(n,e),{info:null,includePaths:[]}}}
 // The AGENTS.md reroute goes at the head of the `i===null` branch, before the
 // original skip-log/metric/return body (which we splice back verbatim).
+// CC >=2.1.227: the reader gained a precomputed-result fast path. It now takes
+// a 4th arg carrying a cache/read result and switches on its `kind`, falling
+// back to a fresh read only when that arg is absent:
+//   async function XPs(e,t,r,n){try{let o,i=!1;
+//     if(n){let s=await vd_(n);switch(s.kind){case"absent":return{info:null,includePaths:[]};
+//       case"error":return oQu(s.code,e),{info:null,includePaths:[]};
+//       case"skipped":i=s.isDirectory,o=null;break;case"content":o=s.content;break}}
+//     else{let s=gr();o=await XY(s,e,vIo,(a)=>{i=a.isDirectory()})}
+//     if(o===null){...[CLAUDE.md] skipping...return{info:null,includePaths:[]}}
+//     return md_(o,e,t,r)}catch(o){return Td_(o,e),{info:null,includePaths:[]}}}
+// The whole if(n){switch}else{read} block is captured verbatim and spliced back;
+// only the signature gains `didReroute` and the `o===null` branch gets the alt
+// reroute. The reroute reads each alt name fresh by recursing with the 4th arg
+// cleared (void 0), so it takes the else-branch read for the alt path.
+const writeAgentsMdAsyncSwitch = (
+  file: string,
+  altNames: string[]
+): string | null => {
+  const funcPattern =
+    /async function ([$\w]+)\(([$\w]+),([$\w]+),([$\w]+),([$\w]+)\)\{try\{let ([$\w]+),([$\w]+)=!1;([\s\S]*?)if\(\6===null\)\{([\s\S]*?\[CLAUDE\.md\] skipping[\s\S]*?return\{info:null,includePaths:\[\]\})\}return ([$\w]+)\(\6,\2,\3,\4\)\}catch\(([$\w]+)\)\{return ([$\w]+)\(\11,\2\),\{info:null,includePaths:\[\]\}\}\}/;
+
+  const m = file.match(funcPattern);
+  if (!m || m.index === undefined) return null;
+
+  const funcName = m[1]; // XPs
+  const pathParam = m[2]; // e
+  const typeParam = m[3]; // t
+  const thirdParam = m[4]; // r
+  const precomputedParam = m[5]; // n
+  const contentVar = m[6]; // o
+  const dirFlag = m[7]; // i
+  const middle = m[8]; // if(n){switch...}else{read}
+  const nullBody = m[9]; // if(E(`[CLAUDE.md] skipping...`)...return{info:null,includePaths:[]}
+  const processor = m[10]; // md_
+  const catchVar = m[11]; // o (catch-scoped)
+  const errorHandler = m[12]; // Td_
+
+  const altNamesJson = JSON.stringify(altNames);
+
+  const replacement =
+    `async function ${funcName}(${pathParam},${typeParam},${thirdParam},${precomputedParam},didReroute){try{let ${contentVar},${dirFlag}=!1;${middle}` +
+    `if(${contentVar}===null){` +
+    `if(!didReroute&&(${pathParam}.endsWith("/CLAUDE.md")||${pathParam}.endsWith("\\\\CLAUDE.md"))){` +
+    `for(let alt of ${altNamesJson}){let altPath=${pathParam}.slice(0,-9)+alt;` +
+    `try{let rerouteResult=await ${funcName}(altPath,${typeParam},${thirdParam},void 0,true);if(rerouteResult.info)return rerouteResult}catch{}}}` +
+    `${nullBody}}` +
+    `return ${processor}(${contentVar},${pathParam},${typeParam},${thirdParam})}catch(${catchVar}){return ${errorHandler}(${catchVar},${pathParam}),{info:null,includePaths:[]}}}`;
+
+  const startIndex = m.index;
+  const endIndex = startIndex + m[0].length;
+  const newFile =
+    file.slice(0, startIndex) + replacement + file.slice(endIndex);
+
+  showDiff(file, newFile, replacement, startIndex, endIndex);
+
+  return newFile;
+};
+
 const writeAgentsMdAsyncDirFlag = (
   file: string,
   altNames: string[]

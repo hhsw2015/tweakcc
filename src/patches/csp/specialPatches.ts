@@ -29,10 +29,13 @@ export const writeDangerTableSkip = (file: string): string => {
 export const writeForceV0True = (file: string): string | null => {
   // Legacy tail: `return X()??Y}`. 2.1.212 tail: `return rL()?.settings.enableWorkflows??t}`.
   // 用 [^}]{0,80} 兜底两种.
+  // 2.1.227+ 把 available/defaultOn 来源从函数调用 `X()` 换成方法调用
+  // `Rhs.resolve()` (main) / `Rhs.resolve().available` (short chain), 故两处
+  // 调用点加可选 `(?:\.[\w$]{1,12})?` 兜住方法调用, 同时兼容旧版裸函数调用.
   const patternLegacy =
-    /function ([\w$]{1,8})\(\)\{if\([\w$]{1,8}\(\)\)return!1;if\(![\w$]{1,8}\(\)\)return!1;let\{available:[\w$]+,defaultOn:[\w$]+\}=[\w$]+\(\);if\(![\w$]+\)return!1;return [^}]{1,80}\}/g;
+    /function ([\w$]{1,8})\(\)\{if\([\w$]{1,8}\(\)\)return!1;if\(![\w$]{1,8}\(\)\)return!1;let\{available:[\w$]+,defaultOn:[\w$]+\}=[\w$]{1,8}(?:\.[\w$]{1,12})?\(\);if\(![\w$]+\)return!1;return [^}]{1,80}\}/g;
   const patternShortChain =
-    /function ([\w$]{1,8})\(\)\{return [\w$]{1,8}\(\)&&![\w$]{1,8}\(process\.env\.CLAUDE_CODE_DISABLE_WORKFLOWS\)&&[\w$]{1,8}\(\)\.available\}/g;
+    /function ([\w$]{1,8})\(\)\{return [\w$]{1,8}\(\)&&![\w$]{1,8}\(process\.env\.CLAUDE_CODE_DISABLE_WORKFLOWS\)&&[\w$]{1,8}(?:\.[\w$]{1,12})?\(\)\.available\}/g;
 
   let out: string | null = file;
   const legacyResult = applyRegexReplace(out ?? file, {

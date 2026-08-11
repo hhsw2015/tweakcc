@@ -142,4 +142,56 @@ describe('agentsMd', () => {
       );
     });
   });
+
+  // CC >=2.1.227: the reader gained a precomputed-result fast path — a 4th arg
+  // that, when present, is switched on by `kind` (absent/error/skipped/content)
+  // instead of doing a fresh read. The whole if(n){switch}else{read} block is
+  // spliced back verbatim; only the signature gains didReroute and the
+  // `o===null` branch gets the reroute (recursing with the 4th arg cleared so
+  // the alt path takes the else-branch read).
+  describe('writeAgentsMd async switch shape (CC >=2.1.227)', () => {
+    const switchReader =
+      'async function XPs(e,t,r,n){try{let o,i=!1;' +
+      'if(n){let s=await vd_(n);switch(s.kind){' +
+      'case"absent":return{info:null,includePaths:[]};' +
+      'case"error":return oQu(s.code,e),{info:null,includePaths:[]};' +
+      'case"skipped":i=s.isDirectory,o=null;break;' +
+      'case"content":o=s.content;break}}' +
+      'else{let s=gr();o=await XY(s,e,vIo,(a)=>{i=a.isDirectory()})}' +
+      'if(o===null){if(E(`[CLAUDE.md] skipping ${e}: not a regular file or exceeds ${vIo} byte limit`),!VXu&&!i)VXu=!0,Pe("context_claude_md_load","file_skipped_special_or_oversize");return{info:null,includePaths:[]}}' +
+      'return md_(o,e,t,r)}catch(o){return Td_(o,e),{info:null,includePaths:[]}}}';
+
+    it('adds didReroute to the signature and reroutes in the o===null branch', () => {
+      const result = writeAgentsMd(switchReader, altNames);
+      expect(result).not.toBeNull();
+      expect(result).toContain('async function XPs(e,t,r,n,didReroute)');
+      expect(result).toContain('if(o===null){');
+      expect(result).toContain('endsWith("/CLAUDE.md")');
+      expect(result).toContain('AGENTS.md');
+    });
+
+    it('recurses with the 4th arg cleared and didReroute=true', () => {
+      const result = writeAgentsMd(switchReader, altNames)!;
+      expect(result).toContain(
+        'let rerouteResult=await XPs(altPath,t,r,void 0,true)'
+      );
+    });
+
+    it('preserves the precomputed switch block, skip body, processor, and catch verbatim', () => {
+      const result = writeAgentsMd(switchReader, altNames)!;
+      expect(result).toContain(
+        'if(n){let s=await vd_(n);switch(s.kind){'
+      );
+      expect(result).toContain(
+        'else{let s=gr();o=await XY(s,e,vIo,(a)=>{i=a.isDirectory()})}'
+      );
+      expect(result).toContain(
+        'if(E(`[CLAUDE.md] skipping ${e}: not a regular file or exceeds ${vIo} byte limit`),!VXu&&!i)VXu=!0,Pe("context_claude_md_load","file_skipped_special_or_oversize");return{info:null,includePaths:[]}}'
+      );
+      expect(result).toContain('return md_(o,e,t,r)');
+      expect(result).toContain(
+        'catch(o){return Td_(o,e),{info:null,includePaths:[]}}'
+      );
+    });
+  });
 });

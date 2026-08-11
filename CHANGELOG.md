@@ -8,6 +8,15 @@ superset of upstream. Pre-fork upstream history lives in Piebald's releases.
 
 ## [Unreleased]
 
+- **CC 2.1.227 支持: 修复 3 个失配 patch** — 上游重构导致三处 anchor 失效,
+  全部适配: (1) **slashCommands** — 命令从内联大数组搬进懒加载模块闭包,
+  注册表变成 `builtinCommandTable??=NAME()` 记忆化 builder (裸变量 + spread),
+  改用该 anchor 定位数组尾部, 保留旧 `=>[]` 内联启发式做 fallback (影响
+  clear-screen / conversation-title / toolsets); (2) **agents-md** — reader
+  新增预算结果快路径 (第 4 参 `switch(s.kind)`), 加 `writeAgentsMdAsyncSwitch`
+  handler, reroute 递归时清空第 4 参走 else 分支重读 alt 路径; (3) **csp #16
+  v0() 强制 workflows** — available/defaultOn 来源从函数调用 `X()` 改为方法
+  调用 `Rhs.resolve()`, 两个 gate pattern 加可选 `(?:\.[\w$]+)?` 兼容.
 - **csp #26 metadata.user_id 剥指纹** — 新增 CSP 隐私 patch. `pMe()`
   组装的 `metadata.user_id` JSON 里剥掉 `device_id` 和 `account_uuid`,
   保留 `session_id` (caching / rate-limit 依赖) 和 `CLAUDE_CODE_EXTRA_METADATA`
