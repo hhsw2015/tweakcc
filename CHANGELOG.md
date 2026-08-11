@@ -8,6 +8,11 @@ superset of upstream. Pre-fork upstream history lives in Piebald's releases.
 
 ## [Unreleased]
 
+- **prompts: CC 2.1.227** — 用 skrabe extractor (`tools/promptExtractor.js`)
+  对 2.1.227 pristine 重新生成全量 prompt 文件 (3593 sites, 对比 upstream
+  Piebald 文件仅 644). system-prompt sync 冲突从 7+ 降到 2 (个别 prompt 词表
+  漂移, 安全 skip). 注: 原始抽取输出, 未跑 skrabe 的 LLM 分类/gate 阶段
+  (那步只喂 detection-coverage, 不改 prompts 文件结构).
 - **CC 2.1.227 支持: 修复 3 个失配 patch** — 上游重构导致三处 anchor 失效,
   全部适配: (1) **slashCommands** — 命令从内联大数组搬进懒加载模块闭包,
   注册表变成 `builtinCommandTable??=NAME()` 记忆化 builder (裸变量 + spread),
