@@ -8,6 +8,10 @@ superset of upstream. Pre-fork upstream history lives in Piebald's releases.
 
 ## [Unreleased]
 
+- **native: 识别 CC 2.1.229+ 无扩展名 `cli` 入口模块** — cherry-pick upstream
+  b781bb9. 2.1.229+ 把 bun 入口模块从 `src/entrypoints/cli.js` 改成无扩展名
+  `cli` (`/$bunfs/root/cli`), `isClaudeModule` 加 `endsWith('/cli')` 兼容,
+  否则升到 2.1.229+ 后 native JS 抽取会失败.
 - **prompts: CC 2.1.227** — 用 skrabe extractor (`tools/promptExtractor.js`)
   对 2.1.227 pristine 重新生成全量 prompt 文件 (3593 sites, 对比 upstream
   Piebald 文件仅 644). system-prompt sync 冲突从 7+ 降到 2 (个别 prompt 词表
