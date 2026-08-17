@@ -7,10 +7,26 @@ import { LocationResult, showDiff } from './index';
  *
  * Approach: Find "=25000," and verify a known anchor appears nearby to ensure
  * we're targeting the correct value. Supports multiple anchors across CC versions:
+ * - "defaultFileReadingLimits" (CC >=2.1.233)
  * - "<system-reminder>" (CC <2.1.83)
  * - "tengu_amber_wren" (CC >=2.1.83)
  */
 const getFileReadLimitLocation = (oldFile: string): LocationResult | null => {
+  // CC >=2.1.233 moved the limit next to `defaultFileReadingLimits` and away
+  // from the tengu_amber_wren / <system-reminder> anchors. The bundle now holds
+  // three `=25000,` sites (memory limit, loop limit, file-read limit); only the
+  // file-read one follows `defaultFileReadingLimits`. Lazy `{0,400}?` grabs the
+  // first `=25000,` after that anchor so a later unrelated site can't be chosen.
+  const fileReadingLimitsRegion = oldFile.match(
+    /defaultFileReadingLimits[\s\S]{0,400}?=25000,/
+  );
+  if (fileReadingLimitsRegion && fileReadingLimitsRegion.index !== undefined) {
+    // region ends with "=25000,"; "25000" occupies the 5 chars before the comma
+    const startIndex =
+      fileReadingLimitsRegion.index + fileReadingLimitsRegion[0].length - 6;
+    return { startIndex, endIndex: startIndex + 5 };
+  }
+
   const newConfigRegion = oldFile.match(
     /CLAUDE_CODE_FILE_READ_MAX_OUTPUT_TOKENS[\s\S]{0,1200}tengu_amber_wren/
   );

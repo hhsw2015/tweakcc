@@ -314,10 +314,11 @@ const ANCHOR_SIGNATURES: Record<number, (file: string) => number> = {
       ? 1
       : 0,
 
-  // patch 26: scrub_metadata - pMe/dLe. 2.1.201: 无 parent_session_id;
-  // 2.1.202+: 结构里插了 parent_session_id. 两种都命中就报 applicable.
+  // patch 26: scrub_metadata - pMe/dLe/COt. 2.1.201: 无 parent_session_id;
+  // 2.1.202+: 结构里插了 parent_session_id; 2.1.233+: account_uuid 有 2 个
+  // accountUuid fallback (gWt/iu). `(?:...)+` 兜任意个 fallback.
   26: f =>
-    /device_id:[\w$]{1,4}\(\),account_uuid:[\w$]{1,4}\([\w$]{1,4}\.CLAUDE_CODE_REMOTE\)&&[\w$]{1,4}\.CLAUDE_CODE_ACCOUNT_UUID\|\|[\w$]{1,4}\(\)\?\.accountUuid\|\|"",session_id:[\w$]{1,4}\(\)/.test(
+    /device_id:[\w$]{1,4}\(\),account_uuid:[\w$]{1,4}\([\w$]{1,4}\.CLAUDE_CODE_REMOTE\)&&[\w$]{1,4}\.CLAUDE_CODE_ACCOUNT_UUID(?:\|\|[\w$]{1,4}\(\)\?\.accountUuid)+\|\|"",session_id:[\w$]{1,4}\(\)/.test(
       f
     )
       ? 1
@@ -466,14 +467,16 @@ const PATCHED_SIGNATURES: Record<number, (file: string) => number> = {
       ? 1
       : 0,
 
-  // patch 26: pMe/dLe 中和 - session_id 后立即闭合 (无 device_id/account_uuid).
-  // 两种变体:
+  // patch 26: pMe/dLe/COt 中和 - session_id 后立即闭合 (无 device_id/account_uuid).
+  // 三种变体:
   //   2.1.201 legacy: let X={...Y,session_id:F()};return{user_id:G(X)}/*
   //   2.1.202+ parent: let P=null,X={...Y,session_id:F(),...P&&{parent_session_id:P}};return{user_id:G(X)}/*
+  //   2.1.233+ COt: 对象内 device_id/account_uuid 子串换等长注释, 留下
+  //     `,/* ... */session_id:F()` 的注释-紧邻-session_id 标记
   26: f =>
     /let [\w$]{1,4}=(?:null,[\w$]{1,4}=)?\{\.\.\.[\w$]{1,4},session_id:[\w$]{1,4}\(\)(?:,\.\.\.[\w$]{1,4}&&\{parent_session_id:[\w$]{1,4}\})?\};return\{user_id:[\w$]{1,4}\([\w$]{1,4}\)\}\/\*/.test(
       f
-    )
+    ) || /,\/\* *\*\/session_id:[\w$]{1,4}\(\)/.test(f)
       ? 1
       : 0,
 

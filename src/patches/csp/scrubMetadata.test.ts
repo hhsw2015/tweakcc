@@ -55,4 +55,29 @@ describe('csp #26: scrubMetadata (pMe)', () => {
     expect(output).toContain('session_id:c3()');
     expect(output).toContain('user_id:d4(z)');
   });
+
+  // CC 2.1.233+ (COt): metadata object is embedded in a comma sequence, not a
+  // standalone `let X={...};return`, and account_uuid gained a 2nd accountUuid
+  // fallback. The scrub strips device_id + account_uuid in place (equal-length
+  // comment), keeping session_id and the trailing parent_session_id / tk spreads.
+  const PRISTINE_227PLUS =
+    'a={...o&&{ti:o},device_id:yhe(),account_uuid:Ln(V.CLAUDE_CODE_REMOTE)&&V.CLAUDE_CODE_ACCOUNT_UUID||gWt()?.accountUuid||iu()?.accountUuid||"",session_id:Gt(),...i&&{parent_session_id:i},...s&&{tk:s}}';
+
+  it('2.1.233 shape: strips device_id + account_uuid in place, keeps rest', () => {
+    const input = wrap(PRISTINE_227PLUS);
+    const output = writeScrubMetadata(input);
+    expect(output).not.toBeNull();
+    expect(output!.length).toBe(input.length);
+    expect(output).not.toContain('device_id:yhe()');
+    expect(output).not.toContain('account_uuid:Ln(');
+    expect(output).toContain('session_id:Gt()');
+    expect(output).toContain('parent_session_id:i');
+    expect(output).toContain('{tk:s}');
+  });
+
+  it('2.1.233 shape: is idempotent', () => {
+    const input = wrap(PRISTINE_227PLUS);
+    const once = writeScrubMetadata(input)!;
+    expect(writeScrubMetadata(once)).toBeNull();
+  });
 });

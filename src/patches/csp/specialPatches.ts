@@ -222,12 +222,28 @@ export const writeScrubMetadata = (file: string): string | null => {
   // 2.1.201 legacy shape: let X={...e,...session_id:...()};return{user_id:F(X)}
   const patternLegacy =
     /let ([\w$]{1,4})=\{\.\.\.([\w$]{1,4}),device_id:[\w$]{1,4}\(\),account_uuid:[\w$]{1,4}\([\w$]{1,4}\.CLAUDE_CODE_REMOTE\)&&[\w$]{1,4}\.CLAUDE_CODE_ACCOUNT_UUID\|\|[\w$]{1,4}\(\)\?\.accountUuid\|\|"",session_id:([\w$]{1,4})\(\)\};return\{user_id:([\w$]{1,4})\(\1\)\}/g;
-  return applyRegexReplace(file, {
+  const legacy = applyRegexReplace(file, {
     pattern: patternLegacy,
     build: m => ({
       body: `let ${m[1]}={...${m[2]},session_id:${m[3]}()};return{user_id:${m[4]}(${m[1]})}`,
       tail: '',
     }),
+  });
+  if (legacy !== null) return legacy;
+
+  // 2.1.233+ 重构: metadata 对象嵌在逗号序列里, 不再是独立 `let X={...};return`
+  // 语句, 且有更多字段:
+  //   a={...o&&{ti:o},device_id:yhe(),account_uuid:Ln(V.CLAUDE_CODE_REMOTE)&&
+  //     V.CLAUDE_CODE_ACCOUNT_UUID||gWt()?.accountUuid||iu()?.accountUuid||"",
+  //     session_id:Gt(),...i&&{parent_session_id:i},...s&&{tk:s}}
+  // account_uuid 的 accountUuid fallback 从 1 个增到 2 个 (gWt/iu), 用 `+` 兜住
+  // 任意个. 只剥 device_id + account_uuid 子串 (换等长注释), 保 session_id 及
+  // 其后的 parent_session_id / tk 分支不动.
+  const patternV3 =
+    /device_id:[\w$]{1,4}\(\),account_uuid:[\w$]{1,4}\([\w$]{1,4}\.CLAUDE_CODE_REMOTE\)&&[\w$]{1,4}\.CLAUDE_CODE_ACCOUNT_UUID(?:\|\|[\w$]{1,4}\(\)\?\.accountUuid)+\|\|"",session_id:/g;
+  return applyRegexReplace(file, {
+    pattern: patternV3,
+    build: () => ({ body: '', tail: 'session_id:' }),
   });
 };
 

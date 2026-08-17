@@ -8,6 +8,15 @@ superset of upstream. Pre-fork upstream history lives in Piebald's releases.
 
 ## [Unreleased]
 
+- **CC 2.1.233 支持: 修复 2 个失配 patch + 生成 prompts** — 升级 2.1.227 → 2.1.233
+  时发现两处 anchor 失效: (1) **increase-file-read-limit** — 上游把 25000 上限从
+  `tengu_amber_wren` 附近挪到 `defaultFileReadingLimits` (且 JS 区多了 memory/loop
+  两个 25000 干扰靶), 新增 `defaultFileReadingLimits` anchor 精确命中文件读取的那个;
+  (2) **csp #26 scrubMetadata** — 组装函数 `pMe` → `COt({agentContext})` 重构,
+  metadata 对象嵌入逗号序列 (不再 `let X={...};return`), account_uuid 增到 2 个
+  accountUuid fallback, 新增 patternV3 只剥 `device_id`+`account_uuid` 子串换等长
+  注释, 保 session_id/parent_session_id/tk; check.ts 同步更新 anchor + patched
+  签名. 另用 skrabe extractor 生成 `prompts-2.1.233.json` (3805 sites).
 - **native: 识别 CC 2.1.229+ 无扩展名 `cli` 入口模块** — cherry-pick upstream
   b781bb9. 2.1.229+ 把 bun 入口模块从 `src/entrypoints/cli.js` 改成无扩展名
   `cli` (`/$bunfs/root/cli`), `isClaudeModule` 加 `endsWith('/cli')` 兼容,
