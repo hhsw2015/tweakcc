@@ -329,3 +329,126 @@ describe('verify-plan reminder removed-feature handling', () => {
     expect(verifyPlan.apply(drifted, 'body', false)).toBeNull();
   });
 });
+
+// CC 2.1.238 reworded/restructured eight reminder handlers: the wrapper renamed
+// (ih/Vr → Zy/kn — already parameterized), several filename slots gained a path
+// helper wrap (`${e.filename}` → `${Kae(e.filename)}`), output_style swapped its
+// map-lookup guard for type/length guards, and edited_text_file became a block
+// body that hoists a shared prefix. These verify the anchors match the 2.1.238
+// shapes (and still suppress).
+describe('reminder anchors — CC 2.1.238 shapes', () => {
+  const get = (id: string) => REMINDER_REGISTRY.find(r => r.id === id)!;
+
+  it('date-change: content-agnostic tail after the newDate prefix', () => {
+    const mock =
+      'date_change:(e)=>Zy([kn({content:`The date has changed. Today\'s date is now ${e.newDate}. No need to announce the new date \\u2014 the user\'s own clock shows it.`,isMeta:!0})])';
+    const out = get('date-change').apply(mock, 'body ${H.newDate}', false)!;
+    expect(out).not.toBeNull();
+    expect(out).toContain('date_change:(e)=>Zy([kn({content:');
+    expect(get('date-change').apply(mock, '', true)).toContain(
+      'date_change:(e)=>[]'
+    );
+  });
+
+  it('compact-file-reference: preserves the ${Kae(e.filename)} wrap', () => {
+    const mock =
+      'compact_file_reference:(e)=>Zy([kn({content:`Note: ${Kae(e.filename)} was read before the last conversation was summarized, but the contents are too large to include. Use ${mC.name} tool if you need to access it.`,isMeta:!0})])';
+    const out = get('compact-file-reference').apply(
+      mock,
+      'Note: ${H.filename} use ${oO.name}',
+      false
+    )!;
+    expect(out).toContain('Kae(e.filename)');
+    expect(out).toContain('${mC.name}');
+  });
+
+  it('pdf-reference: preserves the ${Kae(e.filename)} wrap', () => {
+    const mock =
+      'pdf_reference:(e)=>Zy([kn({content:`PDF file: ${Kae(e.filename)} (${e.pageCount} pages, ${Ba(e.fileSize)}). This PDF is too large to read all at once. You MUST use the ${Ns} tool with the pages parameter to read specific page ranges (e.g., pages: "1-5"). Do NOT call ${Ns} without the pages parameter or it will fail. Maximum 20 pages per request.`,isMeta:!0})])';
+    const out = get('pdf-reference').apply(
+      mock,
+      'PDF: ${H.filename} ${H.page_count} ${H.file_size} ${H.read_tool}',
+      false
+    )!;
+    expect(out).not.toBeNull();
+    expect(out).toContain('Kae(e.filename)');
+  });
+
+  it('selected-lines-in-ide: preserves filename wrap + content expr', () => {
+    const mock =
+      'selected_lines_in_ide:(e)=>Zy([kn({content:`The user selected the lines ${e.lineStart} to ${e.lineEnd} from ${Kae(e.filename)}:\n${Eqm(e.content)}\n\nThis may or may not be related to the current task.`,isMeta:!0})])';
+    const out = get('selected-lines-in-ide').apply(
+      mock,
+      'lines ${H.lineStart}-${H.lineEnd} ${H.filename} ${q}',
+      false
+    )!;
+    expect(out).toContain('Kae(e.filename)');
+    expect(out).toContain('Eqm(e.content)');
+  });
+
+  it('opened-file-in-ide: reproduces exactly (no-op) with matching default', () => {
+    const mock =
+      'opened_file_in_ide:(e)=>Zy([kn({content:`The user opened the file ${Kae(e.filename)} in the IDE. This may or may not be related to the current task.`,isMeta:!0})])';
+    const body =
+      'The user opened the file ${H.filename} in the IDE. This may or may not be related to the current task.';
+    const out = get('opened-file-in-ide').apply(mock, body, false)!;
+    expect(out).toBe(mock); // Kae wrap preserved → exact reproduction
+    expect(get('opened-file-in-ide').apply(mock, '', true)).toContain(
+      'opened_file_in_ide:(e)=>[]'
+    );
+  });
+
+  it('output-style: matches the 2.1.238 guard shape, preserves guards', () => {
+    const mock =
+      'output_style:(e)=>{if(typeof e.style!=="string"||e.style==="")return[];if(e.style.length>gFn)return T(`too long`,{level:"error"}),[];return Zy([kn({content:`${pze(e.style)} output style is active. ${e.turnReminder??"Remember to follow the specific guidelines for this style."}`,isMeta:!0})])}';
+    const out = get('output-style-banner').apply(
+      mock,
+      '${_.name} active ${H.turnReminder??"x"}',
+      false
+    )!;
+    expect(out).not.toBeNull();
+    // guards preserved
+    expect(out).toContain('typeof e.style!=="string"');
+    expect(out).toContain('e.style.length>gFn');
+    // style-name expression preserved
+    expect(out).toContain('pze(e.style)');
+  });
+
+  it('output-style: still matches the <=2.1.237 map-lookup shape', () => {
+    const mock =
+      'output_style:(e)=>{let s=W[e.style];if(!s)return[];return Zy([kn({content:`${s.name} output style is active. ${e.turnReminder??"Remember to follow the specific guidelines for this style."}`,isMeta:!0})])}';
+    const out = get('output-style-banner').apply(
+      mock,
+      '${_.name} active ${H.turnReminder??"x"}',
+      false
+    )!;
+    expect(out).not.toBeNull();
+    expect(out).toContain('let s=W[e.style];if(!s)return[]');
+    expect(out).toContain('s.name');
+  });
+
+  it('edited-text-file: matches the 2.1.238 block+ternary body', () => {
+    const mock =
+      'edited_text_file:(e)=>{let t=`Note: ${Kae(e.filename)} changed on disk.`;return Zy([kn({content:e.snippet===""?`${t} omitted; use ${mC.name}`:`${t} changes:\n${e.snippet}`,isMeta:!0})])}';
+    const out = get('edited-text-file').apply(
+      mock,
+      'Note ${H.filename} ${H.snippet}',
+      false
+    )!;
+    expect(out).not.toBeNull();
+    expect(out).toContain('edited_text_file:(e)=>Zy([kn({content:');
+    expect(get('edited-text-file').apply(mock, '', true)).toContain(
+      'edited_text_file:(e)=>[]'
+    );
+  });
+
+  it('mcp-per-server-router: preserves the appended second map write', () => {
+    const mock =
+      'for(let f of s)if(f.instructions)l.set(f.name,`## ${f.name}\n${f.instructions}`),c.set(f.name,f.instructions);';
+    const out = get('mcp-per-server-router').apply(mock, '', false)!;
+    expect(out).not.toBeNull();
+    expect(out).toContain('__tweakccMcpOverride');
+    // the second map (c.set) must still run
+    expect(out).toContain('c.set(f.name,f.instructions)');
+  });
+});

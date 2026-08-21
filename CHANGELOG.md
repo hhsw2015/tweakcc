@@ -8,6 +8,13 @@ superset of upstream. Pre-fork upstream history lives in Piebald's releases.
 
 ## [Unreleased]
 
+- **CC 2.1.238: 修复 8 个 systemReminderOverrides anchor** — 2.1.238 重写了这些
+  reminder 的文案/结构 (wrapper `ih/Vr`→`Zy/kn`, 文案改词, output_style 加
+  type/length guards + `pze(e.style)`, edited_text_file 变 `{let t=...}`+snippet
+  双分支, mcp-router loop 多了 `c.set(f.name,f.instructions)`). 5 个简单的改成
+  内容无关 regex (抗未来文案变动), 3 个复杂的按新结构匹配并保留新增语句; 顺带
+  更新 defaultBody 到 2.1.238 文案 + 删除 8 个未定制的旧 .md 让其重种 (避免旧
+  文案降级 2.1.238). 全部对 pristine 验证命中, 31/31 reminder 测试过.
 - **CC 2.1.238 支持: 修复 4 个失配 patch + 生成 prompts** — 升级 2.1.233 → 2.1.238
   (大重构). 修 3 个 fatal base patch + 1 个 CSP 隐私 patch: (1) **thinking-visibility**
   — 可见性逻辑搬进 React-Compiler memoized 组件, gate 从 caller 侧 `if(!X&&!Y)return null`

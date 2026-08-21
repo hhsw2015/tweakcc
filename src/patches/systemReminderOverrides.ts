@@ -378,8 +378,15 @@ const OUTPUT_STYLE_INJECTION: ReminderInjection = {
   },
   defaultBody: `{{style_name}} output style is active. {{turn_reminder}}`,
   apply(content, body, isSuppressed) {
+    // Unified across CC versions. <=2.1.237 gated on a map lookup
+    // (`let s=Map[e.style];if(!s)return[];`) with the style name as `${s.name}`;
+    // 2.1.238 replaced that with type/length guards and `${pze(e.style)}`. Both
+    // reduce to: `output_style:(e)=>{<guards>return W([I({content:`<styleExpr>
+    // output style is active. ${e.turnReminder??"…"}`,isMeta:!0})])}`. Capture the
+    // guard blob and the style-name expression so the rebuild preserves whatever
+    // shape CC ships.
     const pattern =
-      /output_style:\(([$\w]+)\)=>\{let ([$\w]+)=([$\w]+)\[\1\.style\];if\(!\2\)return\[\];return ([$\w]+)\(\[([$\w]+)\(\{content:`\$\{\2\.name\} output style is active\. \$\{\1\.turnReminder\?\?"Remember to follow the specific guidelines for this style\."\}`,isMeta:!0\}\)\]\)\}/;
+      /output_style:\(([$\w]+)\)=>\{([\s\S]*?)return ([$\w]+)\(\[([$\w]+)\(\{content:`([^`]*?) output style is active\. \$\{\1\.turnReminder\?\?"[^"]*"\}`,isMeta:!0\}\)\]\)\}/;
     const match = content.match(pattern);
     if (!match || match.index === undefined) {
       if (/output_style:\([$\w]+\)=>\{return \[\]/.test(content)) {
@@ -390,17 +397,16 @@ const OUTPUT_STYLE_INJECTION: ReminderInjection = {
       );
       return null;
     }
-    const [fullMatch, hParam, sVar, mwhMap, o5Name, j6Name] = match;
+    const [fullMatch, hParam, guards, o5Name, j6Name, styleNameExpr] = match;
     const bodyForThisBuild = body
-      .replace(/\$\{_\.name\}/g, `\${${sVar}.name}`)
+      .replace(/\$\{_\.name\}/g, styleNameExpr)
       .replace(/\$\{H\.turnReminder/g, `\${${hParam}.turnReminder`);
     let replacement: string;
     if (isSuppressed) {
       replacement = `output_style:(${hParam})=>{return [];}`;
     } else {
       replacement =
-        `output_style:(${hParam})=>{` +
-        `let ${sVar}=${mwhMap}[${hParam}.style];if(!${sVar})return[];` +
+        `output_style:(${hParam})=>{${guards}` +
         `return ${o5Name}([${j6Name}({content:\`${bodyForThisBuild}\`,isMeta:!0})])}`;
     }
     const newContent =
@@ -476,11 +482,14 @@ const DATE_CHANGE_INJECTION: ReminderInjection = {
     new_date: '${H.newDate}',
   },
   defaultBody:
-    "The date has changed. Today's date is now {{new_date}}. DO NOT mention this to the user explicitly because they are already aware.",
+    "The date has changed. Today's date is now {{new_date}}. No need to announce the new date — the user's own clock shows it.",
   apply(content, body, isSuppressed) {
+    // Content-agnostic on the tail sentence (2.1.238 reworded it): anchor on the
+    // stable "The date has changed. Today's date is now ${newDate}." prefix and
+    // let `[^`]*` absorb whatever advice follows, so future rewordings don't break.
     return findAndReplace(
       content,
-      /date_change:\(([$\w]+)\)=>([$\w]+)\(\[([$\w]+)\(\{content:`The date has changed\. Today's date is now \$\{\1\.newDate\}\. DO NOT mention this to the user explicitly because they are already aware\.`,isMeta:!0\}\)\]\)/,
+      /date_change:\(([$\w]+)\)=>([$\w]+)\(\[([$\w]+)\(\{content:`The date has changed\. Today's date is now \$\{\1\.newDate\}\.[^`]*`,isMeta:!0\}\)\]\)/,
       m => {
         const [, hParam, o5Name, j6Name] = m;
         if (isSuppressed) return `date_change:(${hParam})=>[]`;
@@ -719,12 +728,15 @@ const COMPACT_FILE_REF_INJECTION: ReminderInjection = {
   apply(content, body, isSuppressed) {
     return findAndReplace(
       content,
-      /compact_file_reference:\(([$\w]+)\)=>([$\w]+)\(\[([$\w]+)\(\{content:`Note: \$\{\1\.filename\} was read before the last conversation was summarized, but the contents are too large to include\. Use \$\{([$\w]+)\.name\} tool if you need to access it\.`,isMeta:!0\}\)\]\)/,
+      // 2.1.238 wraps the filename slot in a path helper: `${e.filename}` →
+      // `${Kae(e.filename)}`. Capture the whole slot expression (matches both the
+      // bare and wrapped forms) so the rebuild preserves whatever CC uses.
+      /compact_file_reference:\(([$\w]+)\)=>([$\w]+)\(\[([$\w]+)\(\{content:`Note: \$\{((?:[$\w]+\()?\1\.filename\)?)\} was read before the last conversation was summarized, but the contents are too large to include\. Use \$\{([$\w]+)\.name\} tool if you need to access it\.`,isMeta:!0\}\)\]\)/,
       m => {
-        const [, hParam, o5Name, j6Name, readToolVar] = m;
+        const [, hParam, o5Name, j6Name, filenameExpr, readToolVar] = m;
         if (isSuppressed) return `compact_file_reference:(${hParam})=>[]`;
         const bodyForBuild = body
-          .replace(/\$\{H\.filename\}/g, `\${${hParam}.filename}`)
+          .replace(/\$\{H\.filename\}/g, `\${${filenameExpr}}`)
           .replace(/\$\{oO\.name\}/g, `\${${readToolVar}.name}`);
         return `compact_file_reference:(${hParam})=>${o5Name}([${j6Name}({content:\`${bodyForBuild}\`,isMeta:!0})])`;
       },
@@ -750,12 +762,14 @@ const PDF_REF_INJECTION: ReminderInjection = {
   apply(content, body, isSuppressed) {
     return findAndReplace(
       content,
-      /pdf_reference:\(([$\w]+)\)=>([$\w]+)\(\[([$\w]+)\(\{content:`PDF file: \$\{\1\.filename\} \(\$\{\1\.pageCount\} pages, \$\{([$\w]+)\(\1\.fileSize\)\}\)\. This PDF is too large to read all at once\. You MUST use the \$\{([$\w]+)\} tool with the pages parameter[\s\S]*?Maximum 20 pages per request\.`,isMeta:!0\}\)\]\)/,
+      // 2.1.238 wraps filename: `${e.filename}` → `${Kae(e.filename)}`; capture
+      // the whole slot expression (matches bare or wrapped).
+      /pdf_reference:\(([$\w]+)\)=>([$\w]+)\(\[([$\w]+)\(\{content:`PDF file: \$\{((?:[$\w]+\()?\1\.filename\)?)\} \(\$\{\1\.pageCount\} pages, \$\{([$\w]+)\(\1\.fileSize\)\}\)\. This PDF is too large to read all at once\. You MUST use the \$\{([$\w]+)\} tool with the pages parameter[\s\S]*?Maximum 20 pages per request\.`,isMeta:!0\}\)\]\)/,
       m => {
-        const [, hParam, o5Name, j6Name, l7Var, readToolVar] = m;
+        const [, hParam, o5Name, j6Name, filenameExpr, l7Var, readToolVar] = m;
         if (isSuppressed) return `pdf_reference:(${hParam})=>[]`;
         const bodyForBuild = body
-          .replace(/\$\{H\.filename\}/g, `\${${hParam}.filename}`)
+          .replace(/\$\{H\.filename\}/g, `\${${filenameExpr}}`)
           .replace(/\$\{H\.pageCount\}/g, `\${${hParam}.pageCount}`)
           .replace(
             /\$\{l7\(H\.fileSize\)\}/g,
@@ -790,20 +804,36 @@ const EDITED_TEXT_FILE_INJECTION: ReminderInjection = {
     snippet: '${H.snippet}',
   },
   defaultBody:
-    "Note: {{filename}} was modified, either by the user or by a linter. This change was intentional, so make sure to take it into account as you proceed (ie. don't revert it unless the user asks you to). Don't tell the user this, since they are already aware. Here are the relevant changes (shown with line numbers):\n{{snippet}}",
+    "Note: {{filename}} changed on disk since you last read it. That's usually deliberate, so take it as the current state rather than reverting it; if the change looks wrong, say so rather than undoing it yourself — otherwise no need to call it out. Here are the relevant changes (shown with line numbers):\n{{snippet}}",
   apply(content, body, isSuppressed) {
-    // cli.js literal has a real newline before ${H.snippet}.
+    const build = (hParam: string, o5Name: string, j6Name: string): string => {
+      if (isSuppressed) return `edited_text_file:(${hParam})=>[]`;
+      const bodyForBuild = body
+        .replace(/\$\{H\.filename\}/g, `\${${hParam}.filename}`)
+        .replace(/\$\{H\.snippet\}/g, `\${${hParam}.snippet}`);
+      return `edited_text_file:(${hParam})=>${o5Name}([${j6Name}({content:\`${bodyForBuild}\`,isMeta:!0})])`;
+    };
+    // 2.1.238: handler became a block body that hoists the shared prefix into a
+    // local `let t=`…`` then branches on `e.snippet===""`:
+    //   edited_text_file:(e)=>{let t=`…`;return W([I({content:e.snippet===""?`${t}…`:`${t}…`,isMeta:!0})])}
+    // Content-agnostic on every template literal (rebuild collapses the ternary
+    // into the single override body, matching this registry's design).
+    const blockShape =
+      /edited_text_file:\(([$\w]+)\)=>\{let [$\w]+=`[^`]*`;return ([$\w]+)\(\[([$\w]+)\(\{content:\1\.snippet===""\?`[^`]*`:`[^`]*`,isMeta:!0\}\)\]\)\}/;
+    if (blockShape.test(content)) {
+      return findAndReplace(
+        content,
+        blockShape,
+        m => build(m[1], m[2], m[3]),
+        'edited-text-file',
+        c => /edited_text_file:\([$\w]+\)=>\[\]/.test(c)
+      );
+    }
+    // <=2.1.237: direct arrow with inline `e.snippet===""?…:…` ternary.
     return findAndReplace(
       content,
-      /edited_text_file:\(([$\w]+)\)=>([$\w]+)\(\[([$\w]+)\(\{content:\1\.snippet===""\?`Note: \$\{\1\.filename\} was modified, either by the user or by a linter\. This change was intentional, so make sure to take it into account as you proceed \(ie\. don't revert it unless the user asks you to\)\. Don't tell the user this, since they are already aware\. The diff was omitted because other modified files in this turn already exceeded the snippet budget; use the Read tool if you need the current content\.`:`Note: \$\{\1\.filename\} was modified, either by the user or by a linter\. This change was intentional, so make sure to take it into account as you proceed \(ie\. don't revert it unless the user asks you to\)\. Don't tell the user this, since they are already aware\. Here are the relevant changes \(shown with line numbers\):\n\$\{\1\.snippet\}`,isMeta:!0\}\)\]\)/,
-      m => {
-        const [, hParam, o5Name, j6Name] = m;
-        if (isSuppressed) return `edited_text_file:(${hParam})=>[]`;
-        const bodyForBuild = body
-          .replace(/\$\{H\.filename\}/g, `\${${hParam}.filename}`)
-          .replace(/\$\{H\.snippet\}/g, `\${${hParam}.snippet}`);
-        return `edited_text_file:(${hParam})=>${o5Name}([${j6Name}({content:\`${bodyForBuild}\`,isMeta:!0})])`;
-      },
+      /edited_text_file:\(([$\w]+)\)=>([$\w]+)\(\[([$\w]+)\(\{content:\1\.snippet===""\?`[^`]*`:`[^`]*`,isMeta:!0\}\)\]\)/,
+      m => build(m[1], m[2], m[3]),
       'edited-text-file',
       c => /edited_text_file:\([$\w]+\)=>\[\]/.test(c)
     );
@@ -829,19 +859,22 @@ const SELECTED_LINES_INJECTION: ReminderInjection = {
     // inlined as a function call (`${k6l(e.content)}`) rather than a local var.
     // Capture that whole content expression and map the override's `${q}`
     // (selected_text) placeholder onto it.
+    // 2.1.238 also wraps the filename slot: `${e.filename}` → `${Kae(e.filename)}`.
+    // Capture the whole filename expression (bare or wrapped) alongside the
+    // selected-text content expression.
     const newShape =
-      /selected_lines_in_ide:\(([$\w]+)\)=>([$\w]+)\(\[([$\w]+)\(\{content:`The user selected the lines \$\{\1\.lineStart\} to \$\{\1\.lineEnd\} from \$\{\1\.filename\}:\n\$\{([^`]*?)\}\n\nThis may or may not be related to the current task\.`,isMeta:!0\}\)\]\)/;
+      /selected_lines_in_ide:\(([$\w]+)\)=>([$\w]+)\(\[([$\w]+)\(\{content:`The user selected the lines \$\{\1\.lineStart\} to \$\{\1\.lineEnd\} from \$\{((?:[$\w]+\()?\1\.filename\)?)\}:\n\$\{([^`]*?)\}\n\nThis may or may not be related to the current task\.`,isMeta:!0\}\)\]\)/;
     if (newShape.test(content)) {
       return findAndReplace(
         content,
         newShape,
         m => {
-          const [, hParam, o5Name, j6Name, contentExpr] = m;
+          const [, hParam, o5Name, j6Name, filenameExpr, contentExpr] = m;
           if (isSuppressed) return `selected_lines_in_ide:(${hParam})=>[]`;
           const bodyForBuild = body
             .replace(/\$\{H\.lineStart\}/g, `\${${hParam}.lineStart}`)
             .replace(/\$\{H\.lineEnd\}/g, `\${${hParam}.lineEnd}`)
-            .replace(/\$\{H\.filename\}/g, `\${${hParam}.filename}`)
+            .replace(/\$\{H\.filename\}/g, `\${${filenameExpr}}`)
             .replace(/\$\{q\}/g, `\${${contentExpr}}`);
           return `selected_lines_in_ide:(${hParam})=>${o5Name}([${j6Name}({content:\`${bodyForBuild}\`,isMeta:!0})])`;
         },
@@ -881,15 +914,16 @@ const OPENED_FILE_INJECTION: ReminderInjection = {
   defaultBody:
     'The user opened the file {{filename}} in the IDE. This may or may not be related to the current task.',
   apply(content, body, isSuppressed) {
+    // 2.1.238 wraps the filename slot: `${e.filename}` → `${Kae(e.filename)}`.
     return findAndReplace(
       content,
-      /opened_file_in_ide:\(([$\w]+)\)=>([$\w]+)\(\[([$\w]+)\(\{content:`The user opened the file \$\{\1\.filename\} in the IDE\. This may or may not be related to the current task\.`,isMeta:!0\}\)\]\)/,
+      /opened_file_in_ide:\(([$\w]+)\)=>([$\w]+)\(\[([$\w]+)\(\{content:`The user opened the file \$\{((?:[$\w]+\()?\1\.filename\)?)\} in the IDE\. This may or may not be related to the current task\.`,isMeta:!0\}\)\]\)/,
       m => {
-        const [, hParam, o5Name, j6Name] = m;
+        const [, hParam, o5Name, j6Name, filenameExpr] = m;
         if (isSuppressed) return `opened_file_in_ide:(${hParam})=>[]`;
         const bodyForBuild = body.replace(
           /\$\{H\.filename\}/g,
-          `\${${hParam}.filename}`
+          `\${${filenameExpr}}`
         );
         return `opened_file_in_ide:(${hParam})=>${o5Name}([${j6Name}({content:\`${bodyForBuild}\`,isMeta:!0})])`;
       },
@@ -1429,8 +1463,12 @@ const MCP_PER_SERVER_ROUTER_INJECTION: ReminderInjection = {
     'This file is a marker that enables per-MCP-server overrides. Edit per-server content in mcp-<server-name>.md alongside this file. Leave this file with content (any content) to enable routing; empty it to disable.',
   apply(content, _body, isSuppressed) {
     if (isSuppressed) return content;
+    // 2.1.238 appended a second map write to the loop body:
+    //   ...l.set(f.name,`## ${f.name}\n${f.instructions}`),c.set(f.name,f.instructions);
+    // Capture the optional `,c.set(f.name,f.instructions)` and re-emit it inside
+    // the rebuilt loop so the second map keeps being populated.
     const pattern =
-      /for\(let ([$\w]+) of ([$\w]+)\)if\(\1\.instructions\)([$\w]+)\.set\(\1\.name,`## \$\{\1\.name\}\n\$\{\1\.instructions\}`\);/;
+      /for\(let ([$\w]+) of ([$\w]+)\)if\(\1\.instructions\)([$\w]+)\.set\(\1\.name,`## \$\{\1\.name\}\n\$\{\1\.instructions\}`\)(?:,([$\w]+)\.set\(\1\.name,\1\.instructions\))?;/;
     const match = content.match(pattern);
     if (!match || match.index === undefined) {
       if (content.includes('__tweakccMcpOverride')) return content;
@@ -1439,7 +1477,7 @@ const MCP_PER_SERVER_ROUTER_INJECTION: ReminderInjection = {
       );
       return null;
     }
-    const [fullMatch, jVar, zVar, mapVar] = match;
+    const [fullMatch, jVar, zVar, mapVar, secondMapVar] = match;
     const replacement =
       `function __tweakccMcpOverride(_n,_d){try{` +
       `let _f=require('fs'),_p=require('os').homedir()+'/.tweakcc/system-reminders/mcp-'+_n+'.md';` +
@@ -1453,6 +1491,9 @@ const MCP_PER_SERVER_ROUTER_INJECTION: ReminderInjection = {
       `for(let ${jVar} of ${zVar}){` +
       `let _c=__tweakccMcpOverride(${jVar}.name,${jVar}.instructions);` +
       `if(_c)${mapVar}.set(${jVar}.name,\`## \${${jVar}.name}\n\${_c}\`)` +
+      (secondMapVar
+        ? `;${secondMapVar}.set(${jVar}.name,${jVar}.instructions)`
+        : '') +
       `}`;
     const newContent =
       content.slice(0, match.index) +
