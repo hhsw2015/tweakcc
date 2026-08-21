@@ -19,6 +19,14 @@ const FIXTURE_LEGACY =
 const FIXTURE_2_1_204 =
   'case"thinking":{if(!cit&&!BY){return null}let xU;if(ekt[32]!==ej||ekt[33]!==cit||ekt[34]!==XO||ekt[35]!==BY)xU=Kd.jsx(Rer,{addMargin:ej,param:XO,isTranscriptMode:cit,verbose:BY}),ekt[32]=ej;else xU=ekt[36];return xU}rest';
 
+// CC 2.1.238 shape: the `case"thinking":` caller no longer gates visibility.
+// Rendering moved into a memoized component that destructures
+// `{...,isTranscriptMode:V,verbose:I}=props` and derives a single gate
+// `let G=V||I;` driving `G?<full>:<collapsed>`. The empty-text guard
+// `if(!txt){C=null;break}` must be preserved; only the gate is forced true.
+const FIXTURE_2_1_238 =
+  'function Fsn(JeM){let f9l=ADh.c(27),{param:XeM,addMargin:rIw,isTranscriptMode:vDh,verbose:TDh}=JeM,{thinking:wDh}=XeM,EDh=rIw===void 0?!1:rIw;if(f9l[0]!==EDh){let kDh=AD(wDh);if(!kDh){CDh=null;break bb0}let ZeM=vDh||TDh;_9l=ZeM?Mwe.jsx(Mg,{children:kDh.trim()}):Mwe.jsx(b,{children:kDh.trim().replace(/\\s+/g," ")})}}rest';
+
 describe('writeThinkingVisibility', () => {
   it('removes the early return and forces isTranscriptMode:true (2.1.18 shape)', () => {
     const out = writeThinkingVisibility(FIXTURE);
@@ -57,6 +65,20 @@ describe('writeThinkingVisibility', () => {
     expect(out).toContain('isTranscriptMode:true,');
     expect(out).not.toContain('isTranscriptMode:V,');
     expect(out).toContain('case"thinking":');
+  });
+
+  it('forces the derived visibility gate true in the 2.1.238 component shape', () => {
+    const out = writeThinkingVisibility(FIXTURE_2_1_238);
+
+    expect(out).not.toBeNull();
+    // The derived gate `let ZeM=vDh||TDh;` is forced to `!0`...
+    expect(out).not.toContain('let ZeM=vDh||TDh;');
+    expect(out).toContain('let ZeM=!0;');
+    // ...the empty-thinking-text guard is preserved (not a visibility gate)...
+    expect(out).toContain('if(!kDh){CDh=null;break bb0}');
+    // ...and both render branches survive.
+    expect(out).toContain('Mwe.jsx(Mg,{children:kDh.trim()})');
+    expect(out).toContain('kDh.trim().replace(/\\s+/g," ")');
   });
 
   it('is idempotent: already-natively-configured input is returned unchanged', () => {

@@ -62,23 +62,57 @@ export const writeThinkingVisibility = (oldFile: string): string | null => {
 
   const match = oldFile.match(pattern);
 
-  if (!match || match.index === undefined) {
-    console.error(
-      'patch: thinkingVisibility: failed to find thinking visibility pattern'
-    );
-    return null;
+  if (match && match.index !== undefined) {
+    // Replacement: skip match[2] (removes the if-return-null), set isTranscriptMode to true
+    const replacement = match[1] + match[3] + 'true,';
+
+    const startIndex = match.index;
+    const endIndex = startIndex + match[0].length;
+
+    const newFile =
+      oldFile.slice(0, startIndex) + replacement + oldFile.slice(endIndex);
+
+    showDiff(oldFile, newFile, replacement, startIndex, endIndex);
+
+    return newFile;
   }
 
-  // Replacement: skip match[2] (removes the if-return-null), set isTranscriptMode to true
-  const replacement = match[1] + match[3] + 'true,';
+  // CC 2.1.238+: the `case"thinking":` caller no longer decides visibility.
+  // Rendering moved into a React-Compiler-memoized component that destructures
+  // `{...,isTranscriptMode:V,verbose:I}=props` and derives a single gate:
+  //   let G=V||I;  ... _=G?<full multi-line>:<collapsed single-line>
+  // (`if(!txt){C=null;break}` above it only nulls when there is no thinking
+  // text — that must stay.) Force the gate true so thinking always renders in
+  // full/expanded form, matching the old `isTranscriptMode:true` intent.
+  // Anchored on the isTranscriptMode/verbose destructure names so the generic
+  // `let X=Y||Z;` can only bind to those two.
+  const gatePattern =
+    /isTranscriptMode:([$\w]+),verbose:([$\w]+)\}=[$\w]+,[\s\S]{0,600}?let ([$\w]+)=\1\|\|\2;/;
+  const gateMatch = oldFile.match(gatePattern);
 
-  const startIndex = match.index;
-  const endIndex = startIndex + match[0].length;
+  if (gateMatch && gateMatch.index !== undefined) {
+    // Replace only the `=V||I` initializer with `=!0`, keeping the surrounding
+    // destructure/body untouched.
+    const gateVar = gateMatch[3];
+    const original = gateMatch[0];
+    const replaced = original.replace(
+      new RegExp(`let ${gateVar}=${gateMatch[1]}\\|\\|${gateMatch[2]};$`),
+      `let ${gateVar}=!0;`
+    );
 
-  const newFile =
-    oldFile.slice(0, startIndex) + replacement + oldFile.slice(endIndex);
+    const startIndex = gateMatch.index;
+    const endIndex = startIndex + original.length;
 
-  showDiff(oldFile, newFile, replacement, startIndex, endIndex);
+    const newFile =
+      oldFile.slice(0, startIndex) + replaced + oldFile.slice(endIndex);
 
-  return newFile;
+    showDiff(oldFile, newFile, replaced, startIndex, endIndex);
+
+    return newFile;
+  }
+
+  console.error(
+    'patch: thinkingVisibility: failed to find thinking visibility pattern'
+  );
+  return null;
 };

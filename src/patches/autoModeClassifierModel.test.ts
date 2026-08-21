@@ -108,6 +108,27 @@ describe('writeAutoModeClassifierModel', () => {
     );
   });
 
+  it('rewrites the 2.1.238 resolver (no-arg config reader + member-expr demotion gate)', () => {
+    const SHAPE_2_1_238 =
+      'function SSt(){let e=Gi(),t=WM(),' +
+      'r=Xym(t?.modelByMainModel,{vet:(n)=>Abl(n,"modelByMainModel")})??Abl(t?.model,"model");' +
+      'if(r)return{value:r,src:"gb"};' +
+      'if($hr().externalSonnet5Probe!=="demoted"){let n=noa(e);if(n)return{value:n,src:"default",externalDefault:!0}}' +
+      'return{value:Dbl(e),src:"default"}}';
+    const file = `function kbl(){return SSt().value}${SHAPE_2_1_238}var B=2;`;
+    const result = writeAutoModeClassifierModel(file, 'haiku');
+    expect(result).toContain(
+      'function SSt(){return{value:"claude-haiku-4-5",src:"default"}}'
+    );
+    expect(result).not.toContain('modelByMainModel');
+    expect(result).toContain('function kbl(){return SSt().value}');
+    expect(result).toContain('var B=2;');
+    // idempotent
+    expect(writeAutoModeClassifierModel(result as string, 'haiku')).toBe(
+      result
+    );
+  });
+
   it('is a no-op for choice=default', () => {
     const file = `var A=1;${SHAPE_2_1_170}`;
     expect(writeAutoModeClassifierModel(file, 'default')).toBe(file);

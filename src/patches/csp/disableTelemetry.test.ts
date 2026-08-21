@@ -70,4 +70,21 @@ describe('csp #27: disableTelemetry (G / I_ / pto, all-or-nothing)', () => {
     expect(output).toContain('async function a2(){');
     expect(output).toContain('function a3(){');
   });
+
+  // CC 2.1.238+: state source changed from a bare ident (`let n=pdn`) to a
+  // method chain (`let r=j1o().state`). G/I_ must still neutralize.
+  it('2.1.238 shape: state via method chain (let r=X().state)', () => {
+    const g238 =
+      'function N(e,t){let r=j1o().state;if(r.sink===null){Hgu(r,{eventName:e,metadata:t,async:!1});return}r.sink.logEvent(e,t)}';
+    const i238 =
+      'async function tS(e,t){let r=j1o().state;if(r.sink===null){Hgu(r,{eventName:e,metadata:t,async:!0});return}await r.sink.logEventAsync(e,t)}';
+    const input = `head;${g238}${i238};tail`;
+    const output = writeDisableTelemetry(input);
+    expect(output).not.toBeNull();
+    expect(output!.length).toBe(input.length);
+    expect(output).toContain('function N(){');
+    expect(output).toContain('async function tS(){');
+    expect(output).not.toContain('r.sink.logEvent(e,t)');
+    expect(output).not.toContain('logEventAsync(e,t)');
+  });
 });

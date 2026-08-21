@@ -8,6 +8,20 @@ superset of upstream. Pre-fork upstream history lives in Piebald's releases.
 
 ## [Unreleased]
 
+- **CC 2.1.238 支持: 修复 4 个失配 patch + 生成 prompts** — 升级 2.1.233 → 2.1.238
+  (大重构). 修 3 个 fatal base patch + 1 个 CSP 隐私 patch: (1) **thinking-visibility**
+  — 可见性逻辑搬进 React-Compiler memoized 组件, gate 从 caller 侧 `if(!X&&!Y)return null`
+  变成派生 `let G=isTranscriptMode||verbose`, 改成 `let G=!0` 强制展开; (2)
+  **hide-startup-clawd** — Clawd ASCII 艺术从内联字符串搬进 module-level pose-map
+  (`ntg={default:{r1L,r1E,...}}`), 新增 `findClawdViaPoseMap` 定位读 pose-map +
+  含 `"Apple_Terminal"` 的 wrapper; (3) **auto-mode-classifier-model** — resolver
+  重构 (config 读取 `R("tengu_auto_mode_config")` → `WM()`, 降级门 `STATE` →
+  `$hr().externalSonnet5Probe`), 新增 pattern238 锚 `modelByMainModel`+`vet:`;
+  (4) **csp #27 disableTelemetry** — G/I_ 的 state 来源从裸 ident `let n=pdn` 变成
+  方法链 `let r=j1o().state`, RHS 加可选 `(?:\(\))?(?:\.[\w$]{1,8})?`. 另用 skrabe
+  extractor 生成 `prompts-2.1.238.json` (3987 sites). 注: 8 个 systemReminderOverrides
+  anchor 在 2.1.238 也漂移了 (wrapper `ih/Vr`→`Zy/kn` + 内容变), 但非 fatal 且该功能
+  未配置 (CC 原文保留), 暂缓.
 - **CC 2.1.233 支持: 修复 2 个失配 patch + 生成 prompts** — 升级 2.1.227 → 2.1.233
   时发现两处 anchor 失效: (1) **increase-file-read-limit** — 上游把 25000 上限从
   `tengu_amber_wren` 附近挪到 `defaultFileReadingLimits` (且 JS 区多了 memory/loop

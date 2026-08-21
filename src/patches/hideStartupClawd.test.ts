@@ -52,6 +52,23 @@ describe('writeHideStartupClawd', () => {
     expect(out!.match(/return null;/g)!.length).toBe(1);
   });
 
+  it('CC >=2.1.238: nulls the wrapper that reads the pose-map art', () => {
+    // 2.1.238 moved the art into a module-level pose map (`ntg`) of block-row
+    // pieces, and the wrapper reads `ntg[pose]` with an Apple_Terminal branch.
+    const poseMap =
+      'var TC,Afc,ntg,otg;' +
+      'ntg={default:{r1L:" \\u2590",r1E:"\\u259B\\u2588\\u2588\\u2588\\u259B\\u2588",r1R:"",r2L:"\\u259D\\u259C",r2R:"\\u2588\\u2580"}};' +
+      'function uK(gfc){let P8e=Afc.c(26),GtE;let{pose:VtE}=GtE,yfc=VtE===void 0?"default":VtE;' +
+      'if(V.terminal==="Apple_Terminal"){return TC.jsx(kfc,{pose:yfc})}' +
+      'let EEe=ntg[yfc],zdn;return zdn}';
+    const out = writeHideStartupClawd(poseMap);
+    expect(out).not.toBeNull();
+    expect(out).toContain('function uK(gfc){return null;let P8e=Afc.c(26)');
+    // pose-map data left intact; exactly one insertion.
+    expect(out).toContain('ntg={default:{r1L:" \\u2590"');
+    expect(out!.match(/return null;/g)!.length).toBe(1);
+  });
+
   it('returns null (logging) when no Clawd art is present', () => {
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     expect(

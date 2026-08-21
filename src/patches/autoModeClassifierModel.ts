@@ -111,6 +111,36 @@ export const writeAutoModeClassifierModel = (
   const pattern216 =
     /function\s+([$\w]+)\s*\(\s*\)\s*\{\s*let\s+([$\w]+)\s*=\s*[$\w]+\s*\(\s*\)\s*,\s*([$\w]+)\s*=\s*[$\w]+\s*\(\s*"tengu_auto_mode_config"\s*,\s*\{\s*\}\s*\)\s*,\s*([$\w]+)\s*=\s*[$\w]+\s*\(\s*\3\s*\?\.\s*modelByMainModel\s*,\s*\{\s*vet\s*:\s*\(\s*([$\w]+)\s*\)\s*=>\s*[$\w]+\s*\(\s*\5\s*,\s*"modelByMainModel"\s*\)\s*\}\s*\)\s*\?\?\s*[$\w]+\s*\(\s*\3\s*\?\.\s*model\s*,\s*"model"\s*\)\s*;\s*if\s*\(\s*\4\s*\)\s*return\s*\{\s*value\s*:\s*\4\s*,\s*src\s*:\s*"gb"\s*\}\s*;\s*if\s*\(\s*[$\w]+\s*!==\s*"demoted"\s*\)\s*\{\s*let\s+([$\w]+)\s*=\s*[$\w]+\s*\(\s*\2\s*\)\s*;\s*if\s*\(\s*\6\s*\)\s*return\s*\{\s*value\s*:\s*\6\s*,\s*src\s*:\s*"default"\s*,\s*externalDefault\s*:\s*!0\s*\}\s*\}\s*return\s*\{\s*value\s*:\s*[$\w]+\s*\(\s*\2\s*\)\s*,\s*src\s*:\s*"default"\s*\}\s*\}/;
 
+  // CC 2.1.238 shape: same tagged-object linear chain as 2.1.216, but two spots
+  // moved: (1) the config reader lost its inline `"tengu_auto_mode_config"`
+  // literal — `_=R("tengu_auto_mode_config",{})` became a no-arg helper
+  // `t=WM()` (the key moved inside WM); (2) the demotion check is no longer a
+  // bare identifier — `STATE!=="demoted"` became a member call
+  // `$hr().externalSonnet5Probe!=="demoted"`. Anchored on the still-unique
+  // `modelByMainModel` + `vet:` + tagged-object returns rather than the (now
+  // absent) config-key literal.
+  //   function NAME(){let H=MAIN(),_=CFG(),r=VET(_?.modelByMainModel,{vet:(n)=>V(n,"modelByMainModel")})??V(_?.model,"model");if(r)return{value:r,src:"gb"};if(STATE().field!=="demoted"){let n=EXT(H);if(n)return{value:n,src:"default",externalDefault:!0}}return{value:RESOLVE(H),src:"default"}}
+  const pattern238 =
+    /function\s+([$\w]+)\s*\(\s*\)\s*\{\s*let\s+([$\w]+)\s*=\s*[$\w]+\s*\(\s*\)\s*,\s*([$\w]+)\s*=\s*[$\w]+\s*\(\s*\)\s*,\s*([$\w]+)\s*=\s*[$\w]+\s*\(\s*\3\s*\?\.\s*modelByMainModel\s*,\s*\{\s*vet\s*:\s*\(\s*([$\w]+)\s*\)\s*=>\s*[$\w]+\s*\(\s*\5\s*,\s*"modelByMainModel"\s*\)\s*\}\s*\)\s*\?\?\s*[$\w]+\s*\(\s*\3\s*\?\.\s*model\s*,\s*"model"\s*\)\s*;\s*if\s*\(\s*\4\s*\)\s*return\s*\{\s*value\s*:\s*\4\s*,\s*src\s*:\s*"gb"\s*\}\s*;\s*if\s*\(\s*[$\w]+\s*\(\s*\)\s*\.\s*[$\w]+\s*!==\s*"demoted"\s*\)\s*\{\s*let\s+([$\w]+)\s*=\s*[$\w]+\s*\(\s*\2\s*\)\s*;\s*if\s*\(\s*\6\s*\)\s*return\s*\{\s*value\s*:\s*\6\s*,\s*src\s*:\s*"default"\s*,\s*externalDefault\s*:\s*!0\s*\}\s*\}\s*return\s*\{\s*value\s*:\s*[$\w]+\s*\(\s*\2\s*\)\s*,\s*src\s*:\s*"default"\s*\}\s*\}/;
+
+  const match238 = oldFile.match(pattern238);
+  if (match238 && match238.index !== undefined) {
+    const [fullMatch, fnName] = match238;
+    const replacement = `function ${fnName}(){return{value:"${modelId}",src:"default"}}`;
+    const newFile =
+      oldFile.slice(0, match238.index) +
+      replacement +
+      oldFile.slice(match238.index + fullMatch.length);
+    showDiff(
+      oldFile,
+      newFile,
+      replacement,
+      match238.index,
+      match238.index + fullMatch.length
+    );
+    return newFile;
+  }
+
   const match216 = oldFile.match(pattern216);
   if (match216 && match216.index !== undefined) {
     const [fullMatch, fnName] = match216;

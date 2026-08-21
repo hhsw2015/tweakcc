@@ -263,10 +263,12 @@ export const writeDisableTelemetry = (file: string): string | null => {
   // accountUuid/organizationUuid 也可能绑不同 var 名. 结构不变.
   // 2.1.209+: 队列 push 从 inline `n.eventQueue.push({...})` 抽成 helper
   // `X(n, {...})`. 两种 shape 都吃.
+  // 2.1.238+: state 来源从裸 ident `let r=Z;` 换成方法链 `let r=j1o().state;`,
+  // 故 RHS 加可选 `(?:\(\))?(?:\.[\w$]{1,8})?` 兜住 Z / Z() / Z().state.
   const gPattern =
-    /function ([\w$]{1,4})\(e,t\)\{let ([\w$]{1,4})=[\w$]{1,4};if\(\2\.sink===null\)\{(?:\2\.eventQueue\.push\(\{eventName:e,metadata:t,async:!1\}\)|[\w$]{1,4}\(\2,\{eventName:e,metadata:t,async:!1\}\));return\}\2\.sink\.logEvent\(e,t\)\}/g;
+    /function ([\w$]{1,4})\(e,t\)\{let ([\w$]{1,4})=[\w$]{1,4}(?:\(\))?(?:\.[\w$]{1,8})?;if\(\2\.sink===null\)\{(?:\2\.eventQueue\.push\(\{eventName:e,metadata:t,async:!1\}\)|[\w$]{1,4}\(\2,\{eventName:e,metadata:t,async:!1\}\));return\}\2\.sink\.logEvent\(e,t\)\}/g;
   const iPattern =
-    /async function ([\w$]{1,4})\(e,t\)\{let ([\w$]{1,4})=[\w$]{1,4};if\(\2\.sink===null\)\{(?:\2\.eventQueue\.push\(\{eventName:e,metadata:t,async:!0\}\)|[\w$]{1,4}\(\2,\{eventName:e,metadata:t,async:!0\}\));return\}await \2\.sink\.logEventAsync\(e,t\)\}/g;
+    /async function ([\w$]{1,4})\(e,t\)\{let ([\w$]{1,4})=[\w$]{1,4}(?:\(\))?(?:\.[\w$]{1,8})?;if\(\2\.sink===null\)\{(?:\2\.eventQueue\.push\(\{eventName:e,metadata:t,async:!0\}\)|[\w$]{1,4}\(\2,\{eventName:e,metadata:t,async:!0\}\));return\}await \2\.sink\.logEventAsync\(e,t\)\}/g;
   const ptoPattern =
     /function ([\w$]{1,4})\(e\)\{if\(![\w$]{1,4}\(\)\)return;if\(!([\w$]{1,4})\|\|[\w$]{1,4}\("firstParty"\)\)return;let ([\w$]{1,4})=[\w$]{1,4}\(\),\{accountUuid:([\w$]{1,4}),organizationUuid:([\w$]{1,4})\}=[\w$]{1,4}\(!0\),([\w$]{1,4})=\{event_type:"GrowthbookExperimentEvent",event_id:[\w$]{1,4}\.randomUUID\(\),experiment_id:e\.experimentId,variation_id:e\.variationId,\.\.\.\3&&\{device_id:\3\},\.\.\.\4&&\{account_uuid:\4\},\.\.\.\5&&\{organization_uuid:\5\},\.\.\.e\.userAttributes&&\{session_id:e\.userAttributes\.sessionId,user_attributes:[\w$]{1,4}\(\{appVersion:e\.userAttributes\.appVersion\}\)\},\.\.\.e\.experimentMetadata&&\{experiment_metadata:[\w$]{1,4}\(e\.experimentMetadata\)\},environment:[\w$]{1,4}\(\)\},([\w$]{1,4})=new Date;\2\.emit\(\{timestamp:\7,observedTimestamp:\7,body:"growthbook_experiment",attributes:\6\}\)\}/g;
 

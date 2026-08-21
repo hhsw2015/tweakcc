@@ -328,11 +328,12 @@ const ANCHOR_SIGNATURES: Record<number, (file: string) => number> = {
   // 2.1.202 local var reshuffle (n→r, pdn→ipr, I_→My, pto→kzn). 三个结构任一
   // pristine → applicable. 全参数化 local var LHS.
   // 2.1.209+: eventQueue.push 抽成 helper `X(sink,...)`, 两种 shape 都识.
+  // 2.1.238+: state 来源 `let r=Z;` → `let r=j1o().state;`, RHS 加可选方法链.
   27: f =>
-    /function [\w$]{1,4}\(e,t\)\{let [\w$]{1,4}=[\w$]{1,4};if\([\w$]{1,4}\.sink===null\)\{(?:[\w$]{1,4}\.eventQueue\.push|[\w$]{1,4}\([\w$]{1,4},)\{eventName:e,metadata:t,async:!1\}/.test(
+    /function [\w$]{1,4}\(e,t\)\{let [\w$]{1,4}=[\w$]{1,4}(?:\(\))?(?:\.[\w$]{1,8})?;if\([\w$]{1,4}\.sink===null\)\{(?:[\w$]{1,4}\.eventQueue\.push|[\w$]{1,4}\([\w$]{1,4},)\{eventName:e,metadata:t,async:!1\}/.test(
       f
     ) ||
-    /async function [\w$]{1,4}\(e,t\)\{let [\w$]{1,4}=[\w$]{1,4};if\([\w$]{1,4}\.sink===null\)\{(?:[\w$]{1,4}\.eventQueue\.push|[\w$]{1,4}\([\w$]{1,4},)\{eventName:e,metadata:t,async:!0\}/.test(
+    /async function [\w$]{1,4}\(e,t\)\{let [\w$]{1,4}=[\w$]{1,4}(?:\(\))?(?:\.[\w$]{1,8})?;if\([\w$]{1,4}\.sink===null\)\{(?:[\w$]{1,4}\.eventQueue\.push|[\w$]{1,4}\([\w$]{1,4},)\{eventName:e,metadata:t,async:!0\}/.test(
       f
     ) ||
     /function [\w$]{1,4}\(e\)\{if\(![\w$]{1,4}\(\)\)return;if\(![\w$]{1,4}\|\|[\w$]{1,4}\("firstParty"\)\)return;let [\w$]{1,4}=[\w$]{1,4}\(\),\{accountUuid:[\w$]{1,4},organizationUuid:[\w$]{1,4}\}=[\w$]{1,4}\(!0\),[\w$]{1,4}=\{event_type:"GrowthbookExperimentEvent"/.test(
