@@ -22903,6 +22903,22 @@
       "version": "2.1.233"
     },
     {
+      "name": "Tool Result: Artifact Publish — Incomplete Or Malformed Response",
+      "id": "tool-result-artifact-publish-malformed-response",
+      "description": "Reason clause naming an incomplete or malformed response on the artifact publish path.",
+      "pieces": [
+        "${",
+        "} returned an incomplete or malformed response"
+      ],
+      "identifiers": [
+        0
+      ],
+      "identifierMap": {
+        "0": "TOOL_RESULT_ARTIFACT_PUBLISH_MALFORMED_RESPONSE_VAR_0"
+      },
+      "version": "2.1.238"
+    },
+    {
       "name": "ClaudeDesign Re-Login Hint (Interactive)",
       "id": "tool-result-design-credential-expired-login-hint",
       "description": "Interactive-session branch of mDy()'s ClaudeDesign auth-error message thrown as a Bn tool error and returned to the model as the ClaudeDesign tool_result.",
@@ -25692,6 +25708,17 @@
       "identifiers": [],
       "identifierMap": {},
       "version": "2.1.237"
+    },
+    {
+      "name": "Tool Result: Worktree Isolation — Git Could Not Resolve The Entry",
+      "id": "tool-result-worktree-isolation-git-unresolvable-entry",
+      "description": "Reason clause for refusing a worktree whose .git entry exists but git could not resolve.",
+      "pieces": [
+        "a .git entry exists there but git could not resolve it"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.238"
     },
     {
       "name": "Data: Import untranslatable shell block dropped",
@@ -35685,6 +35712,22 @@
       "version": "2.1.232"
     },
     {
+      "name": "Tool Result: Artifact Publish — Deploy Request Failed",
+      "id": "tool-result-artifact-publish-deploy-request-failed",
+      "description": "Reason clause naming a failed deploy request on the artifact publish path.",
+      "pieces": [
+        "deploy request failed: ${",
+        "}"
+      ],
+      "identifiers": [
+        0
+      ],
+      "identifierMap": {
+        "0": "TOOL_RESULT_ARTIFACT_PUBLISH_DEPLOY_REQUEST_FAILED_VAR_0"
+      },
+      "version": "2.1.238"
+    },
+    {
       "name": "Tool Parameter: Task mode (deprecated)",
       "id": "tool-parameter-task-mode-deprecated",
       "description": "zod .describe() for the Task/Agent tool's deprecated mode input, telling the model it is ignored and that subagents inherit the parent session's permission mode",
@@ -40557,6 +40600,17 @@
       "version": "2.1.206"
     },
     {
+      "name": "Tool Result: Worktree Isolation — Git Could Not Be Run",
+      "id": "tool-result-worktree-isolation-git-unrunnable",
+      "description": "Reason clause for refusing a worktree because git could not be run to resolve it.",
+      "pieces": [
+        "git could not be run to resolve it"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.238"
+    },
+    {
       "name": "Environment: GitHub Session Proxy Explainer",
       "id": "system-prompt-environment-github-session-proxy",
       "description": "Model-facing environment-info system-prompt fragment explaining that git/gh traffic is routed through a pre-configured session proxy and warning never to disable TLS verification or the proxy/sslCAInfo entries.",
@@ -42700,6 +42754,17 @@
       "identifiers": [],
       "identifierMap": {},
       "version": "2.1.206"
+    },
+    {
+      "name": "Tool Result: Worktree Isolation — .git Entry Unexaminable",
+      "id": "tool-result-worktree-isolation-git-entry-unexaminable",
+      "description": "Reason clause for refusing a worktree whose .git entry exists but could not be examined.",
+      "pieces": [
+        "its .git entry exists but could not be examined"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.238"
     },
     {
       "name": "Data: Agent Import — Shell Block Missing Leading Whitespace",
@@ -48460,6 +48525,25 @@
       "version": "2.1.233"
     },
     {
+      "name": "Tool Result: Artifact PR Review — Unverifiable Decided-Item Option",
+      "id": "tool-result-artifact-pr-review-unverifiable-decided-item-option",
+      "description": "Subject clause naming the decided-item option spelled in a form this CLI does not produce.",
+      "pieces": [
+        "option \"${",
+        "}\" of decided item \"${",
+        ".id}\""
+      ],
+      "identifiers": [
+        0,
+        1
+      ],
+      "identifierMap": {
+        "0": "TOOL_RESULT_ARTIFACT_PR_REVIEW_UNVERIFIABLE_DECIDED_ITEM_OPTION_VAR_0",
+        "1": "TOOL_RESULT_ARTIFACT_PR_REVIEW_UNVERIFIABLE_DECIDED_ITEM_OPTION_VAR_1"
+      },
+      "version": "2.1.238"
+    },
+    {
       "name": "Skill args parameter",
       "id": "tool-parameter-skill-args",
       "description": "Skill tool inputSchema param description for the optional args field; model-facing as part of the Skill tool's input_schema.",
@@ -52890,6 +52974,22 @@
         "0": "SLASH_COMMAND_PLUGIN_VALIDATE_COMPONENT_NOT_REGULAR_FILE_TAIL_VAR_0"
       },
       "version": "2.1.233"
+    },
+    {
+      "name": "Tool Result: Artifact Publish — Relay Request Failed",
+      "id": "tool-result-artifact-publish-relay-request-failed",
+      "description": "Reason clause naming a failed relay request on the artifact publish path.",
+      "pieces": [
+        "relay request failed: ${",
+        "}"
+      ],
+      "identifiers": [
+        0
+      ],
+      "identifierMap": {
+        "0": "TOOL_RESULT_ARTIFACT_PUBLISH_RELAY_REQUEST_FAILED_VAR_0"
+      },
+      "version": "2.1.238"
     },
     {
       "name": "Tool Description: Computer left_mouse_up",
@@ -62641,6 +62741,41 @@
       "version": "2.1.221"
     },
     {
+      "name": "Tool Result: Artifact PR Review — Published Page Carries No Option",
+      "id": "tool-result-artifact-pr-review-published-page-no-option",
+      "description": "Refusal stating the published page carries no element for a named option of a decided item.",
+      "pieces": [
+        "the published page carries no option \"${",
+        "}\" for decided item \"${",
+        ".id}\""
+      ],
+      "identifiers": [
+        0,
+        1
+      ],
+      "identifierMap": {
+        "0": "TOOL_RESULT_ARTIFACT_PR_REVIEW_PUBLISHED_PAGE_NO_OPTION_VAR_0",
+        "1": "TOOL_RESULT_ARTIFACT_PR_REVIEW_PUBLISHED_PAGE_NO_OPTION_VAR_1"
+      },
+      "version": "2.1.238"
+    },
+    {
+      "name": "Tool Result: Artifact PR Review — Published Page Carries No Question",
+      "id": "tool-result-artifact-pr-review-published-page-no-question",
+      "description": "Refusal stating the published page carries no question element for a decided item.",
+      "pieces": [
+        "the published page carries no question for decided item \"${",
+        ".id}\""
+      ],
+      "identifiers": [
+        0
+      ],
+      "identifierMap": {
+        "0": "TOOL_RESULT_ARTIFACT_PR_REVIEW_PUBLISHED_PAGE_NO_QUESTION_VAR_0"
+      },
+      "version": "2.1.238"
+    },
+    {
       "name": "Tool Result: Artifact PR-Review Republish Compare Failed",
       "id": "tool-result-artifact-pr-review-republish-compare-failed",
       "description": "Republish refusal when the published page could not be compared with this CLI version's template, so a republish cannot reproduce it.",
@@ -62685,6 +62820,22 @@
       ],
       "identifierMap": {
         "0": "TOOL_RESULT_ARTIFACT_PR_REVIEW_REPUBLISH_UNRECOGNIZED_ENTITY_VAR_0"
+      },
+      "version": "2.1.238"
+    },
+    {
+      "name": "Tool Result: Artifact PR Review — Unverifiable Decided-Item Question",
+      "id": "tool-result-artifact-pr-review-unverifiable-decided-item-question",
+      "description": "Subject clause naming the decided item whose question is spelled in a form this CLI does not produce.",
+      "pieces": [
+        "the question of decided item \"${",
+        ".id}\""
+      ],
+      "identifiers": [
+        0
+      ],
+      "identifierMap": {
+        "0": "TOOL_RESULT_ARTIFACT_PR_REVIEW_UNVERIFIABLE_DECIDED_ITEM_QUESTION_VAR_0"
       },
       "version": "2.1.238"
     },
@@ -62760,6 +62911,22 @@
       "version": "2.1.218"
     },
     {
+      "name": "Tool Result: Artifact PR Review — Republish Changes A Decided Option Set",
+      "id": "tool-result-artifact-pr-review-republish-option-set-changed",
+      "description": "Refusal stating that a republish changes the option set of a decided item, which must keep the options the writer clicked among.",
+      "pieces": [
+        "the republish changes the option set of decided item \"${",
+        ".id}\" — decided items must keep the options the writer clicked among"
+      ],
+      "identifiers": [
+        0
+      ],
+      "identifierMap": {
+        "0": "TOOL_RESULT_ARTIFACT_PR_REVIEW_REPUBLISH_OPTION_SET_CHANGED_VAR_0"
+      },
+      "version": "2.1.238"
+    },
+    {
       "name": "Tool Result: PR Review Republish Changes The Staleness Island",
       "id": "tool-result-artifact-pr-review-republish-island-changed",
       "description": "Artifact tool republish-anchor check error telling the model a republish altered the page staleness island and must reuse the published island exactly, returned as a <tool_use_error> tool result.",
@@ -62769,6 +62936,41 @@
       "identifiers": [],
       "identifierMap": {},
       "version": "2.1.218"
+    },
+    {
+      "name": "Tool Result: Artifact PR Review — Republish Rewrites A Decided Option",
+      "id": "tool-result-artifact-pr-review-republish-rewrites-option",
+      "description": "Refusal stating a republish rewrites a decided item's option, which must match what the writer saw.",
+      "pieces": [
+        "the republish rewrites option \"${",
+        "}\" of decided item \"${",
+        ".id}\" — decided content must match what the writer saw"
+      ],
+      "identifiers": [
+        0,
+        1
+      ],
+      "identifierMap": {
+        "0": "TOOL_RESULT_ARTIFACT_PR_REVIEW_REPUBLISH_REWRITES_OPTION_VAR_0",
+        "1": "TOOL_RESULT_ARTIFACT_PR_REVIEW_REPUBLISH_REWRITES_OPTION_VAR_1"
+      },
+      "version": "2.1.238"
+    },
+    {
+      "name": "Tool Result: Artifact PR Review — Republish Rewrites A Decided Question",
+      "id": "tool-result-artifact-pr-review-republish-rewrites-question",
+      "description": "Refusal stating a republish rewrites a decided item's question, which must match what the writer saw.",
+      "pieces": [
+        "the republish rewrites the question of decided item \"${",
+        ".id}\" — decided content must match what the writer saw"
+      ],
+      "identifiers": [
+        0
+      ],
+      "identifierMap": {
+        "0": "TOOL_RESULT_ARTIFACT_PR_REVIEW_REPUBLISH_REWRITES_QUESTION_VAR_0"
+      },
+      "version": "2.1.238"
     },
     {
       "name": "Tool Result: Artifact asset upload request failed in transit",
