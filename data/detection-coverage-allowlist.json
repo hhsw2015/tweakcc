@@ -29,6 +29,13 @@
     "shape": "concat",
     "verdict": "internal"
   },
+  "0d66eff17746a846": {
+    "excerpt": "Prompt cache TTL for everything outside the main conversation \u2014 subagents, workflows, background and helper requests: \"5m\" or \"1h\". Unset = ",
+    "note": "not model-facing: config schema / CLI help / operator error / TUI dialog",
+    "shape": "concat",
+    "verdict": "internal",
+    "why": "zod .describe() on settings.subagentPromptCacheTtl @1807063, sibling of alwaysThinkingEnabled/effortLevel in the same settings object. Schema help for config.json, never a tool result or system prompt."
+  },
   "0fe20c7872464cea": {
     "excerpt": "ablation requested but no plugin resolved for this case: auto-detection found no plugin.json (or .claude-plugin/plugin.json) between the cas",
     "note": "not model-facing: config schema / CLI help / operator error / TUI dialog",
@@ -75,6 +82,13 @@
     "excerpt": "Optional regex for structured masking when mode is `mask`. Applied globally to the file; capture group 1 of each match is a credential value",
     "shape": "concat",
     "verdict": "internal"
+  },
+  "235be883aabdcf7d": {
+    "excerpt": "When true, the picker shows only the Default row and these options \u2014 the built-in lineup, gateway-discovered models and ANTHROPIC_CUSTOM_MOD",
+    "note": "not model-facing: config schema / CLI help / operator error / TUI dialog",
+    "shape": "concat",
+    "verdict": "internal",
+    "why": "zod .describe() on settings.modelPicker.replaceBuiltInOptions @1783731. Same settings-schema object as modelOverrides/modelPicker.options. Operator-facing /model picker config, not model-facing."
   },
   "257b0632319d1016": {
     "excerpt": "Wait for MCP servers that are still connecting and whose tools are not yet in your tool list. Pass `servers` to wait for specific ones, or o",
@@ -129,6 +143,13 @@
     "shape": "concat",
     "verdict": "internal"
   },
+  "3d9838f859a8bacc": {
+    "excerpt": "Price usage at your organization's contracted rates instead of list price. Affects every spend figure Claude Code reports \u2014 /cost, the statu",
+    "note": "not model-facing: config schema / CLI help / operator error / TUI dialog",
+    "shape": "concat",
+    "verdict": "internal",
+    "why": "zod .describe() on settings.modelPricing @1784527 (f({multiplier,overrides}).optional().describe(concat)). Settings-schema field for contracted rates; consumed by the settings UI/schema, not injected into model context."
+  },
   "4181f64c3775001e": {
     "excerpt": "(dash = not in the current listing, costs nothing; full SKILL.md loads only when it runs)",
     "note": "not model-facing: config schema / CLI help / operator error / TUI dialog",
@@ -169,6 +190,12 @@
     "excerpt": "OAuth access token has expired. Re-authenticate to continue. OAuth access token has been revoked. OAuth access token is invalid. API key is ",
     "shape": "array",
     "verdict": "internal"
+  },
+  "48a2cdfe74b23444": {
+    "excerpt": "(its settings file can be written by the cloud session; what was registered when you attached is what runs)",
+    "shape": "array",
+    "verdict": "ui",
+    "why": "jsx children of n(o,{dimColor:!0,children:[\" \",\"(its settings file\u2026)\"]) @30324184, gated on H.fromWritableFile. Terminal chrome in the decide-cloud-hooks panel (nearby Eo=\"__decide_cloud_hooks__\"); Ink UI, not a tool_result or onDone payload."
   },
   "4a82d5edb8b583a2": {
     "excerpt": "At runtime this agent does not load at all \u2014 with no frontmatter name it is treated as a co-located reference document and skipped.",
@@ -472,6 +499,13 @@
     "verdict": "internal",
     "why": "emitted via E(msg,{level:\"warn\"}) \u2014 sandbox credential-forwarding warning log, never enters model context"
   },
+  "932ee3e71b95a5a7": {
+    "excerpt": "Controls how the managed settings sources compose. \"first-wins\" (default): the highest-priority source present (server-managed > MDM (manage",
+    "note": "not model-facing: config schema / CLI help / operator error / TUI dialog",
+    "shape": "concat",
+    "verdict": "internal",
+    "why": "zod .describe() on settings.managedSourcesBehavior @1802091. Sibling of the already-internal managedSettingsParentBehavior concat (831901d9a9e595e3) in the same settings schema."
+  },
   "957a10ccc68e4f6a": {
     "excerpt": "oidc.allowed_groups is set but Google ID tokens do not carry a groups claim \u2014 every login will be denied. Set oidc.google_groups to fetch Wo",
     "note": "not model-facing: config schema / CLI help / operator error / TUI dialog",
@@ -632,6 +666,12 @@
     "verdict": "internal",
     "why": "zod .describe() on the plugin marketplace github source schema \u2014 config schema"
   },
+  "d69ba722c790aecd": {
+    "excerpt": "sessionJournal names a session's own journal, a stream key, not a scope: the session scope lists it",
+    "shape": "array",
+    "verdict": "internal",
+    "why": "storage-scope validator table It.transcript[] @2755077, consumed by $n() -> s(`scope.${t}`, o) which is b() @475563 returning {code:\"InvalidArgument\",argument,reason} for CC internal storage namespaces. Same table and consumer as the already-internal stamp row 824ce4c3957f2eff; never a tool result."
+  },
   "d6d426f3af153fa2": {
     "excerpt": "Dependency declared in a package manifest. Each {file, pattern} is a pair of RegExp sources: `file` matches the manifest filename (package.j",
     "note": "not model-facing: config schema / CLI help / operator error / TUI dialog",
@@ -655,6 +695,12 @@
     "shape": "concat",
     "verdict": "internal",
     "why": ".describe() on the ripgrep settings-schema field"
+  },
+  "ddf0880569f9d638": {
+    "excerpt": "form names one of the marketplace's two engine-written files, a key, not a scope: the tree narrows with relPath only",
+    "shape": "array",
+    "verdict": "internal",
+    "why": "storage-scope validator table It.marketplaceCache[] @2756580, same $n()/s() InvalidArgument consumer as 824ce4c3957f2eff and d69ba722c790aecd. Internal storage-key addressing, never a tool result."
   },
   "dffac88775950017": {
     "excerpt": "What the user is working with when this plugin is relevant \u2014 fills \"Working with {topic}?\". Often the product name (e.g. \"Stripe\"); use a do",

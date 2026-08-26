@@ -5413,6 +5413,17 @@
       "version": "2.1.232"
     },
     {
+      "name": "Tool Result: Artifact publish — its other published files stay",
+      "id": "tool-result-artifact-publish-other-published-files-stay",
+      "description": "Consequence clause on the publish-upload permission-ask: other files already published on the artifact stay. behavior:ask — if the user declines, this message is the tool_result.",
+      "pieces": [
+        " (its other published files stay)"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.246"
+    },
+    {
       "name": "",
       "id": "",
       "description": "",
@@ -7095,6 +7106,17 @@
       "version": "2.1.246"
     },
     {
+      "name": "Tool Result: Artifact publish supporting files — nothing was published",
+      "id": "tool-result-artifact-publish-supporting-files-nothing-published",
+      "description": "Supporting-files HTTP-refused outcome when no slug was reserved: nothing was published.",
+      "pieces": [
+        " Nothing was published."
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.246"
+    },
+    {
       "name": "Tool Parameter: Artifact lang Type-Created Page Caveat",
       "id": "tool-parameter-artifact-lang-type-created-page-caveat",
       "description": "lang .describe() clause that lang is passed on every page publish and is refused on an Artifact created from a type.",
@@ -8018,6 +8040,17 @@
       "identifiers": [],
       "identifierMap": {},
       "version": "2.1.239"
+    },
+    {
+      "name": "Tool Result: Artifact publish supporting files — this publish didn't finish",
+      "id": "tool-result-artifact-publish-supporting-files-didnt-finish",
+      "description": "Supporting-files HTTP-refused outcome when debris is present: this publish didn't finish, so the model must not treat the artifact as updated.",
+      "pieces": [
+        " This publish didn't finish."
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.246"
     },
     {
       "name": "Durable wake rail skipped tail",
@@ -23615,6 +23648,22 @@
       "version": "2.1.191"
     },
     {
+      "name": "Tool Result: Cloud session — pass --ref to start from GitHub with file sync off",
+      "id": "tool-result-cloud-session-pass-ref-github-file-sync-off",
+      "description": "Remedy interpolated into the cloud-session local-changes bundle-failed tool result: start from GitHub with --ref and file sync off, then claude --cloud again.",
+      "pieces": [
+        "${",
+        "[t]}, or pass --ref <branch> to start from GitHub as it is there, with file sync off; then run claude --cloud again."
+      ],
+      "identifiers": [
+        0
+      ],
+      "identifierMap": {
+        "0": "TOOL_RESULT_CLOUD_SESSION_PASS_REF_GITHUB_FILE_SYNC_OFF_VAR_0"
+      },
+      "version": "2.1.246"
+    },
+    {
       "name": "Artifact capability roster unfetched",
       "id": "data-artifact-capability-roster-unfetched",
       "description": "Artifact runtime-capabilities guidance note appended when the contract's capability roster couldn't be fetched, telling the model the contract service may be unreachable and re-invoking retries.",
@@ -30746,6 +30795,17 @@
       "identifiers": [],
       "identifierMap": {},
       "version": "2.1.191"
+    },
+    {
+      "name": "Tool Result: File dialog is open in this app",
+      "id": "tool-result-computer-use-file-dialog-open-in-this-app",
+      "description": "Condition naming that a file dialog is open in this app (not the common-file-dialog path). Restricts chords, multi-key, and typed newlines while it holds.",
+      "pieces": [
+        "a file dialog is open in this app"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.246"
     },
     {
       "name": "System Reminder: Dir Sync Not-Applied Reason Worktree Changed",
@@ -39403,6 +39463,17 @@
       "version": "2.1.211"
     },
     {
+      "name": "Slash Command: /cloud-plugins — org and repo plugins only",
+      "id": "slash-command-cloud-plugins-org-and-repo-plugins-only",
+      "description": "Default /cloud-plugins consent state when no pin is stored: cloud sessions from this machine keep loading only the repository's and the organization's plugins. Renders into the local-jsx onDone string.",
+      "pieces": [
+        "cloud sessions from this machine keep loading only the repository’s and your organization’s plugins"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.246"
+    },
+    {
       "name": "Tool Result: Cloud Template Stand-In Blocked",
       "id": "tool-result-cloud-template-stand-in-blocked",
       "description": "PreToolUse deny message when a cloud hook template could not be installed on this worker, blocking matching calls until it is registered again.",
@@ -39842,6 +39913,17 @@
       "identifiers": [],
       "identifierMap": {},
       "version": "2.1.226"
+    },
+    {
+      "name": "Tool Result: Artifact DB Batch Write Committed Atomically",
+      "id": "tool-result-artifact-db-batch-write-committed-atomically",
+      "description": "Batch write_db success clause when the server took the writes as one atomic batch. Sibling of tool-result-artifact-db-batch-write-committed-sequential.",
+      "pieces": [
+        "committed atomically"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.246"
     },
     {
       "name": "Tool Description: Bash (alternative — communication)",
@@ -40924,6 +41006,17 @@
       "identifiers": [],
       "identifierMap": {},
       "version": "2.1.227"
+    },
+    {
+      "name": "Tool Result: PreToolUse hook could not render a verdict",
+      "id": "tool-result-pretooluse-hook-could-not-render-verdict",
+      "description": "Reason a served-call PreToolUse hook refused the call: a non-blocking error that was required by contract, so it could not render a verdict.",
+      "pieces": [
+        "could not render a verdict"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.246"
     },
     {
       "name": "Design credential save failed",
@@ -48886,6 +48979,17 @@
       "version": "2.1.246"
     },
     {
+      "name": "Tool Result: PreToolUse hook gave no verdict in time",
+      "id": "tool-result-pretooluse-hook-gave-no-verdict-in-time",
+      "description": "Reason a served-call PreToolUse hook refused the call: it was cancelled without an abort, so it produced no verdict in time.",
+      "pieces": [
+        "gave no verdict in time"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.246"
+    },
+    {
       "name": "Agent Prompt: General purpose agent",
       "id": "agent-prompt-general-purpose-agent",
       "description": "Defines a general-purpose agent for researching complex questions, searching code, and executing multi-step tasks",
@@ -51591,6 +51695,17 @@
       "version": "2.1.246"
     },
     {
+      "name": "System Reminder: Dir Sync Not-Applied Reason Prerequisites Missing",
+      "id": "system-reminder-dir-sync-not-applied-reason-prerequisites-missing",
+      "description": "Reason directory sync did not apply this turn: the snapshot builds on history this checkout lacks.",
+      "pieces": [
+        "it builds on history this checkout lacks"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.246"
+    },
+    {
       "name": "Computer-use file-dialog out-of-dialog key-redirect reason",
       "id": "tool-result-computer-use-file-dialog-key-redirect-outside",
       "description": "Reason fragment interpolated into the file-dialog key-not-allowed tool-result when the chord could jump focus to an address bar, context menu, or rename field.",
@@ -51649,6 +51764,17 @@
       "identifiers": [],
       "identifierMap": {},
       "version": "2.1.210"
+    },
+    {
+      "name": "System Reminder: Dir Sync Not-Applied Reason Released",
+      "id": "system-reminder-dir-sync-not-applied-reason-released",
+      "description": "Reason directory sync did not apply this turn: the snapshot did not finish within the time a turn may be held (released).",
+      "pieces": [
+        "it did not finish within the time a turn may be held"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.246"
     },
     {
       "name": "/loop fire-time expansion note (autonomous)",
@@ -54154,6 +54280,28 @@
       "identifiers": [],
       "identifierMap": {},
       "version": "2.1.206"
+    },
+    {
+      "name": "Tool Result: Memory path must be absolute",
+      "id": "tool-result-memory-path-must-be-absolute",
+      "description": "Refusal returned when the model passes a relative memory path, suggesting the absolute form and the store's root prefix.",
+      "pieces": [
+        "Memory paths are absolute and start with \"/\" — use ${",
+        "(",
+        ")}.${",
+        "}"
+      ],
+      "identifiers": [
+        0,
+        1,
+        2
+      ],
+      "identifierMap": {
+        "0": "TOOL_RESULT_MEMORY_PATH_MUST_BE_ABSOLUTE_VAR_0",
+        "1": "TOOL_RESULT_MEMORY_PATH_MUST_BE_ABSOLUTE_VAR_1",
+        "2": "TOOL_RESULT_MEMORY_PATH_MUST_BE_ABSOLUTE_VAR_2"
+      },
+      "version": "2.1.246"
     },
     {
       "name": "Tool Result: Connected Memory Stores Listing",
@@ -58870,6 +59018,17 @@
       "identifiers": [],
       "identifierMap": {},
       "version": "2.1.224"
+    },
+    {
+      "name": "System Reminder: Dir Sync Not-Applied Reason Unexpected Condition",
+      "id": "system-reminder-dir-sync-not-applied-reason-unexpected",
+      "description": "Fallback reason directory sync did not apply this turn: an unexpected condition not in the named map.",
+      "pieces": [
+        "of an unexpected condition"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.246"
     },
     {
       "name": "Skill: Artifact whiteboard when-to-use guidance",
@@ -64077,6 +64236,28 @@
       "identifiers": [],
       "identifierMap": {},
       "version": "2.1.239"
+    },
+    {
+      "name": "Tool Result: Artifact conflict — reading the content host failed",
+      "id": "tool-result-artifact-conflict-host-read-failed",
+      "description": "Why the live artifact source could not be handed over: reading it failed (read_threw).",
+      "pieces": [
+        "reading it failed"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.246"
+    },
+    {
+      "name": "Tool Result: Artifact conflict — reading the content host timed out",
+      "id": "tool-result-artifact-conflict-host-read-timeout",
+      "description": "Why the live artifact source could not be handed over: reading it timed out (read_timeout).",
+      "pieces": [
+        "reading it timed out"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.246"
     },
     {
       "name": "Artifact read/list — no consent surface for another person's artifact",
@@ -73627,6 +73808,28 @@
       "version": "2.1.234"
     },
     {
+      "name": "Tool Result: Artifact conflict — content host unreachable from this network",
+      "id": "tool-result-artifact-conflict-host-unreachable-from-network",
+      "description": "Why the live artifact source could not be handed over: the content host could not be reached from this network (read_egress_blocked).",
+      "pieces": [
+        "the content host could not be reached from this network"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.246"
+    },
+    {
+      "name": "Tool Result: Artifact conflict — content host did not return it",
+      "id": "tool-result-artifact-conflict-host-did-not-return",
+      "description": "Why the live artifact source could not be handed over: the content host did not return it (read_failed).",
+      "pieces": [
+        "the content host did not return it"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.246"
+    },
+    {
       "name": "Tool Parameter: Write content",
       "id": "tool-parameter-write-content",
       "description": "The content input_schema parameter description for the Write tool; model-facing as part of the tool's serialized input schema.",
@@ -80006,11 +80209,55 @@
       "version": "2.1.246"
     },
     {
+      "name": "System Reminder: Dir Sync Not-Applied Reason Unborn",
+      "id": "system-reminder-dir-sync-not-applied-reason-unborn",
+      "description": "Reason directory sync did not apply this turn: this checkout has no commit yet (unborn).",
+      "pieces": [
+        "this checkout has no commit yet"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.246"
+    },
+    {
+      "name": "System Reminder: Dir Sync Not-Applied Reason Unborn",
+      "id": "system-reminder-dir-sync-not-applied-reason-unborn",
+      "description": "Reason directory sync did not apply this turn: this checkout has no commit yet (unborn).",
+      "pieces": [
+        "this checkout has no commit yet"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.246"
+    },
+    {
+      "name": "System Reminder: Dir Sync Not-Applied Reason Unmerged Index",
+      "id": "system-reminder-dir-sync-not-applied-reason-unmerged-index",
+      "description": "Reason directory sync did not apply this turn: this checkout has unresolved merge conflicts.",
+      "pieces": [
+        "this checkout has unresolved merge conflicts"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.246"
+    },
+    {
       "name": "System Reminder: Dir Sync Not-Applied Reason Mid-Operation",
       "id": "system-reminder-dir-sync-not-applied-reason-mid-operation",
       "description": "Reason phrase interpolated into the cloud not-applied notice when this checkout is in the middle of a merge, rebase, or cherry-pick.",
       "pieces": [
         "this checkout is in the middle of a merge, rebase or cherry-pick"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.246"
+    },
+    {
+      "name": "System Reminder: Dir Sync Not-Applied Reason Detached Head",
+      "id": "system-reminder-dir-sync-not-applied-reason-detached-head",
+      "description": "Reason directory sync did not apply this turn: the checkout is detached and is not in a state sync can update.",
+      "pieces": [
+        "this checkout is not in a state sync can update"
       ],
       "identifiers": [],
       "identifierMap": {},
@@ -83581,6 +83828,28 @@
       "version": "2.1.206"
     },
     {
+      "name": "Artifact unknown connector error",
+      "id": "tool-result-artifact-unknown-connector",
+      "description": "Publish error returned to the model listing unresolved connectors and how to set the server segment.",
+      "pieces": [
+        "unknown ${",
+        "(",
+        ".unresolved.length,\"connector\")}: ${",
+        ".join(\", \")} — "
+      ],
+      "identifiers": [
+        0,
+        1,
+        2
+      ],
+      "identifierMap": {
+        "0": "TOOL_RESULT_ARTIFACT_UNKNOWN_CONNECTOR_VAR_0",
+        "1": "TOOL_RESULT_ARTIFACT_UNKNOWN_CONNECTOR_VAR_1",
+        "2": "TOOL_RESULT_ARTIFACT_UNKNOWN_CONNECTOR_VAR_2"
+      },
+      "version": "2.1.246"
+    },
+    {
       "name": "Tool result: Unknown Claude Design operation",
       "id": "tool-result-unknown-claude-design-operation",
       "description": "Model-facing tool_result text returned by the ClaudeDesign tool for an unrecognized operation, telling the model to list available operations.",
@@ -85734,6 +86003,39 @@
       "identifiers": [],
       "identifierMap": {},
       "version": "2.1.233"
+    },
+    {
+      "name": "System Reminder: Dir Sync Not-Applied Reason Bad Bundle",
+      "id": "system-reminder-dir-sync-not-applied-reason-bad-bundle",
+      "description": "Reason directory sync did not apply this turn: what arrived did not verify (bad_bundle).",
+      "pieces": [
+        "what arrived did not verify"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.246"
+    },
+    {
+      "name": "System Reminder: Dir Sync Not-Applied Reason Bad Bundle",
+      "id": "system-reminder-dir-sync-not-applied-reason-bad-bundle",
+      "description": "Reason directory sync did not apply this turn: what arrived did not verify (bad_bundle).",
+      "pieces": [
+        "what arrived did not verify"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.246"
+    },
+    {
+      "name": "System Reminder: Dir Sync Not-Applied Reason Bad Bundle",
+      "id": "system-reminder-dir-sync-not-applied-reason-bad-bundle",
+      "description": "Reason directory sync did not apply this turn: what arrived did not verify (bad_bundle).",
+      "pieces": [
+        "what arrived did not verify"
+      ],
+      "identifiers": [],
+      "identifierMap": {},
+      "version": "2.1.246"
     },
     {
       "name": "Artifact Created From Type Data Guidance",

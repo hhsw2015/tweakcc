@@ -13,6 +13,13 @@
     "text": "relay request failed: ${}",
     "verdict": "catalogue"
   },
+  "2d5d005632a505db": {
+    "builder": "he",
+    "note": "Reason/subject clause interpolating into the catalogued templates tool-result-agent-resume-worktree-fences-uncovered-{retry,refused} (`its worktree ${bt}`). Call he(\"exists but is not a directory\") @10602340 when stat() says the parked path exists but is not a directory. A catalogue verdict here does not land by itself; needs a classification-cache model verdict on the next extraction.",
+    "param": "bt",
+    "text": "exists but is not a directory",
+    "verdict": "catalogue"
+  },
   "350631db8ba55cbf": {
     "builder": "L7n",
     "note": "Reason/subject clause rendering into a catalogued model-facing template through a parameter slot. Catalogued via a classification-cache model verdict (this gate has no extractor hook of its own); see data/prompt-classification.json.",
@@ -27,12 +34,26 @@
     "text": "its .git entry exists but could not be examined",
     "verdict": "catalogue"
   },
+  "5152ae851c43085e": {
+    "builder": "he",
+    "note": "Reason/subject clause interpolating into the same uncovered-fences resume templates. Call he(\"is not recorded for this isolated agent\", {telemetryCode:\"git_worktree_resume_binding_missing\"}) @10602910 when the parked worktree path is missing from the resume record. Catalogue via classification-cache on the next extraction.",
+    "param": "bt",
+    "text": "is not recorded for this isolated agent",
+    "verdict": "catalogue"
+  },
   "9612029eba6d1859": {
     "builder": "Kcm",
     "note": "Reason/subject clause rendering into a catalogued model-facing template through a parameter slot. Catalogued via a classification-cache model verdict (this gate has no extractor hook of its own); see data/prompt-classification.json.",
     "param": "e",
     "text": "the question of decided item \"${}\"",
     "verdict": "catalogue"
+  },
+  "9d33b8655f3587d2": {
+    "builder": "he",
+    "note": "not-a-slot: LSP logger function he(pe,ye) @8566787 writes {isLSPMessage:!0,type:pe,...} to T.log. The gate attributed he(\"receive-notification\", pe) @8566188 to the later worktree builder he=(bt,an)=> @10600978 because both live in module _444.js and fnByName last-wins. The literal is a log-type label, not a value of the worktree ${bt} slot.",
+    "param": "bt",
+    "text": "receive-notification",
+    "verdict": "not-a-slot"
   },
   "b298a0a8ab610ffb": {
     "builder": "wRl",
@@ -41,11 +62,25 @@
     "text": "reapply your edits, then publish",
     "verdict": "catalogue"
   },
+  "b83826c0a5c7f5bb": {
+    "builder": "he",
+    "note": "Reason/subject clause interpolating into the same uncovered-fences resume templates. Call he(\"vanished between verification and the resume\") @10603918 when utimes() hits ENOENT/ENOTDIR after the worktree was verified. Same region as \"no longer exists\" (below MIN_LEN, not reported). Catalogue via classification-cache on the next extraction.",
+    "param": "bt",
+    "text": "vanished between verification and the resume",
+    "verdict": "catalogue"
+  },
   "c697b476cb780899": {
     "builder": "x3e",
     "note": "Reason/subject clause rendering into a catalogued model-facing template through a parameter slot. Catalogued via a classification-cache model verdict (this gate has no extractor hook of its own); see data/prompt-classification.json.",
     "param": "t",
     "text": "git could not be run to resolve it",
+    "verdict": "catalogue"
+  },
+  "ef708f7ddb6cf3da": {
+    "builder": "f",
+    "note": "Instruction prefix rendered into slash-command-code-review-effort-notice-{fork,inline} through f=(p)=>. Call f(`No effort level given \u2014 ${p}.`) @16136649 when /code-review has no explicit effort and reuses the last typed level. The wrapping templates tell the model to say this to the user in one short line. Catalogue via classification-cache on the next extraction.",
+    "param": "p",
+    "text": "No effort level given \u2014 ${}.",
     "verdict": "catalogue"
   },
   "fe2646082aab8196": {

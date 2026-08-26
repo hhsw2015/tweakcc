@@ -19,6 +19,26 @@
     "text": "- **id**: Task identifier (use with TaskGet, TaskUpdate)",
     "verdict": "catalogue"
   },
+  "0407a4d61382b4b3": {
+    "verdict": "catalogue",
+    "desc": "Reason a served-call PreToolUse hook refused the call: it was cancelled without an abort, so it produced no verdict in time.",
+    "id": "tool-result-pretooluse-hook-gave-no-verdict-in-time",
+    "label": "TOOL_RESULT_PRETOOLUSE_HOOK_SERVED_CALL_GATE_REFUSED_VAR_1",
+    "name": "Tool Result: PreToolUse hook gave no verdict in time",
+    "promptId": "tool-result-pretooluse-hook-served-call-gate-refused",
+    "reason": "states why the hook gate refused rather than skipped",
+    "text": "gave no verdict in time"
+  },
+  "04eaad71dfd462a9": {
+    "verdict": "catalogue",
+    "desc": "Reason directory sync did not apply this turn: the snapshot builds on history this checkout lacks.",
+    "id": "system-reminder-dir-sync-not-applied-reason-prerequisites-missing",
+    "label": "SYSTEM_REMINDER_DIRECTORY_SYNC_NOT_APPLIED_VAR_0",
+    "name": "System Reminder: Dir Sync Not-Applied Reason Prerequisites Missing",
+    "promptId": "system-reminder-directory-sync-not-applied",
+    "reason": "tells the model why the user's edits are not in this checkout",
+    "text": "it builds on history this checkout lacks"
+  },
   "06edc5ca537fb78c": {
     "desc": "Shared clause in the artifact auto-reply notification builder B2e() @11724974 naming the exact `resume_replies` action and the condition for it. Reaches the model through both the name-chord receipt and the typed-resume clause.",
     "id": "data-artifact-auto-reply-resume-replies-clause",
@@ -82,6 +102,16 @@
     "text": "\nTranscript dir: ",
     "verdict": "glue"
   },
+  "123fa3b5a697b086": {
+    "verdict": "catalogue",
+    "desc": "Reason a served-call PreToolUse hook refused the call: a non-blocking error that was required by contract, so it could not render a verdict.",
+    "id": "tool-result-pretooluse-hook-could-not-render-verdict",
+    "label": "TOOL_RESULT_PRETOOLUSE_HOOK_SERVED_CALL_GATE_REFUSED_VAR_1",
+    "name": "Tool Result: PreToolUse hook could not render a verdict",
+    "promptId": "tool-result-pretooluse-hook-served-call-gate-refused",
+    "reason": "states why the hook gate refused rather than skipped",
+    "text": "could not render a verdict"
+  },
   "1477827d48e13d8c": {
     "desc": "The reason clause explaining why a peer could not be verified before sending: the account session list could not be checked.",
     "id": "tool-result-send-message-account-list-unchecked-reason",
@@ -91,6 +121,16 @@
     "reason": "the other reason the peer could not be verified",
     "text": "the account session list could not be checked",
     "verdict": "catalogue"
+  },
+  "1546f5d296bc51d3": {
+    "verdict": "catalogue",
+    "desc": "Why the live artifact source could not be handed over: the content host could not be reached from this network (read_egress_blocked).",
+    "id": "tool-result-artifact-conflict-host-unreachable-from-network",
+    "label": "TOOL_RESULT_ARTIFACT_CONFLICT_SOURCE_NOT_HANDED_OVER_LEAD_VAR_0",
+    "name": "Tool Result: Artifact conflict \u2014 content host unreachable from this network",
+    "promptId": "tool-result-artifact-conflict-source-not-handed-over-lead",
+    "reason": "names the network-egress failure the model must not retry around by resending old content",
+    "text": "the content host could not be reached from this network"
   },
   "176218ef1e7cfd77": {
     "label": "AGENT_PROMPT_AUTOMEMORY_APPLY_MEMORY_TYPES_VAR_0",
@@ -115,6 +155,16 @@
     "reason": "the did-you-mean half of the same message",
     "text": ". Did you mean /",
     "verdict": "catalogue"
+  },
+  "1c0d81e77fda581d": {
+    "verdict": "catalogue",
+    "desc": "Consequence clause on the publish-upload permission-ask: other files already published on the artifact stay. behavior:ask \u2014 if the user declines, this message is the tool_result.",
+    "id": "tool-result-artifact-publish-other-published-files-stay",
+    "label": "TOOL_RESULT_ARTIFACT_PUBLISH_UPLOAD_CONSENT_ASK_VAR_4",
+    "name": "Tool Result: Artifact publish \u2014 its other published files stay",
+    "promptId": "tool-result-artifact-publish-upload-consent-ask",
+    "reason": "states that a declined or partial publish leaves the artifact's other files in place",
+    "text": " (its other published files stay)"
   },
   "20a69a3dd0499378": {
     "label": "TOOL_RESULT_ARTIFACT_PUBLISH_UPLOAD_CONSENT_ASK_VAR_1",
@@ -169,6 +219,16 @@
     "text": "`find` or `grep` via the ",
     "verdict": "glue"
   },
+  "330490325eef4d1c": {
+    "verdict": "catalogue",
+    "desc": "Remedy interpolated into the cloud-session local-changes bundle-failed tool result: start from GitHub with --ref and file sync off, then claude --cloud again.",
+    "id": "tool-result-cloud-session-pass-ref-github-file-sync-off",
+    "label": "TOOL_RESULT_CLOUD_SESSION_LOCAL_CHANGES_BUNDLE_FAILED_VAR_2",
+    "name": "Tool Result: Cloud session \u2014 pass --ref to start from GitHub with file sync off",
+    "promptId": "tool-result-cloud-session-local-changes-bundle-failed",
+    "reason": "names the exact flags the model must use to start from GitHub instead",
+    "text": ", or pass --ref <branch> to start from GitHub as it is there, with file sync off; then run claude --cloud again."
+  },
   "33ce28e37edcbd39": {
     "desc": "Tells the model the command opens an interactive panel that this environment cannot show, and that it must be run from the Claude Code terminal.",
     "id": "system-prompt-slash-command-needs-interactive-terminal",
@@ -188,6 +248,16 @@
     "reason": "states that share status is unconfirmed \u2014 affects the consent decision",
     "text": "; its share status could not be confirmed",
     "verdict": "catalogue"
+  },
+  "3c19816d83bc5d4f": {
+    "verdict": "catalogue",
+    "desc": "Supporting-files HTTP-refused outcome when debris is present: this publish didn't finish, so the model must not treat the artifact as updated.",
+    "id": "tool-result-artifact-publish-supporting-files-didnt-finish",
+    "label": "TOOL_RESULT_ARTIFACT_PUBLISH_SUPPORTING_FILES_HTTP_REFUSED_VAR_2",
+    "name": "Tool Result: Artifact publish supporting files \u2014 this publish didn't finish",
+    "promptId": "tool-result-artifact-publish-supporting-files-http-refused",
+    "reason": "states the publish did not complete",
+    "text": " This publish didn't finish."
   },
   "3d105e8c9cdff71b": {
     "desc": "Consequence clause: reading the database brings collaborator-written rows into the conversation.",
@@ -231,6 +301,16 @@
     "text": "permanently remove a file from",
     "verdict": "glue",
     "why": "sentence fragment of a composed approval prompt; carries no standalone instruction"
+  },
+  "47bc83f3a4ab6dc7": {
+    "verdict": "catalogue",
+    "desc": "Why the live artifact source could not be handed over: the content host did not return it (read_failed).",
+    "id": "tool-result-artifact-conflict-host-did-not-return",
+    "label": "TOOL_RESULT_ARTIFACT_CONFLICT_SOURCE_NOT_HANDED_OVER_LEAD_VAR_0",
+    "name": "Tool Result: Artifact conflict \u2014 content host did not return it",
+    "promptId": "tool-result-artifact-conflict-source-not-handed-over-lead",
+    "reason": "names the host-miss failure the model must re-read rather than resend",
+    "text": "the content host did not return it"
   },
   "47c54f265838325e": {
     "label": "TOOL_RESULT_ARTIFACT_ASSET_UPLOAD_LOADABLE_BY_VIEWERS_REASON_VAR_0",
@@ -356,6 +436,16 @@
     "verdict": "glue",
     "why": "labels the interpolated artifact in an upload ask"
   },
+  "61f7e0bd665eab89": {
+    "verdict": "catalogue",
+    "desc": "Supporting-files HTTP-refused outcome when no slug was reserved: nothing was published.",
+    "id": "tool-result-artifact-publish-supporting-files-nothing-published",
+    "label": "TOOL_RESULT_ARTIFACT_PUBLISH_SUPPORTING_FILES_HTTP_REFUSED_VAR_2",
+    "name": "Tool Result: Artifact publish supporting files \u2014 nothing was published",
+    "promptId": "tool-result-artifact-publish-supporting-files-http-refused",
+    "reason": "states that the artifact was not created",
+    "text": " Nothing was published."
+  },
   "6315c1f948befd3f": {
     "desc": "The terser sparse plan-mode continuation naming the 5-phase workflow.",
     "id": "system-reminder-plan-mode-follow-five-phase-workflow",
@@ -365,6 +455,16 @@
     "reason": "the terse variant of the same direction",
     "text": "Follow 5-phase workflow.",
     "verdict": "catalogue"
+  },
+  "6350afe7eed1c899": {
+    "verdict": "catalogue",
+    "desc": "Why the live artifact source could not be handed over: reading it timed out (read_timeout).",
+    "id": "tool-result-artifact-conflict-host-read-timeout",
+    "label": "TOOL_RESULT_ARTIFACT_CONFLICT_SOURCE_NOT_HANDED_OVER_LEAD_VAR_0",
+    "name": "Tool Result: Artifact conflict \u2014 reading the content host timed out",
+    "promptId": "tool-result-artifact-conflict-source-not-handed-over-lead",
+    "reason": "names the timeout the model must re-read rather than resend",
+    "text": "reading it timed out"
   },
   "6620722f716cfa2b": {
     "desc": "Clause stating that the session will not be woken on republish or on a comment sent to Claude when the durable wake subscription did not register.",
@@ -398,6 +498,16 @@
     "verdict": "glue",
     "why": "sentence fragment naming the owner in a composed approval prompt"
   },
+  "6e307d2dbe729260": {
+    "verdict": "catalogue",
+    "desc": "Batch write_db success clause when the server took the writes as one atomic batch. Sibling of tool-result-artifact-db-batch-write-committed-sequential.",
+    "id": "tool-result-artifact-db-batch-write-committed-atomically",
+    "label": "TOOL_RESULT_ARTIFACT_DB_BATCH_COMMITTED_VAR_0",
+    "name": "Tool Result: Artifact DB Batch Write Committed Atomically",
+    "promptId": "tool-result-artifact-db-batch-committed",
+    "reason": "tells the model the batch was atomic, the opposite of the already-catalogued sequential fallback",
+    "text": "committed atomically"
+  },
   "72622d960a40cea1": {
     "desc": "The example request the statusline-setup agent is shown, asking it to build a statusLine from the shell PS1 configuration.",
     "id": "tool-description-statusline-setup-ps1-example-request",
@@ -430,6 +540,13 @@
     "text": " (full date-time with timezone)",
     "verdict": "catalogue"
   },
+  "72e863297da89d12": {
+    "verdict": "glue",
+    "label": "TOOL_RESULT_COMPUTER_USE_APP_ELEMENT_UNAVAILABLE_IN_BACKGROUND_VAR_1",
+    "promptId": "tool-result-computer-use-app-element-unavailable-in-background",
+    "reason": "parenthetical substituting for a redacted window title (`T?` '${T}'`:k.title?\" (title withheld)\":\"\"` @5803540); labels the withheld interpolation, no instruction of its own",
+    "text": " (title withheld)"
+  },
   "74ec6a16844e716f": {
     "desc": "Reason label inside the unwatch task-notification summary `Stopped watching ${n} (\u2026)` @13275406. The actionable guidance (\"do not re-watch just to resume listening unless the user asks\") is in the separate body string.",
     "text": "the signed-in account changed",
@@ -444,6 +561,16 @@
     "reason": "names why the peer could not be verified",
     "text": "the cloud session list could not be fetched",
     "verdict": "catalogue"
+  },
+  "768784a3ce57cfe2": {
+    "verdict": "catalogue",
+    "desc": "Reason directory sync did not apply this turn: the snapshot did not finish within the time a turn may be held (released).",
+    "id": "system-reminder-dir-sync-not-applied-reason-released",
+    "label": "SYSTEM_REMINDER_DIRECTORY_SYNC_NOT_APPLIED_VAR_0",
+    "name": "System Reminder: Dir Sync Not-Applied Reason Released",
+    "promptId": "system-reminder-directory-sync-not-applied",
+    "reason": "tells the model why the user's edits are not in this checkout",
+    "text": "it did not finish within the time a turn may be held"
   },
   "79f023b6989d7562": {
     "label": "TOOL_RESULT_SEND_MESSAGE_NO_AGENT_REACHABLE_VAR_1",
@@ -469,6 +596,16 @@
     "text": "Unknown command: /",
     "verdict": "catalogue"
   },
+  "7cd6c07e065dd16b": {
+    "verdict": "catalogue",
+    "desc": "Default /cloud-plugins consent state when no pin is stored: cloud sessions from this machine keep loading only the repository's and the organization's plugins. Renders into the local-jsx onDone string.",
+    "id": "slash-command-cloud-plugins-org-and-repo-plugins-only",
+    "label": "SLASH_COMMAND_CLOUD_PLUGINS_NOTHING_DECIDED_VAR_0",
+    "name": "Slash Command: /cloud-plugins \u2014 org and repo plugins only",
+    "promptId": "slash-command-cloud-plugins-nothing-decided",
+    "reason": "states the default plugin-forwarding policy the model reports when nothing is decided",
+    "text": "cloud sessions from this machine keep loading only the repository\u2019s and your organization\u2019s plugins"
+  },
   "7daf3642552ce1fc": {
     "label": "SYSTEM_PROMPT_LOCAL_COMMAND_STDOUT_FRAMING_TAG_5_VAR_0",
     "promptId": "system-prompt-local-command-stdout-framing-tag-5",
@@ -492,6 +629,16 @@
     "reason": "empty-data placeholder",
     "text": "None captured",
     "verdict": "glue"
+  },
+  "8553d8f2a4733a87": {
+    "verdict": "catalogue",
+    "desc": "Reason directory sync did not apply this turn: the checkout is detached and is not in a state sync can update.",
+    "id": "system-reminder-dir-sync-not-applied-reason-detached-head",
+    "label": "SYSTEM_REMINDER_DIRECTORY_SYNC_NOT_APPLIED_VAR_0",
+    "name": "System Reminder: Dir Sync Not-Applied Reason Detached Head",
+    "promptId": "system-reminder-directory-sync-not-applied",
+    "reason": "tells the model why the user's edits are not in this checkout",
+    "text": "this checkout is not in a state sync can update"
   },
   "88ad843c8b4b235d": {
     "label": "DATA_ARTIFACT_WRITE_DB_AUTO_CLASSIFIER_INPUT_VAR_0",
@@ -544,6 +691,13 @@
     "reason": "noun tail after an interpolated store name",
     "text": "` memory store",
     "verdict": "glue"
+  },
+  "94e6f370e59954b4": {
+    "verdict": "glue",
+    "label": "TOOL_RESULT_COMPUTER_USE_ACCESS_UNATTENDED_SCHEDULED_VAR_0",
+    "promptId": "tool-result-computer-use-access-unattended-scheduled",
+    "reason": "first quasi of ` (and grant flags: ${v})` @5817444; only labels the interpolated flag names inside the access-target phrase",
+    "text": " (and grant flags: "
   },
   "9712cdcbb233ab7e": {
     "desc": "States that the artifact stays private to the user until they choose to share it.",
@@ -720,6 +874,26 @@
     "text": "- Use `find` via ",
     "verdict": "catalogue"
   },
+  "b37c605a69d4110c": {
+    "verdict": "catalogue",
+    "desc": "Condition naming that a file dialog is open in this app (not the common-file-dialog path). Restricts chords, multi-key, and typed newlines while it holds.",
+    "id": "tool-result-computer-use-file-dialog-open-in-this-app",
+    "label": "TOOL_RESULT_COMPUTER_USE_FILE_DIALOG_MULTI_KEY_VAR_1",
+    "name": "Tool Result: File dialog is open in this app",
+    "promptId": "tool-result-computer-use-file-dialog-multi-key",
+    "reason": "names the in-app file-dialog state the keystroke restrictions apply to",
+    "text": "a file dialog is open in this app"
+  },
+  "b4a5e8354f99f452": {
+    "verdict": "catalogue",
+    "desc": "Reason directory sync did not apply this turn: this checkout has unresolved merge conflicts.",
+    "id": "system-reminder-dir-sync-not-applied-reason-unmerged-index",
+    "label": "SYSTEM_REMINDER_DIRECTORY_SYNC_NOT_APPLIED_VAR_0",
+    "name": "System Reminder: Dir Sync Not-Applied Reason Unmerged Index",
+    "promptId": "system-reminder-directory-sync-not-applied",
+    "reason": "tells the model why the user's edits are not in this checkout",
+    "text": "this checkout has unresolved merge conflicts"
+  },
   "b4c2ab68c83bdabf": {
     "label": "TOOL_DESCRIPTION_CHROME_MULTIPLE_BROWSERS_NONE_SELECTED_VAR_1",
     "promptId": "tool-description-chrome-multiple-browsers-none-selected",
@@ -785,6 +959,16 @@
     "text": " (user's private global instructions for all projects)",
     "verdict": "catalogue"
   },
+  "c049ad3302061f6c": {
+    "verdict": "catalogue",
+    "desc": "Fallback reason directory sync did not apply this turn: an unexpected condition not in the named map.",
+    "id": "system-reminder-dir-sync-not-applied-reason-unexpected",
+    "label": "SYSTEM_REMINDER_DIRECTORY_SYNC_NOT_APPLIED_VAR_0",
+    "name": "System Reminder: Dir Sync Not-Applied Reason Unexpected Condition",
+    "promptId": "system-reminder-directory-sync-not-applied",
+    "reason": "tells the model why the user's edits are not in this checkout",
+    "text": "of an unexpected condition"
+  },
   "c0dabec62341035c": {
     "desc": "The task-list path listed among the team resources, shown only when task tools are available. Its sibling branch is system-reminder-team-coordination-task-list-upkeep.",
     "id": "system-reminder-team-coordination-task-list-resource-line",
@@ -794,6 +978,13 @@
     "reason": "the founding case: the task-list resource line, whose sibling branch IS catalogued as system-reminder-team-coordination-task-list-upkeep",
     "text": "\n- Task list: ",
     "verdict": "catalogue"
+  },
+  "c14891abacf62315": {
+    "verdict": "glue",
+    "label": "TOOL_RESULT_COMPUTER_USE_ACCESS_UNATTENDED_SCHEDULED_VAR_0",
+    "promptId": "tool-result-computer-use-access-unattended-scheduled",
+    "reason": "first quasi of `grant flags (${v})` @5817475, the flags-only arm of the same ternary; only labels the interpolated flag names",
+    "text": "grant flags ("
   },
   "c1ad34616bb89d8c": {
     "desc": "States that viewers are pinned to an earlier version, so a publish will not be what they see.",
@@ -826,6 +1017,16 @@
     "text": " Its watch was stopped earlier in this session, so no republish notice will come; do not watch it again unless the user asks.",
     "verdict": "catalogue",
     "why": "Sibling branch of the same ternary at cli.js@18705405, whose other arm is catalogued as system-prompt-artifact-attached-republish-notify-note; this branch (outcome==='skipped' && reason==='stop_latched') renders into the same model-facing metaMessage and carries an instruction. The classification cache independently named the same string, so the id here mirrors the one that actually lands."
+  },
+  "cf60f83cd81d8dae": {
+    "verdict": "catalogue",
+    "desc": "Why the live artifact source could not be handed over: reading it failed (read_threw).",
+    "id": "tool-result-artifact-conflict-host-read-failed",
+    "label": "TOOL_RESULT_ARTIFACT_CONFLICT_SOURCE_NOT_HANDED_OVER_LEAD_VAR_0",
+    "name": "Tool Result: Artifact conflict \u2014 reading the content host failed",
+    "promptId": "tool-result-artifact-conflict-source-not-handed-over-lead",
+    "reason": "names the thrown-read failure the model must re-read rather than resend",
+    "text": "reading it failed"
   },
   "d16a0659d9bdbfd3": {
     "desc": "Reason clause naming what the plan-mode artifact-database approval covers: a database whose ownership could not be confirmed.",
@@ -916,6 +1117,16 @@
     "verdict": "catalogue",
     "why": "carries an instruction or consequence the model acts on, so it needs an id an override can reach"
   },
+  "f3d559e276f99557": {
+    "verdict": "catalogue",
+    "desc": "Reason directory sync did not apply this turn: what arrived did not verify (bad_bundle).",
+    "id": "system-reminder-dir-sync-not-applied-reason-bad-bundle",
+    "label": "SYSTEM_REMINDER_DIRECTORY_SYNC_NOT_APPLIED_VAR_0",
+    "name": "System Reminder: Dir Sync Not-Applied Reason Bad Bundle",
+    "promptId": "system-reminder-directory-sync-not-applied",
+    "reason": "tells the model why the user's edits are not in this checkout",
+    "text": "what arrived did not verify"
+  },
   "fb156f422db7d575": {
     "label": "DATA_ARTIFACT_WRITE_DB_AUTO_CLASSIFIER_INPUT_VAR_5",
     "promptId": "data-artifact-write-db-auto-classifier-input",
@@ -929,6 +1140,16 @@
     "reason": "field label before interpolated directories",
     "text": "Additional working directories: ",
     "verdict": "glue"
+  },
+  "fd0c125286677453": {
+    "verdict": "catalogue",
+    "desc": "Reason directory sync did not apply this turn: this checkout has no commit yet (unborn).",
+    "id": "system-reminder-dir-sync-not-applied-reason-unborn",
+    "label": "SYSTEM_REMINDER_DIRECTORY_SYNC_NOT_APPLIED_VAR_0",
+    "name": "System Reminder: Dir Sync Not-Applied Reason Unborn",
+    "promptId": "system-reminder-directory-sync-not-applied",
+    "reason": "tells the model why the user's edits are not in this checkout",
+    "text": "this checkout has no commit yet"
   },
   "fd0d24baab5cbdfa": {
     "desc": "Provenance arm of the artifact read summary @11306119 marking the page as third-party content authored outside the org. A trust constraint the model must act on, not a role label like its sibling arms.",

@@ -49477,5 +49477,17 @@
   "3016b1f54bf4a8788f6e34de4fd5422ca824d9e4": { "facing": "internal" },
   "86a8516bd3b6ba9faee09e864a313680c7027fb1": { "facing": "internal" },
   "2009d79736c37f83d56f0c8b928943c85751b6a4": { "facing": "internal" },
-  "c9b20ccad1e17a3b913b66cebf117a4a1a0423d1": { "facing": "ui" }
+  "c9b20ccad1e17a3b913b66cebf117a4a1a0423d1": { "facing": "ui" },
+  "6f39fc792a7a6f8915f3b81e7dbb45b734514511": {
+    "facing": "model",
+    "id": "tool-result-memory-path-must-be-absolute",
+    "name": "Tool Result: Memory path must be absolute",
+    "desc": "Refusal returned when the model passes a relative memory path, suggesting the absolute form and the store's root prefix."
+  },
+  "2260cb778fefbe5eff3ad8b876d3300ada8e48f0": {
+    "facing": "model",
+    "id": "tool-result-artifact-unknown-connector",
+    "name": "Artifact unknown connector error",
+    "desc": "Publish error returned to the model listing unresolved connectors and how to set the server segment."
+  }
 }
