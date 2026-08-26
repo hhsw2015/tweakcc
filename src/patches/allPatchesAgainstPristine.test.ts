@@ -154,6 +154,56 @@ const findBun = (): string | null => {
 // names — so transpiling it whole is not just wrong, it wedges: the first run
 // against 2.1.246 sat for 32 minutes at 0% CPU. Parse each module on its own,
 // which is also what actually ships, since Bun loads them individually.
+const MODULE_MARK = '/*@@TWEAKCC_MODULE:';
+const MODULE_END = '@@*/';
+
+interface ModuleSpan {
+  name: string;
+  bodyStart: number;
+  bodyEnd: number;
+}
+
+const splitModuleSpans = (src: string): ModuleSpan[] => {
+  const mods: ModuleSpan[] = [];
+  let i = src.indexOf(MODULE_MARK);
+  while (i !== -1) {
+    const close = src.indexOf(MODULE_END, i);
+    const name = src.slice(i + MODULE_MARK.length, close);
+    const bodyStart = close + MODULE_END.length;
+    const next = src.indexOf(MODULE_MARK, close);
+    mods.push({
+      name,
+      bodyStart,
+      bodyEnd: next === -1 ? src.length : next,
+    });
+    i = next;
+  }
+  return mods;
+};
+
+const collectChangedBodies = (
+  original: string,
+  origSpans: ModuleSpan[],
+  source: string
+): string => {
+  const srcSpans = splitModuleSpans(source);
+  const origByName = new Map(origSpans.map(s => [s.name, s]));
+  const chunks: string[] = [];
+  for (const span of srcSpans) {
+    const orig = origByName.get(span.name);
+    // Compare CONTENT, not length. A same-length substitution — which is a
+    // perfectly ordinary patch shape — is invisible to a length test, so the
+    // oracle would silently skip the one module the patch actually touched
+    // and report a pass having parsed nothing.
+    const body = source.slice(span.bodyStart, span.bodyEnd);
+    const origBody = orig ? original.slice(orig.bodyStart, orig.bodyEnd) : null;
+    if (origBody !== body) {
+      chunks.push(`${MODULE_MARK}${span.name}${MODULE_END}\n` + body);
+    }
+  }
+  return chunks.join('');
+};
+
 const ORACLE_SCRIPT = `
 const fs = require('fs');
 const src = fs.readFileSync(process.argv[2], 'utf8');
@@ -191,13 +241,25 @@ interface ParseOracle {
   check(source: string, label: string): string | null;
 }
 
-const makeOracle = (bun: string, scratch: string): ParseOracle => {
+const makeOracle = (
+  bun: string,
+  scratch: string,
+  original: string
+): ParseOracle => {
   const scriptPath = path.join(scratch, 'parse-oracle.js');
   fs.writeFileSync(scriptPath, ORACLE_SCRIPT, 'utf8');
+  const origSpans = splitModuleSpans(original);
   return {
     check(source, label) {
       const srcPath = path.join(scratch, `${label}.js`);
-      fs.writeFileSync(srcPath, source, 'utf8');
+      let toWrite = source;
+      if (source !== original && source.includes(MODULE_MARK)) {
+        toWrite = collectChangedBodies(original, origSpans, source);
+        if (toWrite.length === 0) {
+          toWrite = source;
+        }
+      }
+      fs.writeFileSync(srcPath, toWrite, 'utf8');
       try {
         execFileSync(bun, [scriptPath, srcPath], {
           encoding: 'utf8',
@@ -282,7 +344,14 @@ const INVOCATIONS: Record<PatchId, (src: string) => string | null> = {
   'thinker-symbol-width': c =>
     writeThinkerSymbolWidthLocation(
       c,
-      Math.max(...DEFAULT_SETTINGS.thinkingStyle.phases.map(p => p.length)) + 1
+      // Native spinner cell is width:2. Passing 2 is a same-length no-op that
+      // the sweep would score as "applied, 0 bytes" even if the rewrite is a
+      // no-op of the native default — use a value that must mutate.
+      Math.max(
+        4,
+        Math.max(...DEFAULT_SETTINGS.thinkingStyle.phases.map(p => p.length)) +
+          1
+      )
     ),
   'thinker-symbol-mirror': c => writeThinkerSymbolMirrorOption(c, false),
   'input-box-border': c => writeInputBoxBorder(c, true),
@@ -325,12 +394,20 @@ const INVOCATIONS: Record<PatchId, (src: string) => string | null> = {
   'lean-memory-types': c => writeLeanMemoryTypes(c),
   toolsets: c => writeToolsets(c, TEST_TOOLSETS, 'minimal', 'minimal'),
   'mcp-non-blocking': c => writeMcpNonBlocking(c),
-  'mcp-batch-size': c => writeMcpBatchSize(c, 3),
+  // Native default is 3; passing 3 is a same-token no-op the sweep would
+  // score as applied/unchanged. Use a value that must rewrite the digit.
+  'mcp-batch-size': c => writeMcpBatchSize(c, 5),
   'user-message-display': c =>
     writeUserMessageDisplay(c, {
-      ...DEFAULT_SETTINGS.userMessageDisplay,
-      borderStyle: 'round',
-      styling: ['bold'],
+      format: ' > {} ',
+      styling: [],
+      foregroundColor: 'default',
+      backgroundColor: 'rgb(28,32,48)',
+      borderStyle: 'topBottomBold',
+      borderColor: 'rgb(255,32,134)',
+      paddingX: 1,
+      paddingY: 0,
+      fitBoxToContent: false,
     }),
   'input-pattern-highlighters': c =>
     writeInputPatternHighlighters(c, TEST_HIGHLIGHTERS),
@@ -354,6 +431,24 @@ const EXPECTED_NULL: Partial<Record<PatchId, string>> = {
   'thinking-block-styling':
     'gated to CC < 2.1.26 (CC restyled thinking blocks natively)',
   'thinker-symbol-speed': 'gated to CC < 2.1.27 (spinner interval moved)',
+};
+
+/**
+ * Patches that legitimately return the file unchanged on a current CC build.
+ * A no-op is only acceptable for an id listed here — an undeclared no-op is
+ * the silent-dead-anchor class (userMessageDisplay used to return oldFile on
+ * match failure, and the sweep scored it "applied, 0 bytes").
+ */
+const EXPECTED_NOOP: Partial<Record<PatchId, string>> = {
+  opusplan1m: 'CC >= 2.1.87 ships "opusplan[1m]" natively',
+  'fix-lsp-support':
+    'CC ships textDocument/didOpen natively; unimplemented throws are gone',
+  'worktree-mode':
+    'CC ships EnterWorktree natively; tengu_worktree_mode gate is gone',
+  'allow-custom-agent-models':
+    'CC >= 2.1.83 accepts any agent model string (no enum/includes gate)',
+  'conversation-title':
+    'CC ships /rename natively (name:"rename",aliases:["name"])',
 };
 
 type Outcome = 'applied' | 'no-op' | 'null';
@@ -386,9 +481,9 @@ describe.skipIf(skipReason !== null)('every patch vs. pristine cli.js', () => {
   let scratch = '';
   let oracle: ParseOracle;
 
-  beforeAll(() => {
+  beforeAll(async () => {
     scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'tweakcc-pristine-'));
-    oracle = makeOracle(bun!, scratch);
+    oracle = makeOracle(bun!, scratch, pristine!.source);
 
     const source = pristine!.source;
     for (const def of getAllPatchDefinitions()) {
@@ -415,6 +510,7 @@ describe.skipIf(skipReason !== null)('every patch vs. pristine cli.js', () => {
         parseError:
           outcome === 'applied' ? oracle.check(result!, `patched-${id}`) : null,
       });
+      await new Promise<void>(resolve => setImmediate(resolve));
     }
 
     const pad = (s: string, n: number) => s.padEnd(n);
@@ -429,14 +525,18 @@ describe.skipIf(skipReason !== null)('every patch vs. pristine cli.js', () => {
                 ? EXPECTED_NULL[o.id]
                   ? '(expected: ' + EXPECTED_NULL[o.id] + ')'
                   : 'FAILED TO FIND'
-                : ''
+                : o.outcome === 'no-op'
+                  ? EXPECTED_NOOP[o.id]
+                    ? '(expected: ' + EXPECTED_NOOP[o.id] + ')'
+                    : 'UNDECLARED NO-OP'
+                  : ''
           }`
       )
       .join('\n');
     console.log(
       `\npristine: ${pristine!.path}\noracle:   ${bun!} (Bun.Transpiler)\n${rows}\n`
     );
-  }, 600000);
+  }, 1200000);
 
   it('the parse oracle rejects broken JS', () => {
     expect(
@@ -460,6 +560,7 @@ describe.skipIf(skipReason !== null)('every patch vs. pristine cli.js', () => {
     id => {
       const outcome = outcomes.get(id)!;
       const expectedNull = EXPECTED_NULL[id];
+      const expectedNoop = EXPECTED_NOOP[id];
 
       if (expectedNull) {
         expect(
@@ -467,6 +568,16 @@ describe.skipIf(skipReason !== null)('every patch vs. pristine cli.js', () => {
           `${id} is recorded in EXPECTED_NULL (${expectedNull}) but now ` +
             'matches again — drop the entry and re-check its version gate'
         ).toBe('null');
+        return;
+      }
+
+      if (expectedNoop) {
+        expect(
+          outcome.outcome,
+          `${id} is recorded in EXPECTED_NOOP (${expectedNoop}) but now ` +
+            'applies or returns null — drop the entry if the feature is ' +
+            'gated again, or fix the patch if it should apply'
+        ).toBe('no-op');
         return;
       }
 
@@ -479,6 +590,13 @@ describe.skipIf(skipReason !== null)('every patch vs. pristine cli.js', () => {
       ).not.toBe('null');
 
       expect(
+        outcome.outcome,
+        `${id} returned the file unchanged against the pristine bundle, but ` +
+          'is not in EXPECTED_NOOP. That is a silent dead-anchor: either ' +
+          're-anchor it, or declare the no-op with a reason.'
+      ).not.toBe('no-op');
+
+      expect(
         outcome.parseError,
         `${id} spliced JS that Bun cannot parse — this would brick Claude ` +
           `Code on --apply:\n${outcome.parseError}`
@@ -486,6 +604,19 @@ describe.skipIf(skipReason !== null)('every patch vs. pristine cli.js', () => {
     },
     600000
   );
+
+  it('user-message-display also applies the round+bold sweep fixture', () => {
+    const result = writeUserMessageDisplay(pristine!.source, {
+      ...DEFAULT_SETTINGS.userMessageDisplay,
+      borderStyle: 'round',
+      styling: ['bold'],
+    });
+    expect(result).not.toBeNull();
+    expect(result).not.toBe(pristine!.source);
+    expect(
+      oracle.check(result!, 'patched-user-message-display-sweep')
+    ).toBeNull();
+  });
 });
 
 // The 35-entry system-reminder registry is a SECOND patch surface that

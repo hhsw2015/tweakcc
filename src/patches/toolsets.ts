@@ -195,6 +195,15 @@ export const matchDelimiter = (
 export const findSelectComponentName = (
   fileContents: string
 ): string | null => {
+  // Method 0 (CC >= 2.1.246): imported jsx helper, not `.jsx(`:
+  //   e(Me,{confirmLabel:"Yes, use recommended settings",...})
+  const importedJsxPattern =
+    /[^$\w][$\w]+\(([$\w]+),\{[\s\S]{0,100}"Yes, use recommended settings"/;
+  const importedJsxMatch = fileContents.match(importedJsxPattern);
+  if (importedJsxMatch) {
+    return importedJsxMatch[1];
+  }
+
   // Method 1 (CC >=2.1.186): the jsx runtime replaced createElement, and the
   // children/props moved into the object literal:
   //   Mb.jsx(ya,{confirmLabel:"Yes, use recommended settings",...})
@@ -288,9 +297,95 @@ export const getMainAppComponentBodyStart = (
 /**
  * Get app state selector and useState function names
  */
+export interface AppStateFns {
+  appStateUseSelectorFn: string;
+  appStateSetState: string;
+  selectorIndex?: number;
+  setStateIndex?: number;
+}
+
+const TWEAKCC_MODULE_MARK = '/*@@TWEAKCC_MODULE:';
+
+const moduleBoundsAt = (
+  file: string,
+  index: number
+): { start: number; end: number } | null => {
+  const start = file.lastIndexOf(TWEAKCC_MODULE_MARK, index);
+  if (start === -1) return null;
+  const next = file.indexOf(TWEAKCC_MODULE_MARK, start + 1);
+  return { start, end: next === -1 ? file.length : next };
+};
+
+/**
+ * After the 2.1.246 ESM split, a function's local name in its defining module
+ * is not the name other modules import. Map defining-local → export → local
+ * name at `useIndex`. On a single-module bundle there are no sentinels and
+ * the defining name is used as-is.
+ */
+export const resolveNameAt = (
+  file: string,
+  definingLocal: string,
+  definingIndex: number,
+  useIndex: number
+): string => {
+  const defBounds = moduleBoundsAt(file, definingIndex);
+  const useBounds = moduleBoundsAt(file, useIndex);
+  if (!defBounds || !useBounds || defBounds.start === useBounds.start) {
+    return definingLocal;
+  }
+  const defMod = file.slice(defBounds.start, defBounds.end);
+  const exp = defMod.match(/export\{([^}]+)\}/);
+  if (!exp) return definingLocal;
+  let exported: string | null = null;
+  for (const part of exp[1].split(',')) {
+    const m = part.match(/^([$\w]+)(?: as ([$\w]+))?$/);
+    if (m && m[1] === definingLocal) {
+      exported = m[2] ?? m[1];
+      break;
+    }
+  }
+  if (!exported) return definingLocal;
+  const useHead = file.slice(
+    useBounds.start,
+    Math.min(useBounds.end, useBounds.start + 80000)
+  );
+  const escaped = exported.replace(/\$/g, '\\$');
+  const renamed = useHead.match(
+    new RegExp(`(?:^|[,{])${escaped} as ([${'$'}\\w]+)`)
+  );
+  if (renamed) return renamed[1];
+  return definingLocal;
+};
+
 export const getAppStateSelectorAndUseState = (
   fileContents: string
-): { appStateUseSelectorFn: string; appStateSetState: string } | null => {
+): AppStateFns | null => {
+  // Method 0 (CC >= 2.1.246): the app-state store is its own ESM module.
+  // useSyncExternalStore is an imported binding, so the old identifier hunt
+  // never sees it. Unique anchor is the provider error string. Shape:
+  //   function SEL(t){let e=STORE(),n=()=>{let i=e.getState();return t(i)};return HOOK(e.subscribe,n,n)}
+  //   function SET(){return STORE().setState}
+  const appStateErr =
+    'useAppState/useSetAppState cannot be called outside of an <AppStateProvider />';
+  const errIdx = fileContents.indexOf(appStateErr);
+  if (errIdx !== -1) {
+    const start = Math.max(0, errIdx - 400);
+    const region = fileContents.slice(start, errIdx + 1200);
+    const selectorPat =
+      /function ([$\w]+)\(([$\w]+)\)\{let ([$\w]+)=([$\w]+)\(\),([$\w]+)=\(\)=>\{let ([$\w]+)=\3\.getState\(\);return \2\(\6\)\};return [$\w]+\(\3\.subscribe,\5,\5\)\}/;
+    const setPat = /function ([$\w]+)\(\)\{return ([$\w]+)\(\)\.setState\}/;
+    const sel = region.match(selectorPat);
+    const set = region.match(setPat);
+    if (sel && sel.index !== undefined && set && set.index !== undefined) {
+      return {
+        appStateUseSelectorFn: sel[1],
+        appStateSetState: set[1],
+        selectorIndex: start + sel.index,
+        setStateIndex: start + set.index,
+      };
+    }
+  }
+
   // CC <2.1.83: function D8(...`Your selector in...function iA(){return STORE().setState}
   const oldPattern =
     /function ([$\w]+)\(.{0,110}`Your selector in.{0,1000}?function ([$\w]+)\(\)\{return [$\w]+\(\)\.setState\}/;
@@ -300,6 +395,7 @@ export const getAppStateSelectorAndUseState = (
     return {
       appStateUseSelectorFn: oldMatch[1],
       appStateSetState: oldMatch[2],
+      selectorIndex: oldMatch.index,
     };
   }
 
@@ -336,6 +432,8 @@ export const getAppStateSelectorAndUseState = (
     return {
       appStateUseSelectorFn: selectorFn,
       appStateSetState: setStateFn,
+      selectorIndex: selectorMatch.index,
+      setStateIndex: ssMatch.index,
     };
   }
 
@@ -485,7 +583,7 @@ export const writeToolFetchingUseMemo = (
     return null;
   }
 
-  const { appStateUseSelectorFn } = stateInfo;
+  const { appStateUseSelectorFn, selectorIndex } = stateInfo;
 
   // Pattern to find: let toolAggregationVar=toolAggregationCode(arg1,arg2.tools,arg3);
   const pattern = /let ([$\w]+)=([$\w]+\([$\w]+,[$\w]+\.tools,[$\w]+\)),/;
@@ -495,6 +593,16 @@ export const writeToolFetchingUseMemo = (
     console.error('patch: toolsets: failed to find tool aggregation pattern');
     return null;
   }
+
+  const selectorFn =
+    selectorIndex !== undefined
+      ? resolveNameAt(
+          oldFile,
+          appStateUseSelectorFn,
+          selectorIndex,
+          match.index
+        )
+      : appStateUseSelectorFn;
 
   const toolAggregationVar = match[1];
   const toolAggregationCode = match[2];
@@ -517,7 +625,7 @@ export const writeToolFetchingUseMemo = (
     : 'undefined';
 
   // Generate the replacement code
-  const replacement = `let currentToolset = ${appStateUseSelectorFn}(state => state.toolset) ?? ${fallback};
+  const replacement = `let currentToolset = ${selectorFn}(state => state.toolset) ?? ${fallback};
 let ${toolAggregationVar} = undefined;
 const toolsets = ${toolsetsJSON};
 if (toolsets.hasOwnProperty(currentToolset)) {
@@ -563,16 +671,6 @@ export const writeComputeToolsFilter = (
   toolsets: Toolset[],
   defaultToolset: string | null
 ): string | null => {
-  const stateInfo = getAppStateSelectorAndUseState(oldFile);
-  if (!stateInfo) {
-    console.error(
-      'patch: toolsets: computeToolsFilter: failed to find app state info'
-    );
-    return null;
-  }
-
-  // stateInfo validated above — computeTools reads toolset from STORE.getState() directly
-
   // Create toolsets mapping (shared by both methods)
   const toolsetsMapJSON = JSON.stringify(
     Object.fromEntries(
@@ -585,6 +683,60 @@ export const writeComputeToolsFilter = (
   const toolsetFallback = defaultToolset
     ? JSON.stringify(defaultToolset)
     : 'undefined';
+
+  const classFilterHelper = `globalThis.__tweakcc_appStore=this.store;const __ts=${toolsetsMapJSON},__tf=(t,s)=>{const n=s.toolset??${toolsetFallback};globalThis.__tweakcc_toolset={name:n,tools:__ts[n]};if(__ts.hasOwnProperty(n)){const a=__ts[n];if(a==="*")return t;return t.filter(d=>a.includes(d.name))}return t};`;
+
+  // Method 0 (CC >= 2.1.246): computeTools is a class field that reads the
+  // store off `this`, not a useCallback closure. Both exits are wrapped; the
+  // cache still stores the UNFILTERED list so a /toolset switch takes effect
+  // without invalidating it. Also stashes the store on globalThis so the
+  // slash-command path can set `toolset` without a React hook in scope.
+  const classHead = oldFile.match(
+    /computeTools=\(\)=>\{let ([$\w]+)=this\.store\.getState\(\),/
+  );
+  if (classHead && classHead.index !== undefined) {
+    const braceIndex = classHead.index + 'computeTools=()=>'.length;
+    const bodyEnd = matchDelimiter(oldFile, braceIndex);
+    if (bodyEnd !== null) {
+      const stateVar = classHead[1];
+      const body = oldFile.slice(braceIndex + 1, bodyEnd);
+      let patched = classFilterHelper + body;
+      const final = patched.match(
+        /return this\.toolPoolCache=\{key:([$\w]+),result:([$\w]+)\},\2/
+      );
+      if (final && final.index !== undefined) {
+        const keyVar = final[1];
+        const rv = final[2];
+        patched =
+          patched.slice(0, final.index) +
+          `return this.toolPoolCache={key:${keyVar},result:${rv}},__tf(${rv},${stateVar})` +
+          patched.slice(final.index + final[0].length);
+      }
+      const cached = patched.match(/return ([$\w]+)\.result;/);
+      if (cached && cached.index !== undefined) {
+        const cv = cached[1];
+        patched =
+          patched.slice(0, cached.index) +
+          `return __tf(${cv}.result,${stateVar});` +
+          patched.slice(cached.index + cached[0].length);
+      }
+      const startIndex = classHead.index;
+      const newFile =
+        oldFile.slice(0, braceIndex + 1) + patched + oldFile.slice(bodyEnd);
+      showDiff(oldFile, newFile, patched, startIndex, bodyEnd + 1);
+      return newFile;
+    }
+  }
+
+  const stateInfo = getAppStateSelectorAndUseState(oldFile);
+  if (!stateInfo) {
+    console.error(
+      'patch: toolsets: computeToolsFilter: failed to find app state info'
+    );
+    return null;
+  }
+
+  // stateInfo validated above — computeTools reads toolset from STORE.getState() directly
 
   // Method 1 (CC >=2.1.219): the closure gained a ref-backed memo cache and the
   // agent-resolution branch collapsed into a ternary inside a post-filter call:
@@ -781,11 +933,22 @@ export const writePrintToolsFilter = (
   if (csMatch && csMatch.index !== undefined) {
     const thunkVar = csMatch[1];
 
-    const thunkDecl = oldFile.match(
-      new RegExp(
-        `${escapeIdent(thunkVar)}=\\(\\)=>([$\\w]+)\\(([$\\w]+)\\(\\)\\)`
-      )
+    const thunkDeclRe = new RegExp(
+      `${escapeIdent(thunkVar)}=\\(\\)=>([$\\w]+)\\(([$\\w]+)\\(\\)\\)`,
+      'g'
     );
+    let thunkDecl: RegExpExecArray | null = null;
+    for (
+      let candidate = thunkDeclRe.exec(oldFile);
+      candidate !== null;
+      candidate = thunkDeclRe.exec(oldFile)
+    ) {
+      if (candidate.index < csMatch.index) thunkDecl = candidate;
+      else {
+        if (thunkDecl === null) thunkDecl = candidate;
+        break;
+      }
+    }
     if (!thunkDecl || thunkDecl.index === undefined) {
       console.error(
         'patch: toolsets: printToolsFilter: failed to find the print tools thunk'
@@ -1063,17 +1226,17 @@ export const writeToolsetComponentDefinition = (
   toolsets: Toolset[],
   defaultToolset: string | null
 ): string | null => {
+  const reactVar = getReactVar(oldFile);
+  if (!reactVar) {
+    console.error('patch: toolsets: failed to find React variable');
+    return null;
+  }
+
   const insertionPoint = findTopLevelPositionBeforeSlashCommand(oldFile);
   if (insertionPoint === null) {
     console.error(
       'patch: toolsets: failed to find slash command insertion point'
     );
-    return null;
-  }
-
-  const reactVar = getReactVar(oldFile);
-  if (!reactVar) {
-    console.error('patch: toolsets: failed to find React variable');
     return null;
   }
 
@@ -1236,7 +1399,7 @@ export interface StatusLineComponent {
 // The optional `currentToolset` prefix makes the locator idempotent: step 5
 // injects there, and steps 6/7 must still be able to find the same component.
 const compilerComponentHeader = () =>
-  /function ([$\w]+)\([$\w]+\)\{(?:let currentToolset=[^;]*;)?let ([$\w]+)=[$\w]+\.c\(\d+\),/g;
+  /function ([$\w]+)\([$\w]+\)\{(?:let currentToolset=[^;]*;)?let ([$\w]+)=[$\w]+(?:\.[$\w]+)?\(\d+\),/g;
 
 // `Que(dne)," on",EWf` — the permission-mode label in the status line.
 // CC 2.1.232 split the label into its own component and precomputes the mode
@@ -1493,11 +1656,16 @@ export const insertShiftTabAppStateVar = (
     return null;
   }
 
-  const { appStateUseSelectorFn } = stateInfo;
+  const { appStateUseSelectorFn, selectorIndex } = stateInfo;
   const fallback = defaultToolset
     ? JSON.stringify(defaultToolset)
     : 'undefined';
-  const codeToInsert = `let currentToolset=${appStateUseSelectorFn}(state => state.toolset) ?? ${fallback};`;
+  const selectorAt = (at: number): string =>
+    selectorIndex !== undefined
+      ? resolveNameAt(oldFile, appStateUseSelectorFn, selectorIndex, at)
+      : appStateUseSelectorFn;
+  const codeToInsertAt = (at: number): string =>
+    `let currentToolset=${selectorAt(at)}(state => state.toolset) ?? ${fallback};`;
 
   // Method 1 (CC >=2.1.204): declare it at the top of every React-compiler
   // component steps 6/7 rewrite a label in. Up to CC 2.1.231 that was a single
@@ -1523,11 +1691,11 @@ export const insertShiftTabAppStateVar = (
     const splices: Splice[] = points.map(at => ({
       start: at,
       end: at,
-      text: codeToInsert,
+      text: codeToInsertAt(at),
     }));
     const newFile = applySplices(oldFile, splices);
     const first = Math.min(...points);
-    showDiff(oldFile, newFile, codeToInsert, first, first);
+    showDiff(oldFile, newFile, splices[0].text, first, first);
     return newFile;
   }
 
@@ -1541,6 +1709,7 @@ export const insertShiftTabAppStateVar = (
     return null;
   }
 
+  const codeToInsert = codeToInsertAt(insertionPoint);
   const newFile =
     oldFile.slice(0, insertionPoint) +
     codeToInsert +
@@ -1726,15 +1895,14 @@ export const appendToolsetToShortcutsDisplay = (
 /**
  * Sub-patch 4: Add the slash command definition
  */
-export const writeSlashCommandDefinition = (oldFile: string): string | null => {
+export const writeSlashCommandDefinition = (
+  oldFile: string,
+  toolsets?: Toolset[],
+  defaultToolset?: string | null
+): string | null => {
   const reactVar = getReactVar(oldFile);
-  if (!reactVar) {
-    console.error('patch: toolsets: failed to find React variable');
-    return null;
-  }
-
-  // Generate the slash command definition
-  const commandDef = `, {
+  if (reactVar) {
+    const commandDef = `, {
   aliases: ["change-tools"],
   type: "local-jsx",
   name: "toolset",
@@ -1749,8 +1917,44 @@ export const writeSlashCommandDefinition = (oldFile: string): string | null => {
     return "toolset";
   }
 }`;
+    return writeSlashCommandDefinitionToArray(oldFile, commandDef);
+  }
 
-  // Use the imported function to write the command definition
+  // CC >= 2.1.246: React.createElement is not a global in the command-table
+  // module. Register a text command that reads/writes the store stashed by
+  // computeTools (`globalThis.__tweakcc_appStore`).
+  const names = (toolsets ?? []).map(ts => ts.name);
+  const namesJson = JSON.stringify(names);
+  const fallback =
+    defaultToolset === undefined || defaultToolset === null
+      ? 'undefined'
+      : JSON.stringify(defaultToolset);
+  const commandDef = `, {
+  aliases: ["change-tools"],
+  type: "local",
+  name: "toolset",
+  description: "Select a toolset (managed by tweakcc)",
+  argumentHint: "[toolset-name]",
+  isEnabled: () => true,
+  isHidden: false,
+  load: () => Promise.resolve().then(() => ({call: (args) => {
+    const names = ${namesJson};
+    const store = globalThis.__tweakcc_appStore;
+    const current = (store && store.getState && store.getState().toolset) ?? ${fallback};
+    const input = typeof args === "string" ? args.trim() : "";
+    if (!input) {
+      return "Current toolset: " + current + ". Valid toolsets: " + names.join(", ") + ". Run /toolset <name> to switch.";
+    }
+    if (!names.includes(input)) {
+      return input + " is not a valid toolset. Valid toolsets: " + names.join(", ");
+    }
+    if (store && store.setState) store.setState(prev => ({...prev, toolset: input}));
+    return "Toolset changed to " + input;
+  }})),
+  userFacingName() {
+    return "toolset";
+  }
+}`;
   return writeSlashCommandDefinitionToArray(oldFile, commandDef);
 };
 
@@ -1804,13 +2008,17 @@ export const addCurrentToolsetAtToolChangeComponentScope = (
     return null;
   }
 
-  const { appStateUseSelectorFn } = stateInfo;
+  const { appStateUseSelectorFn, selectorIndex } = stateInfo;
   const fallback = defaultToolset
     ? JSON.stringify(defaultToolset)
     : 'undefined';
+  const selectorFn =
+    selectorIndex !== undefined
+      ? resolveNameAt(oldFile, appStateUseSelectorFn, selectorIndex, scopeIndex)
+      : appStateUseSelectorFn;
 
   // Inject the currentToolset access right at the start of the component scope
-  const injectionCode = `const currentToolset = ${appStateUseSelectorFn}(state => state.toolset) ?? ${fallback};`;
+  const injectionCode = `const currentToolset = ${selectorFn}(state => state.toolset) ?? ${fallback};`;
 
   const newFile =
     oldFile.slice(0, scopeIndex) + injectionCode + oldFile.slice(scopeIndex);
@@ -1963,17 +2171,24 @@ export const writeToolsets = (
     result = result2d;
   }
 
-  // Step 3: Add toolset component definition
-  result = writeToolsetComponentDefinition(result, toolsets, defaultToolset);
-  if (!result) {
-    console.error(
-      'patch: toolsets: step 3 failed (writeToolsetComponentDefinition)'
+  // Step 3: Add toolset component definition (JSX UI). On ESM-split builds
+  // React is not a global in the insertion module — skip the component and
+  // register a text /toolset command instead.
+  const withUi = writeToolsetComponentDefinition(
+    result,
+    toolsets,
+    defaultToolset
+  );
+  if (withUi) {
+    result = withUi;
+  } else {
+    console.log(
+      'patch: toolsets: step 3 skipped (no React global — using text /toolset)'
     );
-    return null;
   }
 
   // Step 4: Add slash command definition
-  result = writeSlashCommandDefinition(result);
+  result = writeSlashCommandDefinition(result, toolsets, defaultToolset);
   if (!result) {
     console.error(
       'patch: toolsets: step 4 failed (writeSlashCommandDefinition)'

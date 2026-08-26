@@ -565,6 +565,122 @@ const findPatchesListLocation = (
  * - PATCH 2: Adds tweakcc version to header
  * - PATCH 3: Adds patches applied list
  */
+const IMPORTED_VERSION_ROW =
+  /([$\w]+)=([$\w]+)\(([$\w]+),\{children:\[[$\w]+," ",([$\w]+)\(([$\w]+),\{dimColor:!0,children:\["v",[$\w]+\]\}\)\]\}\)/;
+
+const IMPORTED_BANNER_ROW =
+  /([$\w]+)=([$\w]+)\(([$\w]+),\{flexDirection:"row",gap:2,alignItems:"center",children:\[[$\w]+,[$\w]+\]\}\)/;
+
+const findNearbyJsxTitle = (
+  fileContents: string,
+  at: number
+): { jsx: string; text: string } | null => {
+  const window = fileContents.slice(Math.max(0, at - 500), at);
+  const title = window.match(
+    /([$\w]+)\(([$\w]+),\{bold:!0,children:"Claude Code"\}\)/
+  );
+  if (!title) return null;
+  return { jsx: title[1], text: title[2] };
+};
+
+const renderImportedJsxPatchList = (
+  jsx: string,
+  jsxs: string,
+  box: string,
+  text: string,
+  patchesApplies: string[]
+): string => {
+  const rows = [
+    `${jsxs}(${box},{children:[${jsx}(${text},{color:"success",bold:!0,children:"\\u2503 "}),${jsx}(${text},{color:"success",bold:!0,children:"\\u2713 tweakcc-fixed patches are applied"})]})`,
+  ];
+  for (const item of patchesApplies) {
+    rows.push(
+      `${jsxs}(${box},{children:[${jsx}(${text},{color:"success",bold:!0,children:"\\u2503 "}),${jsx}(${text},{dimColor:!0,children:${JSON.stringify(`  * ${item}`)}})]})`
+    );
+  }
+  return `${jsxs}(${box},{flexDirection:"column",children:[${rows.join(',')}]})`;
+};
+
+/**
+ * CC >= 2.1.246: jsx/jsxs are imported bindings, so the startup header is
+ * `da=l(c,{children:[QS," ",l(c,{dimColor:!0,children:["v",Xm]})]})` rather
+ * than `HELPER.jsxs(TEXT,{...})`. Spliced UI must use those same locals —
+ * `React.createElement` is not in scope in the header module.
+ */
+const applyImportedJsxHeader = (
+  content: string,
+  tweakccVersion: string,
+  patchesApplies: string[],
+  showTweakccVersion: boolean,
+  showPatchesApplied: boolean
+): { content: string; didVersion: boolean; didList: boolean } => {
+  let didVersion = false;
+  let didList = false;
+
+  if (showTweakccVersion && !content.includes(`+ tweakcc v${tweakccVersion}`)) {
+    const dim = ',{dimColor:!0,children:["v"';
+    let dimAt = content.indexOf(dim);
+    while (dimAt !== -1 && !didVersion) {
+      const lookbackStart = Math.max(0, dimAt - 180);
+      const window = content.slice(lookbackStart, dimAt + 80);
+      const verMatch = window.match(IMPORTED_VERSION_ROW);
+      if (verMatch && verMatch.index !== undefined) {
+        const absIndex = lookbackStart + verMatch.index;
+        const title = findNearbyJsxTitle(content, absIndex);
+        const jsx = title?.jsx ?? verMatch[4];
+        const text = title?.text ?? verMatch[5];
+        const marker = `," ",${jsx}(${text},{color:"warning",bold:!0,children:${JSON.stringify(`+ tweakcc v${tweakccVersion}`)}})`;
+        const insertAt = absIndex + verMatch[0].length - 3;
+        const old = content;
+        content = content.slice(0, insertAt) + marker + content.slice(insertAt);
+        showDiff(old, content, marker, insertAt, insertAt);
+        didVersion = true;
+        break;
+      }
+      dimAt = content.indexOf(dim, dimAt + dim.length);
+    }
+  }
+
+  if (
+    showPatchesApplied &&
+    !content.includes('tweakcc-fixed patches are applied')
+  ) {
+    const anchor = 'flexDirection:"row",gap:2,alignItems:"center",children:[';
+    const rowAt = content.indexOf(anchor);
+    const lookbackStart = rowAt === -1 ? 0 : Math.max(0, rowAt - 40);
+    const window =
+      rowAt === -1 ? '' : content.slice(lookbackStart, rowAt + 120);
+    const rowMatch = window.match(IMPORTED_BANNER_ROW);
+    if (rowMatch && rowMatch.index !== undefined) {
+      const absIndex = lookbackStart + rowMatch.index;
+      const assignVar = rowMatch[1];
+      const jsxs = rowMatch[2];
+      const box = rowMatch[3];
+      const title = findNearbyJsxTitle(content, absIndex);
+      const jsx = title?.jsx ?? jsxs;
+      const text = title?.text ?? box;
+      const rowExpr = rowMatch[0].slice(assignVar.length + 1);
+      const patchesElement = renderImportedJsxPatchList(
+        jsx,
+        jsxs,
+        box,
+        text,
+        patchesApplies
+      );
+      const wrapped = `${assignVar}=${jsxs}(${box},{flexDirection:"column",children:[${rowExpr},${patchesElement}]})`;
+      const old = content;
+      content =
+        content.slice(0, absIndex) +
+        wrapped +
+        content.slice(absIndex + rowMatch[0].length);
+      showDiff(old, content, wrapped, absIndex, absIndex + wrapped.length);
+      didList = true;
+    }
+  }
+
+  return { content, didVersion, didList };
+};
+
 export const writePatchesAppliedIndication = (
   fileContents: string,
   tweakccVersion: string,
@@ -597,29 +713,55 @@ export const writePatchesAppliedIndication = (
     versionOutputLocation.endIndex
   );
 
-  // Find shared components needed by multiple patches
+  // CC >= 2.1.246 header: imported jsx/jsxs. Does not need the global React
+  // var (which the ESM split no longer exposes as `X=loader(react(),1)`).
+  const imported = applyImportedJsxHeader(
+    content,
+    tweakccVersion,
+    patchesApplies,
+    showTweakccVersion,
+    showPatchesApplied
+  );
+  content = imported.content;
+
+  const needLegacyVersion = showTweakccVersion && !imported.didVersion;
+  const needLegacyList = showPatchesApplied && !imported.didList;
+  if (!needLegacyVersion && !needLegacyList) {
+    return content;
+  }
+
+  // Find shared components needed by the pre-2.1.246 header paths.
   const chalkVar = findChalkVar(fileContents);
   if (!chalkVar) {
-    console.error(
-      'patch: patchesAppliedIndication: failed to find chalk variable'
-    );
-    return null;
+    if (!imported.didVersion && !imported.didList) {
+      console.error(
+        'patch: patchesAppliedIndication: failed to find chalk variable'
+      );
+      return null;
+    }
+    return content;
   }
 
   const textComponent = findTextComponent(fileContents);
   if (!textComponent) {
-    console.error(
-      'patch: patchesAppliedIndication: failed to find text component'
-    );
-    return null;
+    if (!imported.didVersion && !imported.didList) {
+      console.error(
+        'patch: patchesAppliedIndication: failed to find text component'
+      );
+      return null;
+    }
+    return content;
   }
 
   const reactVar = getReactVar(fileContents);
   if (!reactVar) {
-    console.error(
-      'patch: patchesAppliedIndication: failed to find React variable'
-    );
-    return null;
+    if (!imported.didVersion && !imported.didList) {
+      console.error(
+        'patch: patchesAppliedIndication: failed to find React variable'
+      );
+      return null;
+    }
+    return content;
   }
 
   // PATCH 2: Add tweakcc version to all header paths.

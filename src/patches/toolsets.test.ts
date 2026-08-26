@@ -41,9 +41,22 @@ const TS: Toolset[] = [
 ];
 
 describe('getAppStateSelectorAndUseState', () => {
+  it('finds the selector + setState fns in the CC >=2.1.246 ESM store', () => {
+    const mod =
+      'function o(){let t=r(p);if(!t)throw ReferenceError("useAppState/useSetAppState cannot be called outside of an <AppStateProvider />");return t}' +
+      'function v(t){let e=o(),n=()=>{let i=e.getState();return t(i)};return s(e.subscribe,n,n)}' +
+      'function y(){return o().setState}';
+    expect(getAppStateSelectorAndUseState(mod)).toEqual({
+      appStateUseSelectorFn: 'v',
+      appStateSetState: 'y',
+      selectorIndex: expect.any(Number),
+      setStateIndex: expect.any(Number),
+    });
+  });
+
   it('finds the selector + setState fns in the CC >=2.1.83 shape', () => {
     const info = getAppStateSelectorAndUseState(APP_STATE);
-    expect(info).toEqual({
+    expect(info).toMatchObject({
       appStateUseSelectorFn: 'D8',
       appStateSetState: 'iA',
     });
@@ -54,7 +67,7 @@ describe('getAppStateSelectorAndUseState', () => {
     const old =
       'function D8(A){let q=`Your selector in something`;return q}' +
       'function iA(){return ST().setState}';
-    expect(getAppStateSelectorAndUseState(old)).toEqual({
+    expect(getAppStateSelectorAndUseState(old)).toMatchObject({
       appStateUseSelectorFn: 'D8',
       appStateSetState: 'iA',
     });

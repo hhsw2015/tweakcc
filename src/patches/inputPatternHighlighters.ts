@@ -35,6 +35,60 @@ const buildChalkChain = (
 
 // ======================================================================
 
+const rewriteJsxHighlightRenderer = (
+  oldFile: string,
+  jsxMatch: RegExpMatchArray,
+  dottedJsx: boolean
+): string | null => {
+  if (jsxMatch.index === undefined) return null;
+  const [, jsxVar, textComp, props, segVar, innerComp, keyVar] = jsxMatch;
+  const propVars = [...props.matchAll(/[$\w]+:([$\w]+)\.highlight\?\./g)].map(
+    m => m[1]
+  );
+  if (propVars.some(v => v !== segVar)) {
+    console.error(
+      'patch: inputPatternHighlighters: highlight prop run mixes segment variables'
+    );
+    return null;
+  }
+
+  const call = dottedJsx ? `${jsxVar}.jsx` : jsxVar;
+  const styleFn =
+    `(${segVar}.highlight?.style??` +
+    `(typeof ${segVar}.highlight?.color==="function"?` +
+    `${segVar}.highlight.color:void 0))`;
+  const off = (prop: string): string =>
+    `,${prop}:${styleFn}?void 0:${segVar}.highlight?.${prop}`;
+
+  const replacement =
+    `return ${call}(${textComp},{` +
+    `${off('color').slice(1)}` +
+    off('backgroundColor') +
+    `,dimColor:${segVar}.highlight?.dimColor` +
+    off('inverse') +
+    off('bold') +
+    off('italic') +
+    off('underline') +
+    off('strikethrough') +
+    `,children:${call}(${innerComp},{children:${styleFn}?` +
+    `${styleFn}(${segVar}.text):${segVar}.text})},${keyVar})`;
+
+  const newFile =
+    oldFile.slice(0, jsxMatch.index) +
+    replacement +
+    oldFile.slice(jsxMatch.index + jsxMatch[0].length);
+
+  showDiff(
+    oldFile,
+    newFile,
+    replacement,
+    jsxMatch.index,
+    jsxMatch.index + jsxMatch[0].length
+  );
+
+  return newFile;
+};
+
 const writeCustomHighlighterImpl = (oldFile: string): string | null => {
   // Idempotency: the augmented renderer (any method) is the only place that
   // emits this exact guard, so a second pass is a no-op instead of a failure.
@@ -43,6 +97,18 @@ const writeCustomHighlighterImpl = (oldFile: string): string | null => {
     oldFile.includes('.highlight?.style??(typeof ')
   ) {
     return oldFile;
+  }
+
+  // Method 0 — CC >= 2.1.246: jsx/jsxs are imported bindings, so the renderer
+  // is a bare call (`return c(u,{color:C.highlight?.color,...,children:c(E,
+  // {children:C.text})},Pt)`) rather than `JSX.jsx(TEXT,{...})`. Same prop-run
+  // matching as Method 1 so a newly inserted highlight field does not break us.
+  const importedJsxRegex =
+    /return ([$\w]+)\(([$\w]+),\{((?:[$\w]+:([$\w]+)\.highlight\?\.[$\w]+,)+)children:\1\(([$\w]+),\{children:\4\.text\}\)\},([$\w]+)\)/;
+
+  const importedJsxMatch = oldFile.match(importedJsxRegex);
+  if (importedJsxMatch && importedJsxMatch.index !== undefined) {
+    return rewriteJsxHighlightRenderer(oldFile, importedJsxMatch, false);
   }
 
   // Method 1 — CC >=2.1.186 (jsx runtime). React.createElement was replaced by
@@ -65,57 +131,7 @@ const writeCustomHighlighterImpl = (oldFile: string): string | null => {
 
   const jsxMatch = oldFile.match(jsxRegex);
   if (jsxMatch && jsxMatch.index !== undefined) {
-    const [, jsxVar, textComp, props, segVar, innerComp, keyVar] = jsxMatch;
-    // Every pair must read off the SAME segment variable; a mixed run would mean
-    // the regex straddled two different renderers.
-    const propVars = [...props.matchAll(/[$\w]+:([$\w]+)\.highlight\?\./g)].map(
-      m => m[1]
-    );
-    if (propVars.some(v => v !== segVar)) {
-      console.error(
-        'patch: inputPatternHighlighters: highlight prop run mixes segment variables'
-      );
-      return null;
-    }
-
-    // A highlight carries either a chalk `style` fn (what this patch pushes) or
-    // — for legacy configs — a callable `color`. Either one renders the text
-    // itself, so the Ink colour props must be suppressed to avoid double
-    // styling and to keep a function from reaching `color=`.
-    const styleFn =
-      `(${segVar}.highlight?.style??` +
-      `(typeof ${segVar}.highlight?.color==="function"?` +
-      `${segVar}.highlight.color:void 0))`;
-    const off = (prop: string): string =>
-      `,${prop}:${styleFn}?void 0:${segVar}.highlight?.${prop}`;
-
-    const replacement =
-      `return ${jsxVar}.jsx(${textComp},{` +
-      `${off('color').slice(1)}` +
-      off('backgroundColor') +
-      `,dimColor:${segVar}.highlight?.dimColor` +
-      off('inverse') +
-      off('bold') +
-      off('italic') +
-      off('underline') +
-      off('strikethrough') +
-      `,children:${jsxVar}.jsx(${innerComp},{children:${styleFn}?` +
-      `${styleFn}(${segVar}.text):${segVar}.text})},${keyVar})`;
-
-    const newFile =
-      oldFile.slice(0, jsxMatch.index) +
-      replacement +
-      oldFile.slice(jsxMatch.index + jsxMatch[0].length);
-
-    showDiff(
-      oldFile,
-      newFile,
-      replacement,
-      jsxMatch.index,
-      jsxMatch.index + jsxMatch[0].length
-    );
-
-    return newFile;
+    return rewriteJsxHighlightRenderer(oldFile, jsxMatch, true);
   }
 
   // Method 2 — CC <2.1.83: if(N.highlight?.color)return createElement(T,{key:E},color:N.highlight.color,...)
@@ -248,10 +264,22 @@ const writeCustomHighlighterCreation = (
   // CC >=2.1.140: same shape, but unrelated useMemos earlier in the file
   // require the inner span to be length-bounded so the regex doesn't span
   // across functions and latch onto the wrong useMemo opening.
+  // Method 0 (CC >= 2.1.246): useMemo is an imported binding, so the ranges
+  // builder is `let Mc=z(()=>{let E=[];...if(be&&en&&!Gi)E.push({start:U,
+  // end:U+Pn.length,color:"warning",priority:20})` — no `.useMemo`.
+  const importedMemoRegex =
+    /((?:let |;|,)[$\w]+=[$\w]+\(\(\)=>\{let [$\w]+=\[\];[\s\S]{0,2000}?)(if\([$\w]+&&[$\w]+&&![$\w]+\)([$\w]+)\.push\(\{start:[$\w]+,end:[$\w]+\+[$\w]+\.length,color:"warning",priority:\d+\})/;
+
+  // Method 1 (CC <2.1.246): `,VAR=REACT.useMemo(()=>{let ARR=[];...` or
+  // `;let VAR=REACT.useMemo(()=>{let ARR=[];...`
   const regex =
     /((?:,|;let )[$\w]+=[$\w]+\.useMemo\(\(\)=>\{let [$\w]+=\[\];[\s\S]{0,2000}?)(if\([$\w]+&&[$\w]+&&![$\w]+\)([$\w]+)\.push\(\{start:[$\w]+,end:[$\w]+\+[$\w]+\.length,color:"warning",priority:\d+\})/;
 
-  const match = oldFile.match(regex);
+  const importedMemoMatch = oldFile.match(importedMemoRegex);
+  const match =
+    importedMemoMatch && importedMemoMatch.index !== undefined
+      ? importedMemoMatch
+      : oldFile.match(regex);
   if (!match || match.index === undefined) {
     console.error(
       'patch: inputPatternHighlighters: failed to find useMemo/push pattern'
@@ -260,16 +288,6 @@ const writeCustomHighlighterCreation = (
   }
 
   const rangesVar = match[3];
-
-  const reactMemoPattern = /[^$\w]([$\w]+(?:\.default)?)\.useMemo\(/;
-  const reactMemoMatch = match[1].match(reactMemoPattern);
-  if (!reactMemoMatch) {
-    console.error(
-      'patch: inputPatternHighlighters: failed to extract React var from useMemo'
-    );
-    return null;
-  }
-  const _reactVarFromMemo = reactMemoMatch[1]; // eslint-disable-line @typescript-eslint/no-unused-vars
 
   const searchStart = Math.max(0, match.index - 15000);
   const searchWindow = oldFile.slice(searchStart, match.index);
@@ -378,7 +396,7 @@ const writeCustomHighlighterCreation = (
       Math.max(0, forLoopIdx - 2000),
       forLoopIdx
     );
-    const memoMatches = [...searchBack.matchAll(/useMemo\(\(\)=>\{/g)];
+    const memoMatches = [...searchBack.matchAll(/[$\w]+\(\(\)=>\{/g)];
     if (memoMatches.length > 0) {
       const memoOffset =
         Math.max(0, forLoopIdx - 2000) +

@@ -57,6 +57,29 @@ describe('writeInputPatternHighlighters', () => {
     ';let ranges=Pi.useMemo(()=>{let arr=[];if(a&&b&&!c)' +
     'arr.push({start:s,end:s+l.length,color:"warning",priority:20})},[a]);';
 
+  const importedJsxRenderer =
+    'return c(u,{color:C.highlight?.color,dimColor:C.highlight?.dimColor,' +
+    'inverse:C.highlight?.inverse,underline:C.highlight?.underline,' +
+    'children:c(E,{children:C.text})},Pt);';
+
+  const importedJsxFile =
+    'let props={inputValue:te,other:1};' +
+    importedJsxRenderer +
+    ';let ranges=z(()=>{let arr=[];if(a&&b&&!c)' +
+    'arr.push({start:s,end:s+l.length,color:"warning",priority:20})},[a]);';
+
+  it('patches the imported jsx renderer shape (CC >=2.1.246)', () => {
+    const result = writeInputPatternHighlighters(importedJsxFile, [
+      baseHighlighter({ name: 'todo', regex: 'TODO', styling: ['bold'] }),
+    ]);
+
+    expect(result).not.toBeNull();
+    expect(result).toContain('return c(u,{');
+    expect(result).not.toContain('.jsx(');
+    expect(result).toContain('matchAll(new RegExp("TODO", "g"))');
+    expect(result).toContain(',[a,te]);');
+  });
+
   it('patches the jsx-runtime renderer shape (CC >=2.1.186)', () => {
     const result = writeInputPatternHighlighters(jsxFile, [
       baseHighlighter({ name: 'todo', regex: 'TODO', styling: ['bold'] }),

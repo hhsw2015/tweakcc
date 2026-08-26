@@ -25,7 +25,18 @@ const FIXTURE_JSX_A =
 const FIXTURE_JSX_B =
   'Fo.jsx(UXe,{messages:ug.messages,deferMessages:ug.isMain&&!Uge&&bs,tools:_o,commands:Dn,verbose:re,toolJSX:as,inProgressToolUseIDs:ug.inProgressToolUseIDs,isMessageSelectorVisible:Hv,conversationId:ug.conversationKey,screen:lr,streamingToolUses:ec,showAllInTranscript:fr,agentDefinitions:ee,onOpenRateLimitOptions:CCt,isLoading:bs});';
 
+const FIXTURE_IMPORTED_JSX =
+  'LYe=i(uR,{messages:Di.messages,tools:tR,commands:rue,inProgressToolUseIDs:Di.inProgressToolUseIDs,conversationId:Di.conversationKey,screen:"transcript",turn:iue,showAllInTranscript:Il,onOpenRateLimitOptions:sue,scrollRef:jc});';
+
 describe('writeSuppressRateLimitOptions', () => {
+  it('replaces the callback var in the imported jsx helper shape (method 4)', () => {
+    const out = writeSuppressRateLimitOptions(FIXTURE_IMPORTED_JSX);
+
+    expect(out).not.toBeNull();
+    expect(out).toContain('onOpenRateLimitOptions:()=>{}');
+    expect(out).not.toContain('onOpenRateLimitOptions:sue');
+  });
+
   it('replaces the callback var in the jsx() runtime shape (method 3)', () => {
     const out = writeSuppressRateLimitOptions(FIXTURE_JSX_A);
 
