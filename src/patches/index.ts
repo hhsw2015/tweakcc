@@ -124,6 +124,7 @@ import { compareVersions } from '../systemPromptSync';
 export { showDiff, showPositionalDiff, globalReplace } from './patchDiffing';
 export {
   findChalkVar,
+  findChalkVarInModule,
   getModuleLoaderFunction,
   getReactModuleNameNonBun,
   getReactModuleFunctionBun,

@@ -1,6 +1,6 @@
 import { stringifyRegex } from '@/utils';
 import { InputPatternHighlighter } from '../types';
-import { findChalkVar, showDiff } from './index';
+import { findChalkVar, findChalkVarInModule, showDiff } from './index';
 
 // ======================================================================
 
@@ -289,6 +289,19 @@ const writeCustomHighlighterCreation = (
 
   const rangesVar = match[3];
 
+  // Chalk as named in THIS module. The bundle-wide winner is a different
+  // module's local on a code-split build, so splicing it here throws the first
+  // time a highlighter matches. When the module has no chalk, drop the `style`
+  // closure: every option this config exposes is also carried by the plain
+  // color/backgroundColor/bold/italic/underline/inverse/dimColor/strikethrough
+  // props, which is the branch the renderer already falls back to.
+  const localChalkVar = findChalkVarInModule(oldFile, match.index);
+  if (!localChalkVar) {
+    console.log(
+      'patch: inputPatternHighlighters: no chalk binding in the target module — using declarative styling props'
+    );
+  }
+
   const searchStart = Math.max(0, match.index - 15000);
   const searchWindow = oldFile.slice(searchStart, match.index);
   // CC >=2.1.140: input is destructured from a hook as `inputValue:VAR,`.
@@ -313,7 +326,9 @@ const writeCustomHighlighterCreation = (
   let genCode = '';
   for (let i = 0; i < highlighters.length; i++) {
     const highlighter = highlighters[i];
-    const chalkChain = buildChalkChain(chalkVar, highlighter);
+    const chalkChain = localChalkVar
+      ? buildChalkChain(localChalkVar, highlighter)
+      : null;
     const formatStr = highlighter.format ?? '{MATCH}';
     JSON.stringify(formatStr).replace(/\{MATCH\}/g, '"+x+"'); // preserve legacy side-effect-free transform shape for diff stability
 
@@ -370,7 +385,7 @@ const writeCustomHighlighterCreation = (
     }
     const regexStr = stringifyRegex(regex);
 
-    genCode += `if(typeof ${inputVar}==="string"){for(let m of ${inputVar}.matchAll(${regexStr})){${rangesVar}.push({start:m.index,end:m.index+m[0].length,color:${colorValue}${bgColorValue ? `,backgroundColor:${bgColorValue}` : ''}${isBold ? ',bold:!0' : ''}${isItalic ? ',italic:!0' : ''}${isUnderline ? ',underline:!0' : ''}${isInverse ? ',inverse:!0' : ''}${isDim ? ',dimColor:!0' : ''}${isStrikethrough ? ',strikethrough:!0' : ''},style:(x)=>${chalkChain}(x),priority:100})}}`;
+    genCode += `if(typeof ${inputVar}==="string"){for(let m of ${inputVar}.matchAll(${regexStr})){${rangesVar}.push({start:m.index,end:m.index+m[0].length,color:${colorValue}${bgColorValue ? `,backgroundColor:${bgColorValue}` : ''}${isBold ? ',bold:!0' : ''}${isItalic ? ',italic:!0' : ''}${isUnderline ? ',underline:!0' : ''}${isInverse ? ',inverse:!0' : ''}${isDim ? ',dimColor:!0' : ''}${isStrikethrough ? ',strikethrough:!0' : ''}${chalkChain ? `,style:(x)=>${chalkChain}(x)` : ''},priority:100})}}`;
   }
 
   if (!genCode) {
