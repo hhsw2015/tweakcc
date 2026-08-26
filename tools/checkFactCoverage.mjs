@@ -46,12 +46,14 @@ const SPAN = /`([^`\n]{1,400})`/g;
 const FENCE = /```[^\n]*\n([\s\S]*?)```/g;
 // A whole inline span is a fact when it is nothing but an identifier, a dotted
 // chain, or a versioned path — `client.beta.agents.create`, `/v1/skills/{id}`.
-const SPAN_SHAPE = /^(?:\/v1\/[A-Za-z0-9_{}/.-]+|[A-Za-z_][A-Za-z0-9_]*(?:[.:][A-Za-z0-9_-]+)*(?:\(\))?)$/;
+const SPAN_SHAPE =
+  /^(?:\/v1\/[A-Za-z0-9_{}/.-]+|[A-Za-z_][A-Za-z0-9_]*(?:[.:][A-Za-z0-9_-]+)*(?:\(\))?)$/;
 // An object key in a code sample is API surface; a bare identifier beside it is
 // usually sample scaffolding (`m.path`, `ev.id`), so require the trailing colon.
 const KEY = /(?:^|[{,(\[]|\s)["']?([a-z][a-zA-Z0-9_]{3,})["']?\??\s*:/g;
 // SDK chains and CLI commands are facts wherever they appear, including prose.
-const CHAIN = /\bclient\.[A-Za-z_][A-Za-z0-9_.]{3,}|\bant\s+[a-z][a-z0-9:_-]{3,}/g;
+const CHAIN =
+  /\bclient\.[A-Za-z_][A-Za-z0-9_.]{3,}|\bant\s+[a-z][a-z0-9:_-]{3,}/g;
 
 export const reconstruct = p => {
   const pieces = p.pieces || [];
@@ -81,7 +83,8 @@ export const factsOf = text => {
     regions.push(m[1]);
   }
   for (const m of t.matchAll(FENCE)) regions.push(m[1]);
-  for (const region of regions) for (const k of region.matchAll(KEY)) found.add(k[1]);
+  for (const region of regions)
+    for (const k of region.matchAll(KEY)) found.add(k[1]);
   for (const c of t.matchAll(CHAIN)) found.add(c[0].replace(/\s+/g, ' '));
   return found;
 };
@@ -124,9 +127,25 @@ const main = () => {
     .map(s => s.trim())
     .filter(Boolean);
 
+  // The deployed corpus is every override in the set PLUS the pristine body of
+  // every catalogued id the set does not override. An absent file is not an
+  // absent prompt: `syncPrompt` applies pristine for it, so that text reaches
+  // the model. Scanning only `.md` files therefore under-counts coverage in
+  // exactly the set where it matters most — `opus-4-7` carries real overrides
+  // only, so nearly every id is delivered as pristine there, and the gate
+  // reported `id()` from the artifact db contract as reachable nowhere while
+  // `tool-description-artifact-database-guidance` was in fact supplying it
+  // pristine.
   let deployed = '';
+  const overridden = new Set();
   for (const f of fs.readdirSync(setDir)) {
-    if (f.endsWith('.md')) deployed += fs.readFileSync(path.join(setDir, f), 'utf8');
+    if (!f.endsWith('.md')) continue;
+    overridden.add(f.slice(0, -3));
+    deployed += fs.readFileSync(path.join(setDir, f), 'utf8');
+  }
+  for (const [id, bodies] of pristine) {
+    if (overridden.has(id)) continue;
+    for (const b of bodies) deployed += b + '\n';
   }
 
   const findings = [];
@@ -159,6 +178,9 @@ const main = () => {
   process.exit(1);
 };
 
-if (process.argv[1] && path.resolve(process.argv[1]) === url.fileURLToPath(import.meta.url)) {
+if (
+  process.argv[1] &&
+  path.resolve(process.argv[1]) === url.fileURLToPath(import.meta.url)
+) {
   main();
 }
