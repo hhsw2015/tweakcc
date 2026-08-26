@@ -571,16 +571,32 @@ const IMPORTED_VERSION_ROW =
 const IMPORTED_BANNER_ROW =
   /([$\w]+)=([$\w]+)\(([$\w]+),\{flexDirection:"row",gap:2,alignItems:"center",children:\[[$\w]+,[$\w]+\]\}\)/;
 
+const TWEAKCC_MODULE_MARK = '/*@@TWEAKCC_MODULE:';
+
+/** Start of the bundle module containing `index`; 0 on a single-module bundle. */
+const moduleStartAt = (file: string, index: number): number => {
+  const start = file.lastIndexOf(TWEAKCC_MODULE_MARK, index);
+  return start === -1 ? 0 : start;
+};
+
+/**
+ * Resolve the module-local `jsx` helper and `Text` component from the startup
+ * header's product title. Two constraints, both load-bearing: the lookback is
+ * clamped to the enclosing module, because a 2.1.246 code-split bundle reuses
+ * these one-letter locals per module; and the NEAREST preceding match wins,
+ * because the same title renders ~8MB away under different names.
+ */
 const findNearbyJsxTitle = (
   fileContents: string,
   at: number
 ): { jsx: string; text: string } | null => {
-  const window = fileContents.slice(Math.max(0, at - 500), at);
-  const title = window.match(
-    /([$\w]+)\(([$\w]+),\{bold:!0,children:"Claude Code"\}\)/
-  );
-  if (!title) return null;
-  return { jsx: title[1], text: title[2] };
+  const from = Math.max(moduleStartAt(fileContents, at), at - 4000);
+  const window = fileContents.slice(from, at);
+  const re = /([$\w]+)\(([$\w]+),\{bold:!0,children:"Claude Code"\}\)/g;
+  let last: RegExpExecArray | null = null;
+  for (let m = re.exec(window); m !== null; m = re.exec(window)) last = m;
+  if (!last) return null;
+  return { jsx: last[1], text: last[2] };
 };
 
 const renderImportedJsxPatchList = (
@@ -594,8 +610,13 @@ const renderImportedJsxPatchList = (
     `${jsxs}(${box},{children:[${jsx}(${text},{color:"success",bold:!0,children:"\\u2503 "}),${jsx}(${text},{color:"success",bold:!0,children:"\\u2713 tweakcc-fixed patches are applied"})]})`,
   ];
   for (const item of patchesApplies) {
+    // \uXXXX-escape after JSON.stringify, never before: a prompt title carrying
+    // an em dash spliced raw mojibakes against CC's Latin-1 module storage on a
+    // Bun-compiled binary. The legacy renderer has always escaped; the imported
+    // path is new, and skipping it here is what put a raw U+2014 in the bundle.
+    const label = escapeNonAscii(JSON.stringify(`  * ${item}`));
     rows.push(
-      `${jsxs}(${box},{children:[${jsx}(${text},{color:"success",bold:!0,children:"\\u2503 "}),${jsx}(${text},{dimColor:!0,children:${JSON.stringify(`  * ${item}`)}})]})`
+      `${jsxs}(${box},{children:[${jsx}(${text},{color:"success",bold:!0,children:"\\u2503 "}),${jsx}(${text},{dimColor:!0,children:${label}})]})`
     );
   }
   return `${jsxs}(${box},{flexDirection:"column",children:[${rows.join(',')}]})`;
@@ -629,7 +650,7 @@ const applyImportedJsxHeader = (
         const title = findNearbyJsxTitle(content, absIndex);
         const jsx = title?.jsx ?? verMatch[4];
         const text = title?.text ?? verMatch[5];
-        const marker = `," ",${jsx}(${text},{color:"warning",bold:!0,children:${JSON.stringify(`+ tweakcc v${tweakccVersion}`)}})`;
+        const marker = `," ",${jsx}(${text},{color:"warning",bold:!0,children:${escapeNonAscii(JSON.stringify(`+ tweakcc v${tweakccVersion}`))}})`;
         const insertAt = absIndex + verMatch[0].length - 3;
         const old = content;
         content = content.slice(0, insertAt) + marker + content.slice(insertAt);
@@ -657,8 +678,18 @@ const applyImportedJsxHeader = (
       const jsxs = rowMatch[2];
       const box = rowMatch[3];
       const title = findNearbyJsxTitle(content, absIndex);
-      const jsx = title?.jsx ?? jsxs;
-      const text = title?.text ?? box;
+      // No fallback here: `box` renders its children as a layout node, so
+      // handing it a bare string throws Ink's "must be rendered inside <Text>"
+      // at startup — an unrecoverable interface error that boots fine under
+      // --print. Refuse to splice rather than emit a Box where Text is needed.
+      if (!title || title.text === box) {
+        console.error(
+          'patch: patchesAppliedIndication: failed to find the Text component near the startup banner'
+        );
+        return { content, didVersion, didList };
+      }
+      const jsx = title.jsx;
+      const text = title.text;
       const rowExpr = rowMatch[0].slice(assignVar.length + 1);
       const patchesElement = renderImportedJsxPatchList(
         jsx,
@@ -728,6 +759,17 @@ export const writePatchesAppliedIndication = (
   const needLegacyList = showPatchesApplied && !imported.didList;
   if (!needLegacyVersion && !needLegacyList) {
     return content;
+  }
+
+  // Every path below splices `React.createElement(...)`, which is a module
+  // global only on a single-bundle build. On a code-split bundle that name is
+  // not in the header module's scope, so a "successful" legacy splice is a
+  // ReferenceError at first render — worse than leaving the indicator off.
+  if (content.includes(TWEAKCC_MODULE_MARK)) {
+    console.error(
+      'patch: patchesAppliedIndication: failed to patch the imported-jsx header; the legacy createElement paths do not apply to a code-split bundle'
+    );
+    return imported.didVersion || imported.didList ? content : null;
   }
 
   // Find shared components needed by the pre-2.1.246 header paths.

@@ -255,6 +255,55 @@ describe('writePatchesAppliedIndication', () => {
     );
   });
 
+  // The real 2.1.246 bundle puts ~780 chars between the "Claude Code" title and
+  // the banner row; the fixture above puts ~300. A 500-char lookback passed the
+  // fixture and missed the binary, so the resolver fell back to the BOX
+  // component for Text and Ink died at startup with `Text string "\u2503 " must
+  // be rendered inside <Text>` — a crash no --print smoke can reach.
+  const PADDING = `var pad=${JSON.stringify('x'.repeat(900))};`;
+  const FAR_TITLE_FIXTURE = IMPORTED_JSX_FIXTURE.replace(
+    'let Ym=r(p,{children:"LOGO"});',
+    `${PADDING}let Ym=r(p,{children:"LOGO"});`
+  );
+
+  it('resolves Text past a 500-char gap and never renders a string in a Box', () => {
+    expect(FAR_TITLE_FIXTURE).not.toEqual(IMPORTED_JSX_FIXTURE);
+    const out = writePatchesAppliedIndication(FAR_TITLE_FIXTURE, '3.2.1', [
+      'shrink: 12 fewer chars',
+    ]);
+    expect(out).not.toBeNull();
+    // `c` is Text and `p` is Box in this fixture. Every glyph/label element must
+    // be built on Text; a `p` here is the startup crash.
+    expect(out).toContain('r(c,{color:"success",bold:!0,children:"\\u2503 "})');
+    expect(out).not.toContain('(p,{color:"success"');
+    expect(out).not.toContain('(p,{dimColor:!0,children:"  * ');
+  });
+
+  it('refuses to splice the list when the Text component cannot be resolved', () => {
+    // Title removed => nothing identifies Text. Emitting anyway is what shipped
+    // the Box-as-Text crash, so the list must be skipped and the failure logged.
+    const NO_TITLE_FIXTURE = IMPORTED_JSX_FIXTURE.replace(
+      'QS=r(c,{bold:!0,children:"Claude Code"})',
+      'QS=r(c,{bold:!0,children:"Other Product"})'
+    );
+    expect(NO_TITLE_FIXTURE).not.toEqual(IMPORTED_JSX_FIXTURE);
+    const out = writePatchesAppliedIndication(NO_TITLE_FIXTURE, '3.2.1', [
+      'shrink: 12 fewer chars',
+    ]);
+    expect(out).not.toContain('tweakcc-fixed patches are applied');
+  });
+
+  it('\\uXXXX-escapes a non-ASCII item on the imported-jsx path too', () => {
+    const out = writePatchesAppliedIndication(IMPORTED_JSX_FIXTURE, '3.2.1', [
+      'Data: Claude API reference \u2014 C#: 554 fewer chars',
+    ]);
+    expect(out).not.toBeNull();
+    // Raw multibyte UTF-8 mojibakes against CC's Latin-1 module storage on a
+    // Bun-compiled binary; the legacy renderer escapes and this one must match.
+    expect(out).toContain('Data: Claude API reference \\u2014 C#');
+    expect(out).not.toContain('\u2014 C#: 554');
+  });
+
   it('injects the tweakcc marker into the JSX header version row (PATCH 2 Method 0)', () => {
     const out = writePatchesAppliedIndication(JSX_FIXTURE, '3.2.1', []);
     expect(out).not.toBeNull();

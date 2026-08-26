@@ -538,12 +538,16 @@ export const writeUserMessageDisplay = (
     // ESM-split: Text lives in this module as an import (`t` from ink), not
     // as the globally-first Text function (which is a different module's
     // binding and would be a ReferenceError if spliced in here).
+    // The global-first Text is only a legitimate fallback on a single-module
+    // bundle. On a code-split one it names a DIFFERENT module's binding, so
+    // splicing it here is a ReferenceError the moment the row renders.
     const textComponent =
       findLocalTextComponent(
         oldFile,
         importedJsxMatch.index,
         importedJsxMatch.callExpr
-      ) ?? findTextComponent(oldFile);
+      ) ??
+      (oldFile.includes(MODULE_MARK) ? undefined : findTextComponent(oldFile));
     if (!textComponent) {
       console.error('patch: userMessageDisplay: failed to find Text component');
       return null;
