@@ -147,10 +147,43 @@ const findBun = (): string | null => {
   }
 };
 
+// CC 2.1.246 code-split the bundle, so what the patch layer now sees is a
+// VIRTUAL bundle: every JS module concatenated behind a
+// `/*@@TWEAKCC_MODULE:index:name@@*/` sentinel. That concatenation is NOT a
+// valid single program — 1,412 ESM modules redeclare each other's top-level
+// names — so transpiling it whole is not just wrong, it wedges: the first run
+// against 2.1.246 sat for 32 minutes at 0% CPU. Parse each module on its own,
+// which is also what actually ships, since Bun loads them individually.
 const ORACLE_SCRIPT = `
 const fs = require('fs');
 const src = fs.readFileSync(process.argv[2], 'utf8');
-new Bun.Transpiler({ loader: 'js' }).transformSync(src);
+const t = new Bun.Transpiler({ loader: 'js' });
+const MARK = '/*@@TWEAKCC_MODULE:';
+const END = '@@*' + '/';
+if (src.indexOf(MARK) === -1) {
+  t.transformSync(src);
+} else {
+  const bounds = [];
+  let i = src.indexOf(MARK);
+  while (i !== -1) {
+    const close = src.indexOf(END, i);
+    bounds.push({
+      start: i,
+      bodyStart: close + END.length,
+      name: src.slice(i + MARK.length, close),
+    });
+    i = src.indexOf(MARK, close);
+  }
+  for (let k = 0; k < bounds.length; k++) {
+    const from = bounds[k].bodyStart;
+    const to = k + 1 < bounds.length ? bounds[k + 1].start : src.length;
+    try {
+      t.transformSync(src.slice(from, to));
+    } catch (err) {
+      throw new Error('module ' + bounds[k].name + ': ' + err.message);
+    }
+  }
+}
 `;
 
 interface ParseOracle {

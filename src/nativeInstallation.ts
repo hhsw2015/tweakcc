@@ -249,6 +249,67 @@ export function isClaudeModule(moduleName: string): boolean {
 }
 
 /**
+ * CC 2.1.246 code-split the app: `/$bunfs/root/cli` became a ~20 KB ESM entry
+ * loader and the real code moved into ~1,400 sibling modules, 128 of which
+ * carry model-facing prompt text. Every downstream consumer (patches, prompt
+ * overrides, the extractor) is written against ONE `cli.js` string, so instead
+ * of threading a module array through all of them we hand them a single
+ * VIRTUAL bundle: every JS module concatenated, each preceded by a sentinel
+ * comment naming its module-table index. Repack splits on the same sentinel
+ * and writes each segment back to its own module.
+ *
+ * The sentinel is a block comment, so the bundle stays valid-ish JS, and
+ * `/*@@` appears in zero of the 1,411 real modules (checked on 2.1.246).
+ */
+const MODULE_SENTINEL_RE = /\n\/\*@@TWEAKCC_MODULE:(\d+):([^@]*)@@\*\/\n/g;
+
+export const moduleSentinel = (index: number, name: string): string =>
+  `\n/*@@TWEAKCC_MODULE:${index}:${name}@@*/\n`;
+
+/**
+ * True for a module whose contents tweakcc may patch. Assets (`.node`,
+ * `.html.asset`, `.wasm`) are passed through untouched.
+ */
+export function isPatchableJsModule(
+  moduleName: string,
+  contentsLength: number
+): boolean {
+  if (contentsLength <= 0) return false;
+  const n = moduleName.replaceAll('\\', '/');
+  return n.endsWith('.js') || isClaudeModule(n);
+}
+
+/**
+ * Split a virtual bundle back into `moduleIndex -> contents`.
+ * Returns null when the buffer is not a sentinel bundle (pre-2.1.246 single
+ * module), so the legacy path keeps working untouched.
+ */
+export function parseSentinelBundle(buf: Buffer): Map<number, Buffer> | null {
+  const text = buf.toString('utf8');
+  if (!text.includes('/*@@TWEAKCC_MODULE:')) return null;
+
+  const byIndex = new Map<number, Buffer>();
+  const marks: Array<{ index: number; start: number; end: number }> = [];
+  MODULE_SENTINEL_RE.lastIndex = 0;
+  let m: RegExpExecArray | null;
+  while ((m = MODULE_SENTINEL_RE.exec(text)) !== null) {
+    marks.push({
+      index: Number(m[1]),
+      start: m.index,
+      end: m.index + m[0].length,
+    });
+  }
+  if (marks.length === 0) return null;
+
+  for (let i = 0; i < marks.length; i++) {
+    const from = marks[i].end;
+    const to = i + 1 < marks.length ? marks[i + 1].start : text.length;
+    byIndex.set(marks[i].index, Buffer.from(text.slice(from, to), 'utf8'));
+  }
+  return byIndex;
+}
+
+/**
  * Detects the module struct size from the modules list byte length.
  * Returns SIZEOF_MODULE_NEW (52) or SIZEOF_MODULE_OLD (36).
  */
@@ -867,6 +928,61 @@ export function extractClaudeJsFromNativeInstallation(
       `extractClaudeJsFromNativeInstallation: Got bunData, size=${bunData.length} bytes, moduleStructSize=${moduleStructSize}`
     );
 
+    // Decide which bundle shape this binary has. Up to CC 2.1.241 the claude
+    // module WAS the app (~28 MB) and everything else was an asset. From
+    // 2.1.246 the app is code-split, the claude module is a ~20 KB ESM entry
+    // loader, and the real code — including 128 modules of prompt text — lives
+    // in siblings. Comparing the two totals detects that without pinning a
+    // version or a size threshold.
+    let claudeLen = 0;
+    let otherJsLen = 0;
+    mapModules(bunData, bunOffsets, moduleStructSize, (module, moduleName) => {
+      const len = module.contents.length;
+      if (isClaudeModule(moduleName)) claudeLen = len;
+      else if (isPatchableJsModule(moduleName, len)) otherJsLen += len;
+      return undefined;
+    });
+    const codeSplit = otherJsLen > claudeLen;
+    debug(
+      `extractClaudeJsFromNativeInstallation: claudeLen=${claudeLen} otherJsLen=${otherJsLen} codeSplit=${codeSplit}`
+    );
+
+    if (codeSplit) {
+      const parts: Buffer[] = [];
+      let moduleCount = 0;
+      mapModules(
+        bunData,
+        bunOffsets,
+        moduleStructSize,
+        (module, moduleName, index) => {
+          if (!isPatchableJsModule(moduleName, module.contents.length)) {
+            return undefined;
+          }
+          parts.push(Buffer.from(moduleSentinel(index, moduleName), 'utf8'));
+          parts.push(getStringPointerContent(bunData, module.contents));
+          moduleCount++;
+          return undefined;
+        }
+      );
+
+      if (moduleCount === 0) {
+        return {
+          data: null,
+          clearBytecode: false,
+          error: 'code-split binary but no patchable JS modules were found',
+        };
+      }
+
+      const bundle = Buffer.concat(parts);
+      debug(
+        `extractClaudeJsFromNativeInstallation: built virtual bundle from ${moduleCount} modules, ${bundle.length} bytes`
+      );
+      // Bytecode is handled PER MODULE at repack time (only modules whose
+      // source actually changed get their bytecode pointer zeroed), so the
+      // global flag stays false here.
+      return { data: bundle, clearBytecode: false };
+    }
+
     const result = mapModules(
       bunData,
       bunOffsets,
@@ -952,6 +1068,100 @@ export function extractClaudeJsFromNativeInstallation(
       }`,
     };
   }
+}
+
+/**
+ * Rebuild bunData for a CODE-SPLIT binary (CC 2.1.246+) by APPENDING rather
+ * than repacking.
+ *
+ * The full repack in `rebuildBunData` re-lays-out every string from scratch.
+ * That was safe while the bundle was one CJS module whose bytecode Bun never
+ * executed. It is not safe now: 2.1.246 ships 1,404 modules of REAL executable
+ * bytecode, and the shipped layout guarantees invariants we can only partially
+ * enumerate — `bytecode` and `moduleInfo` are 8-byte aligned in every module,
+ * and re-packing them still produced a binary that segfaulted 8 ms into
+ * startup even after both were aligned.
+ *
+ * So do not re-lay-out anything. Keep the entire referenced data region
+ * BYTE-IDENTICAL, append the new contents of only the modules that changed,
+ * and repoint just those modules. Every offset the original binary relied on
+ * still resolves to the same bytes, so no undiscovered invariant can break.
+ * The cost is that superseded contents and bytecode stay in the file as
+ * unreferenced bytes — the binary grows by roughly the size of what changed.
+ */
+function rebuildBunDataAppendOnly(
+  bunData: Buffer,
+  bunOffsets: BunOffsets,
+  moduleStructSize: number,
+  moduleOverrides: Map<number, Buffer>
+): Buffer {
+  const ALIGN = 8;
+  const modOff = bunOffsets.modulesPtr.offset;
+
+  // Everything a StringPointer can address lives BELOW the module table.
+  const dataRegion = bunData.subarray(0, modOff);
+
+  // Everything from the module table to the end is kept as ONE opaque block:
+  // the table, then the post-table records, then compileExecArgv, the offsets
+  // struct and the trailer. `flags = 255` on CC 2.1.246 sets
+  // SOURCE_TEXT_CONTIGUOUS | HAS_SOURCE_HASHES | HAS_BUILTIN_BYTECODE |
+  // HAS_BYTECODE_STRING_TABLE, and the source-hash array (1,582 * 4 bytes)
+  // sits immediately after the table with no pointer to it. Rebuilding the
+  // tail field by field silently drops those records, which is why an
+  // otherwise byte-identical repack still segfaulted on startup. Moving the
+  // block wholesale preserves every internal adjacency; only the three
+  // absolute offsets in the offsets struct need fixing up.
+  const tail = Buffer.from(bunData.subarray(modOff));
+
+  const appended: Buffer[] = [];
+  let cursor = dataRegion.length;
+  let changedCount = 0;
+
+  mapModules(bunData, bunOffsets, moduleStructSize, (module, _name, index) => {
+    const override = moduleOverrides.get(index);
+    if (!override) return undefined;
+    const original = getStringPointerContent(bunData, module.contents);
+    if (override.equals(original)) return undefined;
+
+    const pad = cursor % ALIGN === 0 ? 0 : ALIGN - (cursor % ALIGN);
+    if (pad > 0) {
+      appended.push(Buffer.alloc(pad));
+      cursor += pad;
+    }
+    const e = index * moduleStructSize;
+    tail.writeUInt32LE(cursor, e + 8); // contents.offset
+    tail.writeUInt32LE(override.length, e + 12); // contents.length
+    // Bun runs the bytecode when a module has any, and that bytecode carries
+    // its own copy of every string literal — so a source edit is inert until
+    // the bytecode is dropped. Zeroing the LENGTH (keeping the offset) makes
+    // JSC fall back to parsing the patched source.
+    tail.writeUInt32LE(0, e + 28); // bytecode.length
+    appended.push(override, Buffer.alloc(1)); // + null terminator
+    cursor += override.length + 1;
+    changedCount++;
+    return undefined;
+  });
+
+  const tailPad = cursor % ALIGN === 0 ? 0 : ALIGN - (cursor % ALIGN);
+  if (tailPad > 0) appended.push(Buffer.alloc(tailPad));
+  const newModOff = cursor + tailPad;
+  const delta = newModOff - modOff;
+
+  debug(
+    `rebuildBunDataAppendOnly: ${changedCount} module(s) changed, appended ${
+      newModOff - dataRegion.length
+    } bytes, tail shifted by ${delta}`
+  );
+
+  const out = Buffer.concat([dataRegion, ...appended, tail]);
+
+  // Fix up the offsets struct (the 32 bytes before the 16-byte trailer).
+  const st = out.length - SIZEOF_OFFSETS - BUN_TRAILER.length;
+  out.writeBigUInt64LE(BigInt(Number(bunOffsets.byteCount) + delta), st);
+  out.writeUInt32LE(newModOff, st + 8);
+  out.writeUInt32LE(bunOffsets.compileExecArgvPtr.offset + delta, st + 20);
+
+  return out;
 }
 
 function rebuildBunData(
@@ -1666,13 +1876,54 @@ export function repackNativeInstallation(
   const binary = LIEF.parse(binPath);
 
   const bundle = locateBundle(binary, binPath);
-  const newBuffer = rebuildBunData(
-    bundle.bunData,
-    bundle.bunOffsets,
-    modifiedClaudeJs,
-    bundle.moduleStructSize,
-    clearBytecode
-  );
+
+  // A virtual bundle (CC 2.1.246+) carries its own module boundaries. Split it
+  // back into per-module contents; a pre-2.1.246 single module parses as null
+  // and takes the legacy path untouched.
+  const moduleOverrides = parseSentinelBundle(modifiedClaudeJs);
+
+  if (moduleOverrides) {
+    // A patch that deleted or fabricated a sentinel would silently merge two
+    // modules' source into one. Fail loudly instead: the set of indices in the
+    // bundle must be exactly the set of patchable JS modules in the binary.
+    const expected = new Set<number>();
+    mapModules(
+      bundle.bunData,
+      bundle.bunOffsets,
+      bundle.moduleStructSize,
+      (module, moduleName, index) => {
+        if (isPatchableJsModule(moduleName, module.contents.length)) {
+          expected.add(index);
+        }
+        return undefined;
+      }
+    );
+    const missing = [...expected].filter(i => !moduleOverrides.has(i));
+    const extra = [...moduleOverrides.keys()].filter(i => !expected.has(i));
+    if (missing.length > 0 || extra.length > 0) {
+      throw new Error(
+        `repackNativeInstallation: module sentinel mismatch — ` +
+          `${missing.length} missing (${missing.slice(0, 5).join(', ')}), ` +
+          `${extra.length} unexpected (${extra.slice(0, 5).join(', ')}). ` +
+          `A patch most likely deleted a /*@@TWEAKCC_MODULE:@@*/ boundary.`
+      );
+    }
+  }
+
+  const newBuffer = moduleOverrides
+    ? rebuildBunDataAppendOnly(
+        bundle.bunData,
+        bundle.bunOffsets,
+        bundle.moduleStructSize,
+        moduleOverrides
+      )
+    : rebuildBunData(
+        bundle.bunData,
+        bundle.bunOffsets,
+        modifiedClaudeJs,
+        bundle.moduleStructSize,
+        clearBytecode
+      );
 
   bundle.write(newBuffer, outputPath);
 }

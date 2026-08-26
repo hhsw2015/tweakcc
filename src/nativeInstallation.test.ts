@@ -3,6 +3,9 @@ import { describe, expect, it } from 'vitest';
 import {
   computeBunSectionPlacement,
   isClaudeModule,
+  isPatchableJsModule,
+  moduleSentinel,
+  parseSentinelBundle,
 } from './nativeInstallation';
 
 describe('isClaudeModule', () => {
@@ -147,5 +150,70 @@ describe('computeBunSectionPlacement', () => {
     expect(p.compact).toBe(false);
     expect(p.newVaddr % REAL_218.pageSize).toBe(0n);
     expect(p.newVaddr).toBe(0x20001000n); // align(0x20000800, page)
+  });
+});
+
+describe('isPatchableJsModule (CC 2.1.246 code-split bundles)', () => {
+  it.each([
+    ['/$bunfs/root/_444.js', 6801709],
+    ['/$bunfs/root/chunk-8m05jgxf.js', 1040630],
+    ['/$bunfs/root/cli', 20605],
+  ])('patches %s', (name, len) => {
+    expect(isPatchableJsModule(name, len)).toBe(true);
+  });
+
+  it.each([
+    ['/$bunfs/root/computer-use-swift.node', 2507608],
+    ['/$bunfs/root/payload.template.html.asset', 2488127],
+    ['/$bunfs/root/image-processor.node', 1249368],
+  ])('leaves the asset %s untouched', (name, len) => {
+    expect(isPatchableJsModule(name, len)).toBe(false);
+  });
+
+  it('skips a module with no contents', () => {
+    expect(isPatchableJsModule('/$bunfs/root/_1.js', 0)).toBe(false);
+  });
+});
+
+describe('parseSentinelBundle', () => {
+  const bundle = (parts: Array<[number, string, string]>) =>
+    Buffer.from(
+      parts.map(([i, n, src]) => moduleSentinel(i, n) + src).join(''),
+      'utf8'
+    );
+
+  it('returns null for a pre-2.1.246 single-module bundle', () => {
+    expect(parseSentinelBundle(Buffer.from('let a=1;\n', 'utf8'))).toBeNull();
+  });
+
+  it('round-trips every module body exactly', () => {
+    const buf = bundle([
+      [0, '/$bunfs/root/_821.js', 'let a=1;\n'],
+      [7, '/$bunfs/root/cli', 'import{x}from"/$bunfs/root/_821.js";\n'],
+      [367, '/$bunfs/root/_444.js', 'let prompt=`You are Claude Code.`;\n'],
+    ]);
+    const got = parseSentinelBundle(buf);
+    expect(got).not.toBeNull();
+    expect([...got!.keys()].sort((a, b) => a - b)).toEqual([0, 7, 367]);
+    expect(got!.get(0)!.toString()).toBe('let a=1;\n');
+    expect(got!.get(367)!.toString()).toBe(
+      'let prompt=`You are Claude Code.`;\n'
+    );
+  });
+
+  it('keeps a body that itself contains backticks and ${} slots intact', () => {
+    const src = 'let p=`a ${VAR} b`;\n';
+    const got = parseSentinelBundle(bundle([[1, '/$bunfs/root/_1.js', src]]));
+    expect(got!.get(1)!.toString()).toBe(src);
+  });
+
+  it('survives a patch that lengthened a module body', () => {
+    const got = parseSentinelBundle(
+      bundle([
+        [1, '/$bunfs/root/_1.js', 'short\n'],
+        [2, '/$bunfs/root/_2.js', 'a much longer body than before\n'],
+      ])
+    );
+    expect(got!.get(2)!.toString()).toBe('a much longer body than before\n');
   });
 });
