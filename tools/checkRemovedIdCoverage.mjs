@@ -44,13 +44,20 @@
  * rather than eyeballed, and reviewed removals are recorded in the allowlist so
  * a stable removal stops being re-reported every bump.
  *
- * Two things the probe has to get right, both of them §12 rows that have cost a
- * bump before:
+ * Two things the 25-char window has to get right, both of them §12 rows that
+ * have cost a bump before:
  *
  *   - Probe ASCII-only. An em dash is `—` in the bundle, so a window
  *     carrying one reads as absent from a file that contains it.
  *   - Step the window by 5, not by its own width. A reword moves the boundary,
  *     and a stride-width sweep can miss a body that is 90% intact.
+ *
+ * A third: 25-char windows of generic English, YAML, or SDK snippets match the
+ * bundle by coincidence after the prompt itself is gone. IN-BUNDLE is confirmed
+ * with single-line ASCII probes of 32+ chars from mid-body (the bundle stores a
+ * newline as a literal backslash-n, so a probe that spans a line break is a
+ * false 0). A body whose 32+ probes are all absent is `gone`, even if a short
+ * window hit. Short bodies with no 32+ run still use the 25-char fallback.
  *
  * Absence is counted with `String.prototype.includes`, never `grep`: one NUL
  * byte anywhere makes ugrep return false-empty for every pattern.
@@ -62,6 +69,8 @@ import path from 'node:path';
 
 const WINDOW = 25;
 const STRIDE = 5;
+const BUNDLE_PROBE_MIN = 32;
+const BUNDLE_PROBE_COUNT = 8;
 const ALLOWLIST = path.join(
   path.dirname(new URL(import.meta.url).pathname),
   '..',
@@ -111,6 +120,43 @@ const isAscii = s => !/[^\x20-\x7e]/.test(s);
 const literalRuns = p =>
   (p.pieces || []).filter(x => typeof x === 'string' && x.length >= WINDOW);
 
+const asciiRunsOnLine = line => {
+  const runs = [];
+  let cur = '';
+  const flush = () => {
+    const s = cur.trim();
+    if (s.length >= BUNDLE_PROBE_MIN) runs.push(s);
+    cur = '';
+  };
+  for (const ch of line) {
+    if (ch >= ' ' && ch <= '~') cur += ch;
+    else flush();
+  }
+  flush();
+  return runs;
+};
+
+// Longest single-line ASCII runs from mid-body. One generic 32-char SDK
+// snippet matching the bundle is not evidence the prompt survived; the
+// distinctive sentences are.
+const midBodyProbes = p => {
+  const lines = [];
+  for (const piece of p.pieces || []) {
+    if (typeof piece !== 'string') continue;
+    for (const line of piece.split('\n')) {
+      lines.push(...asciiRunsOnLine(line));
+    }
+  }
+  if (lines.length === 0) return [];
+  const uniq = [...new Set(lines)];
+  if (uniq.length <= BUNDLE_PROBE_COUNT) return uniq;
+  const lo = Math.floor(uniq.length * 0.2);
+  const hi = Math.max(lo + 1, Math.ceil(uniq.length * 0.8));
+  const mid = uniq.slice(lo, hi);
+  mid.sort((a, b) => b.length - a.length);
+  return mid.slice(0, BUNDLE_PROBE_COUNT);
+};
+
 const cli = fs.readFileSync(cliPath, 'utf8');
 const prev = readPrompts(prevPath);
 const cur = readPrompts(curPath);
@@ -158,19 +204,31 @@ const allowlist = fs.existsSync(ALLOWLIST)
   : {};
 
 const classify = id => {
-  let inBundle = false;
-  for (const p of prevById.get(id) || []) {
+  const entries = prevById.get(id) || [];
+  for (const p of entries) {
     for (const run of literalRuns(p)) {
       for (let off = 0; off + WINDOW <= run.length; off += STRIDE) {
         const w = run.slice(off, off + WINDOW);
         if (!isAscii(w)) continue;
         if (curBlob.includes(w)) return 'in-catalogue';
         if (sidecarBlob.includes(w)) return 'in-sidecar';
-        if (cli.includes(w)) inBundle = true;
       }
     }
   }
-  return inBundle ? 'IN-BUNDLE' : 'gone';
+  const probes = entries.flatMap(midBodyProbes);
+  if (probes.length) {
+    return probes.some(pr => cli.includes(pr)) ? 'IN-BUNDLE' : 'gone';
+  }
+  for (const p of entries) {
+    for (const run of literalRuns(p)) {
+      for (let off = 0; off + WINDOW <= run.length; off += STRIDE) {
+        const w = run.slice(off, off + WINDOW);
+        if (!isAscii(w)) continue;
+        if (cli.includes(w)) return 'IN-BUNDLE';
+      }
+    }
+  }
+  return 'gone';
 };
 
 const buckets = { 'in-catalogue': [], 'in-sidecar': [], 'IN-BUNDLE': [], gone: [] };

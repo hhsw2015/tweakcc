@@ -754,6 +754,20 @@ function getExpectedFormatForPlatform(): 'MachO' | 'ELF' | 'PE' | null {
 function assertPlatformFormat(
   binary: LIEF.ELF.Binary | LIEF.PE.Binary | LIEF.MachO.Binary
 ): void {
+  // TEST-ONLY ESCAPE HATCH. The guard is right for users: patching a
+  // wrong-platform binary is never what they meant. But it also made the ELF
+  // repack path impossible to exercise from a Mac, so the Linux legs of a
+  // release could only ever be tested by shipping to a Linux box first. That
+  // is exactly backwards for the riskiest code in the repo. With this set, a
+  // darwin checkout can extract and repack the linux-arm64 and linux-x64
+  // builds (npm: @anthropic-ai/claude-code-linux-{arm64,x64}) and prove the
+  // ELF path before anything is published. Never set it in a real apply.
+  if (process.env.TWEAKCC_ALLOW_CROSS_PLATFORM === '1') {
+    debug(
+      `assertPlatformFormat: cross-platform check bypassed for ${binary.format}`
+    );
+    return;
+  }
   const expectedFormat = getExpectedFormatForPlatform();
   if (expectedFormat && binary.format !== expectedFormat) {
     throw new Error(
@@ -973,7 +987,29 @@ export function extractClaudeJsFromNativeInstallation(
         };
       }
 
-      const bundle = Buffer.concat(parts);
+      // The wording here deliberately avoids the strings used to detect a
+      // PATCHED binary (`__tweakcc`, `tweakcc v`, the sentinel name). A
+      // preamble containing them makes every pristine extraction look patched,
+      // which is the one check standing between this pipeline and building a
+      // catalogue out of already-lobotomized JS.
+      // Lead with a real JS STATEMENT, not just comments. Callers that
+      // MIME-sniff the bundle (the apply-safety harness writes it to a temp
+      // `cli.js` and lets `resolvePathToInstallationType` detect it) classify a
+      // file that opens with a comment block as plain text, and the harness
+      // then cannot run at all — it reported FAIL for every set on every
+      // platform while saying `apply ran: false`. CC's own single-module
+      // cli.js happened to satisfy the sniffer because real code followed its
+      // first comment line immediately; a 2.1.246 module opens with a long
+      // licence comment and does not. Everything before the first sentinel is
+      // discarded on split, so this preamble is inert for repack.
+      const preamble = Buffer.from(
+        `#!/usr/bin/env node\n// @bun @bytecode\n` +
+          `// Virtual bundle: ${moduleCount} modules, split on the module ` +
+          `sentinels below.\n` +
+          `var __ccVirtualBundleModules = ${moduleCount};\n`,
+        'utf8'
+      );
+      const bundle = Buffer.concat([preamble, ...parts]);
       debug(
         `extractClaudeJsFromNativeInstallation: built virtual bundle from ${moduleCount} modules, ${bundle.length} bytes`
       );
