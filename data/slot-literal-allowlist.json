@@ -1167,5 +1167,21 @@
     "text": " rather than into the conversation",
     "verdict": "catalogue",
     "why": "carries an instruction or consequence the model acts on, so it needs an id an override can reach"
+  },
+  "39199fe7daf5bb6a": {
+    "promptId": "tool-result-artifact-preview-popup-on-load",
+    "label": "TOOL_RESULT_ARTIFACT_PREVIEW_POPUP_ON_LOAD_VAR_0",
+    "note": "REVIEW ME - replace with the verdict and its reason",
+    "text": "this page again",
+    "verdict": "glue",
+    "why": "One branch of the 4-way ternary naming WHICH page a popup targets; substituted into `the page opens a new window (${f}) on load - blocked in preview; the published viewer allows pop-ups only from a click`. Labels a value, carries no instruction."
+  },
+  "94739b9fa635500d": {
+    "promptId": "system-reminder-dir-sync-user-switched-checkout-followed",
+    "label": "SYSTEM_REMINDER_DIR_SYNC_USER_SWITCHED_CHECKOUT_FOLLOWED_VAR_0",
+    "note": "REVIEW ME - replace with the verdict and its reason",
+    "text": "a detached HEAD",
+    "verdict": "glue",
+    "why": "Null-branch of `e.to===null?\"a detached HEAD\":`branch ${qe(e.to)}`` in qa(); names the git ref substituted into `This checkout is back on the user's ${n}`. Noun phrase, no instruction."
   }
 }

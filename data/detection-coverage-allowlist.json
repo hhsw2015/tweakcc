@@ -440,6 +440,12 @@
     "shape": "concat",
     "verdict": "internal"
   },
+  "81ba72c4a3dd03ee": {
+    "excerpt": "The request body is not valid JSON Failed to parse request: could not parse request body as JSON",
+    "shape": "array",
+    "verdict": "internal",
+    "why": "mFo: a two-element prefix list matched with .startsWith() against the error.message of an HTTP 400 response body (yFo -> KMn), to detect a JSON-parse rejection in the tengu_gzip_request_bodies retry path. Never sent to the model."
+  },
   "823e94b24ba94c50": {
     "excerpt": "7d tokens = tokens attributed to the skill over the last 7 days of sessions on this machine",
     "note": "not model-facing: config schema / CLI help / operator error / TUI dialog",

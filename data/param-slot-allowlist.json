@@ -89,5 +89,95 @@
     "param": "e",
     "text": "${} returned an incomplete or malformed response",
     "verdict": "catalogue"
+  },
+  "c4331ff99b5af491": {
+    "builder": "qs",
+    "param": "e",
+    "note": "REVIEW ME - replace with the verdict (catalogue|glue|not-a-slot) and its reason",
+    "text": "this session is not bound to that machine",
+    "verdict": "catalogue",
+    "id": "tool-result-remote-tool-unverified-refusal-reason-unbound",
+    "why": "qs(e) call-site argument; BD[a.code] is consumed by jD() as the refused tool_result. The parent qs() template is catalogued; the reason clause is the only distinguishing content and tells the model whether a retry can help. Landed via a classification-cache model verdict (key probed with TWEAKCC_DUMP_CANDIDATES)."
+  },
+  "bc0c19ca51693743": {
+    "builder": "qs",
+    "param": "e",
+    "note": "REVIEW ME - replace with the verdict (catalogue|glue|not-a-slot) and its reason",
+    "text": "the call's protocol version was not accepted",
+    "verdict": "catalogue",
+    "id": "tool-result-remote-tool-unverified-refusal-reason-unsupported-protocol",
+    "why": "qs(e) call-site argument; BD[a.code] is consumed by jD() as the refused tool_result. The parent qs() template is catalogued; the reason clause is the only distinguishing content and tells the model whether a retry can help. Landed via a classification-cache model verdict (key probed with TWEAKCC_DUMP_CANDIDATES)."
+  },
+  "2bb4a09f4a966771": {
+    "builder": "qs",
+    "param": "e",
+    "note": "REVIEW ME - replace with the verdict (catalogue|glue|not-a-slot) and its reason",
+    "text": "the call was not acceptable as sent",
+    "verdict": "catalogue",
+    "id": "tool-result-remote-tool-unverified-refusal-reason-invalid-request",
+    "why": "qs(e) call-site argument; BD[a.code] is consumed by jD() as the refused tool_result. The parent qs() template is catalogued; the reason clause is the only distinguishing content and tells the model whether a retry can help. Landed via a classification-cache model verdict (key probed with TWEAKCC_DUMP_CANDIDATES)."
+  },
+  "a456a712678c232b": {
+    "builder": "qs",
+    "param": "e",
+    "note": "REVIEW ME - replace with the verdict (catalogue|glue|not-a-slot) and its reason",
+    "text": "that machine does not serve this tool to the session",
+    "verdict": "catalogue",
+    "id": "tool-result-remote-tool-unverified-refusal-reason-not-served",
+    "why": "qs(e) call-site argument; BD[a.code] is consumed by jD() as the refused tool_result. The parent qs() template is catalogued; the reason clause is the only distinguishing content and tells the model whether a retry can help. Landed via a classification-cache model verdict (key probed with TWEAKCC_DUMP_CANDIDATES)."
+  },
+  "2ccb50f759c95b4e": {
+    "builder": "qs",
+    "param": "e",
+    "note": "REVIEW ME - replace with the verdict (catalogue|glue|not-a-slot) and its reason",
+    "text": "that machine could not tell which session the call came from",
+    "verdict": "catalogue",
+    "id": "tool-result-remote-tool-unverified-refusal-reason-no-session",
+    "why": "qs(e) call-site argument; BD[a.code] is consumed by jD() as the refused tool_result. The parent qs() template is catalogued; the reason clause is the only distinguishing content and tells the model whether a retry can help. Landed via a classification-cache model verdict (key probed with TWEAKCC_DUMP_CANDIDATES)."
+  },
+  "ac0636a50e785037": {
+    "builder": "qs",
+    "param": "e",
+    "note": "REVIEW ME - replace with the verdict (catalogue|glue|not-a-slot) and its reason",
+    "text": "that machine is connected on behalf of a different session",
+    "verdict": "catalogue",
+    "id": "tool-result-remote-tool-unverified-refusal-reason-session-mismatch",
+    "why": "qs(e) call-site argument; BD[a.code] is consumed by jD() as the refused tool_result. The parent qs() template is catalogued; the reason clause is the only distinguishing content and tells the model whether a retry can help. Landed via a classification-cache model verdict (key probed with TWEAKCC_DUMP_CANDIDATES)."
+  },
+  "d952f30464e506e4": {
+    "builder": "qs",
+    "param": "e",
+    "note": "REVIEW ME - replace with the verdict (catalogue|glue|not-a-slot) and its reason",
+    "text": "that machine already has as many calls under way as it accepts",
+    "verdict": "catalogue",
+    "id": "tool-result-remote-tool-unverified-refusal-reason-too-many-in-flight",
+    "why": "qs(e) call-site argument; BD[a.code] is consumed by jD() as the refused tool_result. The parent qs() template is catalogued; the reason clause is the only distinguishing content and tells the model whether a retry can help. Landed via a classification-cache model verdict (key probed with TWEAKCC_DUMP_CANDIDATES)."
+  },
+  "b524b596f4e5fe9d": {
+    "builder": "qs",
+    "param": "e",
+    "note": "REVIEW ME - replace with the verdict (catalogue|glue|not-a-slot) and its reason",
+    "text": "one of the call's input fields is not accepted on that machine",
+    "verdict": "catalogue",
+    "id": "tool-result-remote-tool-unverified-refusal-reason-refused-field",
+    "why": "qs(e) call-site argument; BD[a.code] is consumed by jD() as the refused tool_result. The parent qs() template is catalogued; the reason clause is the only distinguishing content and tells the model whether a retry can help. Landed via a classification-cache model verdict (key probed with TWEAKCC_DUMP_CANDIDATES)."
+  },
+  "12b97a40ff9549f4": {
+    "builder": "qs",
+    "param": "e",
+    "note": "REVIEW ME - replace with the verdict (catalogue|glue|not-a-slot) and its reason",
+    "text": "that machine serves no tools while its sandbox is off or not fully confining",
+    "verdict": "catalogue",
+    "id": "tool-result-remote-tool-unverified-refusal-reason-sandbox-unavailable",
+    "why": "qs(e) call-site argument; BD[a.code] is consumed by jD() as the refused tool_result. The parent qs() template is catalogued; the reason clause is the only distinguishing content and tells the model whether a retry can help. Landed via a classification-cache model verdict (key probed with TWEAKCC_DUMP_CANDIDATES)."
+  },
+  "57bf4a1065e108ca": {
+    "builder": "qs",
+    "param": "e",
+    "note": "REVIEW ME - replace with the verdict (catalogue|glue|not-a-slot) and its reason",
+    "text": "that machine has no record of the call asked about",
+    "verdict": "catalogue",
+    "id": "tool-result-remote-tool-unverified-refusal-reason-unknown-call",
+    "why": "qs(e) call-site argument; BD[a.code] is consumed by jD() as the refused tool_result. The parent qs() template is catalogued; the reason clause is the only distinguishing content and tells the model whether a retry can help. Landed via a classification-cache model verdict (key probed with TWEAKCC_DUMP_CANDIDATES)."
   }
 }

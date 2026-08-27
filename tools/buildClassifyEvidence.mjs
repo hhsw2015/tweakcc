@@ -125,6 +125,10 @@ if (!chunkFiles.length) {
 const keep = new Set(
   chunkFiles.map(f => f.replace('classify-chunk-', 'classify-evidence-'))
 );
+// Namespacing packets per version is what stops a previous bump's leftovers
+// being harvested as this run's result, and that means outDir routinely does
+// not exist yet. Same class as the buildAuditPacket ENOENT.
+fs.mkdirSync(outDir, { recursive: true });
 for (const f of fs.readdirSync(outDir)) {
   if (/^classify-evidence-\d+\.json$/.test(f) && !keep.has(f)) {
     fs.unlinkSync(path.join(outDir, f));

@@ -512,5 +512,9 @@
     "verdict": "archived",
     "version": "2.1.246",
     "why": "False-positive of the 25-char sliding-window gate: distinctive 'multi-file publish is not enabled' prose is absent from the 2.1.246 bundle and catalogue."
+  },
+  "tool-result-design-no-credential": {
+    "verdict": "archived",
+    "why": "Removed in CC 2.1.247; the design no-credential tool_result is gone from the bundle. Override was a pristine stub, so no curated decision is lost."
   }
 }

@@ -89,6 +89,40 @@ const WORKFLOW_SCRIPT_IDENTIFIER_MAP = {
 //   [6] l  = e?TW_:"briefly tell the user what you launched"
 //   [7] o  = "Workers have access to …" intro text
 const CURATED_IDENTIFIER_MAPS = {
+  'system-prompt-memory-instructions': [
+    {
+      // CC 2.1.247 hoisted the memory-file size-cap note into a new conditional
+      // on the linking-instructions line — `${ll.join(`\n`)}${b?` ${sr}`:""}` —
+      // where `b` is `skipIndex || noPrivateDir` and `sr` is the cap note. That
+      // inserts TWO slots at 2 and 3, taking the array from 10 to 12, so every
+      // carried label from slot 4 on slides by two. Nothing else sees it: the
+      // apply is clean, four zeros are green and the smoke boots, while the
+      // deployed override renders `${b}` — a bare boolean — as prompt text and
+      // silently drops the save-exclusions, recalled-memory-verification and
+      // project-skill-upkeep blocks. Roles resolved from the definitions in
+      // module _601, not from position: Br is the type descriptions, Xt the
+      // size cap, Pr the save exclusions, Yr the recalled-memory verification,
+      // Ht the skill-upkeep text, qt the predicate that gates it.
+      // Site: `Each memory is one file holding one fact`, function cl(e);
+      // distinct vars in first-seen order: m, ll, b, sr, tn, p, v, er, rn, g,
+      // Jn, Xn.
+      identifiers: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+      identifierMap: {
+        0: 'MEMORY_LOCATION_CONTEXT',
+        1: 'MEMORY_LINKING_INSTRUCTIONS',
+        2: 'HAS_NO_INDEX_OR_PRIVATE_DIR',
+        3: 'MEMORY_FILE_SIZE_CAP_NOTE',
+        4: 'MEMORY_TYPE_DESCRIPTIONS',
+        5: 'TEAM_MEMORY_SCOPE_NOTE',
+        6: 'MEMORY_INDEX_POINTER_INSTRUCTIONS',
+        7: 'MEMORY_SAVE_EXCLUSIONS',
+        8: 'RECALLED_MEMORY_VERIFICATION_GUIDANCE',
+        9: 'MEMORY_CITATION_INSTRUCTIONS',
+        10: 'HAS_PROJECT_SKILL_UPKEEP_INSTRUCTIONS_FN',
+        11: 'PROJECT_SKILL_UPKEEP_INSTRUCTIONS',
+      },
+    },
+  ],
   'tool-description-edit': [
     {
       // CC 2.1.237 turned the Edit description's leading ternary from

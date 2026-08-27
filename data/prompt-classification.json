@@ -49489,5 +49489,1636 @@
     "id": "tool-result-artifact-unknown-connector",
     "name": "Artifact unknown connector error",
     "desc": "Publish error returned to the model listing unresolved connectors and how to set the server segment."
+  },
+  "5078686f9cd10350bedf962da76ee344587ee972": {
+    "facing": "model",
+    "id": "tool-result-computer-use-ax-summary-walk-truncated-lead",
+    "name": "Computer-Use Ax-Summary Walk Truncated Lead",
+    "desc": "Opening fragment of the app_screenshot ax-summary note that the accessibility walk was truncated so some UI is missing from the list."
+  },
+  "d64914a5cf646b8b9f47ffb0b414a97e69d752fb": {
+    "facing": "model",
+    "id": "tool-parameter-artifact-action-preview",
+    "name": "Tool Parameter: Artifact Action Preview",
+    "desc": "Artifact action-enum addendum describing preview of a local page file with widths/themes and a layout checklist, with nothing uploaded."
+  },
+  "37c07a12024f6bd914e1b3017fdf4a22ab3e0ba9": {
+    "facing": "model",
+    "id": "tool-result-computer-use-no-app-focus-retry-lead",
+    "name": "Computer-Use No App Focus Retry Lead",
+    "desc": "Opening of the parenthetical on a desktop-shell click result when getFrontmostApp() is empty."
+  },
+  "5891435a5f6ef0f7c9cd1ca5d05b3df79dbe4b59": { "facing": "ui" },
+  "9e51875252f9fee1efe3fef44077476832690c9a": { "facing": "internal" },
+  "b72e7fe165663ef88697b6361077b570b7e00e4f": {
+    "facing": "model",
+    "id": "tool-result-remote-host-result-too-large",
+    "name": "Tool Result: Remote Host Result Too Large",
+    "desc": "Error tool_result substituted when a remote-session payload exceeds the byte cap and cannot be returned."
+  },
+  "fc266ec5ba461f448863508355fc9ab83f9abc79": {
+    "facing": "model",
+    "id": "tool-result-mcp-unknown-content-omitted",
+    "name": "Tool Result: MCP Unknown Content Omitted",
+    "desc": "Replaces an MCP tool-result block that is neither text nor image with an omitted-content placeholder."
+  },
+  "63602a6564a499a3e755702740180cb25631f97f": {
+    "facing": "model",
+    "id": "agent-prompt-workflow-harness-assistant-context-lead",
+    "name": "Agent Prompt: Workflow Harness Assistant Context Lead",
+    "desc": "Opening concat fragment of the assistant-context harness frame prepended when a workflow request may reply to the preceding assistant message."
+  },
+  "b76386f81abbeaa9fd7b0769d2bfea119316ec15": { "facing": "internal" },
+  "acab5db77512501d2a60dfeec73dd62ce874360e": {
+    "facing": "model",
+    "id": "tool-parameter-app-batch-actions-type-key-default",
+    "name": "Tool Parameter: App Batch Actions Type/Key Default",
+    "desc": "Closing fragment of the app_batch actions schema example stating type/key default to the previous action's point."
+  },
+  "2d197b91c78df87aea5b33edc9e203ff7a81fb67": {
+    "facing": "model",
+    "id": "tool-description-artifact-preview",
+    "name": "Tool Description: Artifact Preview",
+    "desc": "Artifact tool-description section for action preview: local render of one page file with screenshots and a layout checklist, uploading nothing."
+  },
+  "c58978128c561130dff3f04288c6c9579b7199cc": {
+    "facing": "model",
+    "id": "system-reminder-memory-continuation-chain",
+    "name": "System Reminder: Memory Continuation Chain",
+    "desc": "PostToolUse additionalContext lint when a memory file looks like a numbered continuation that recall will not chain."
+  },
+  "38638c4277b75c82c1651268e94f5e9cfc40d745": { "facing": "ui" },
+  "85d0ae69f6b973c2a4fbea026859629b4b645604": {
+    "facing": "model",
+    "id": "system-prompt-writing-for-the-user",
+    "name": "System Prompt: Writing For The User",
+    "desc": "System-prompt section on writing a stand-alone final user-visible message with short-sentence and formatting rules."
+  },
+  "b1875b6e30153cd84b48e0ad4ce6b254eba74bb0": {
+    "facing": "model",
+    "id": "data-claude-code-changelog",
+    "name": "Data: Claude Code Changelog",
+    "desc": "Bundled changelog whose parsed recent-version bullets are assembled into the claude-code help skill context."
+  },
+  "68aa7fe6f89c1f152a664273558a719c8ccd5cf9": {
+    "facing": "model",
+    "id": "tool-result-computer-use-app-release-requires-app-lead",
+    "name": "Computer-Use App Release Requires App Lead",
+    "desc": "Opening of the app_release bad_args tool_result when window_id is passed without app."
+  },
+  "b794a7b0205b29175325104a71296f3a5ba7f6af": {
+    "facing": "model",
+    "id": "system-reminder-directory-sync-branch-switch-parked-work",
+    "name": "System Reminder: Directory Sync Branch Switch Parked Work",
+    "desc": "Explains that a directory-sync checkout followed the user's branch switch while preserving the agent's prior work at a separate ref."
+  },
+  "06818385ce9ebf1c980701bcf72b917590c13d2d": {
+    "facing": "model",
+    "id": "tool-result-mcp-first-party-auth-rejected-claude-design",
+    "name": "Tool Result: MCP First-Party Auth Rejected Claude Design",
+    "desc": "MCP connect failure when a first-party host returns HTTP 403 because the /login token has no Claude Design access."
+  },
+  "83b9c14a45cbb66c59e33cc6c46e976674ba50ed": {
+    "facing": "model",
+    "id": "tool-result-artifact-identical-resubmission-unviewed-unread",
+    "name": "Tool Result: Artifact Identical Resubmission Unviewed Unread",
+    "desc": "identical_resubmission_unviewed publish refusal when saved source lines have not yet been Read whole."
+  },
+  "2b7bf274c83800b751dc702f1aeca7101cf65c19": {
+    "facing": "model",
+    "id": "tool-result-artifact-identical-resubmission-unviewed-source-changed",
+    "name": "Tool Result: Artifact Identical Resubmission Unviewed Source Changed",
+    "desc": "identical_resubmission_unviewed refusal when the saved source file was modified or removed after it was handed over."
+  },
+  "20fb6f0317b7fc0b2185eab98e79ee62bfd369fd": {
+    "facing": "model",
+    "id": "tool-result-artifact-identical-resubmission-unviewed-unchecked-reads",
+    "name": "Tool Result: Artifact Identical Resubmission Unviewed Unchecked Reads",
+    "desc": "identical_resubmission_unviewed refusal when Reads returned every line but could not be checked against the file."
+  },
+  "03e5e023f1a38242bacc011709fb15cda4d0e3e7": {
+    "facing": "model",
+    "id": "tool-result-artifact-identical-resubmission-merge-source",
+    "name": "Tool Result: Artifact Identical Resubmission Merge Source",
+    "desc": "identical_resubmission publish refusal telling the model to merge onto the live/version source and not resend unchanged content."
+  },
+  "b9215d7283295aff0860f01238ff7f5ee4e2b9a3": {
+    "facing": "model",
+    "id": "tool-parameter-sendmessage-summary-own-transcript-row",
+    "name": "Tool Parameter: SendMessage Summary Own Transcript Row",
+    "desc": "Cross-session SendMessage summary param: a 5-10 word label for the sender's transcript row, truncated rather than rejected."
+  },
+  "d437164b11c754b13ed26c9bbe47dcc0a3d78a41": {
+    "facing": "model",
+    "id": "tool-result-remote-host-liveness-probe-stalled",
+    "name": "Tool Result: Remote Host Liveness Probe Stalled",
+    "desc": "stalled probe tool_result when a liveness check could not be sent because the session's connection to the host was backed up."
+  },
+  "3a43cb6339f8acb936f1b3275417aaa29397e7db": { "facing": "internal" },
+  "898c71bbe6501f2b1b097549488533cc3a3d59e4": { "facing": "internal" },
+  "fe55b437e4b38c304aafdbc022ac8d48ae9af7e2": {
+    "facing": "model",
+    "id": "tool-result-app-drag-focused-no-anchor-lead",
+    "name": "Tool Result: App Drag Focused No Anchor Lead",
+    "desc": "Opening of the app_drag bad_args tool_result when target is focused, which has no drag origin or endpoint."
+  },
+  "469053afcf1328ed234ea1cd03d928537b55afb2": {
+    "facing": "model",
+    "id": "tool-result-computer-use-app-scroll-horizontal-unsupported-lead",
+    "name": "Computer-Use App Scroll Horizontal Unsupported Lead",
+    "desc": "Opening of the app_scroll feature_unavailable tool_result rejecting a non-zero dx."
+  },
+  "19c63519e313961dc00a7fb27a74c1aa25a52891": { "facing": "ui" },
+  "574310b826f7d1d81f385e47576ce56fcae75466": { "facing": "ui" },
+  "431a5ba98bce30a9b13efb435c04af602d26403c": { "facing": "ui" },
+  "fc4bc0f3abf89e1f0aa0184aeacf71cb199be6f8": {
+    "facing": "model",
+    "id": "tool-description-computer-app-scoped-background-limits",
+    "name": "Tool Description: Computer App-Scoped Background Limits",
+    "desc": "App-scoped suffix fragment stating background app_* tools cannot reach menu-bar items, hover, context menus, or canvas drags."
+  },
+  "3981455c21eb1faa96f79580eeff13e3b7db3f22": {
+    "facing": "model",
+    "id": "tool-result-computer-use-app-ax-find-needs-screenshot-lead",
+    "name": "Computer-Use App Ax Find Needs Screenshot Lead",
+    "desc": "Opening of the app_ax_find bad_args tool_result when no last screenshot snapshot exists to search."
+  },
+  "ac48ebc2c5aa8fbf66a4f2db16e3b743faadca8b": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-capture-caption",
+    "name": "Tool Result: Artifact Preview Capture Caption",
+    "desc": "Text caption prepended to each preview JPEG in the Artifact preview tool_result (capture index, width, theme)."
+  },
+  "83a1838d11a908a141012b635cbdbb536db92648": {
+    "facing": "model",
+    "id": "tool-result-claudedesign-needs-login-non-interactive",
+    "name": "Tool Result: ClaudeDesign Needs Login Non-Interactive",
+    "desc": "Claude Design needs_design_login error when /design login cannot run in a non-interactive session."
+  },
+  "692e61275ba1f5448d38bba967b6a43ffba2d420": {
+    "facing": "model",
+    "id": "tool-result-claudedesign-needs-scopes-non-interactive",
+    "name": "Tool Result: ClaudeDesign Needs Scopes Non-Interactive",
+    "desc": "DesignNeedsScopesError when a 403 needs_design_scopes response arrives in a non-interactive session."
+  },
+  "89393cb05a1512aa20f6dd34bfb1de2c8deda651": {
+    "facing": "model",
+    "id": "tool-result-claudedesign-needs-scopes",
+    "name": "Tool Result: ClaudeDesign Needs Scopes",
+    "desc": "DesignNeedsScopesError when the session's claude.ai credential lacks Claude Design access (interactive)."
+  },
+  "a70bbe96489462e0bd5ee290a3a15a21c2e5ed7d": {
+    "facing": "model",
+    "id": "tool-parameter-sendmessage-message-first-line-guidance",
+    "name": "Tool Parameter: SendMessage Message First-Line Guidance",
+    "desc": "Continuation of the SendMessage message param telling the model to make the first line a clear sentence, not a greeting or @-mention."
+  },
+  "304444d06df69f8d2dab6c93c71d3afcf0ff2c41": { "facing": "internal" },
+  "994b251bfba0f3b2ec530104143f423e1b50261e": { "facing": "ui" },
+  "8ece79c5a551d5e24245ceec4c347de0827d2df3": {
+    "facing": "model",
+    "id": "tool-result-app-action-coordinate-frame-needs-screenshot-lead",
+    "name": "Tool Result: App Action Coordinate Frame Needs Screenshot Lead",
+    "desc": "Opening of the coordinate bad_args tool_result when pixels are given with no prior app_screenshot frame."
+  },
+  "b55b95b5eeaefd72573bb083e46ac0018ca7b147": {
+    "facing": "model",
+    "id": "tool-result-git-bundle-admin-dir-failed",
+    "name": "Tool Result: Git Bundle Admin Dir Failed",
+    "desc": "Git-bundle refusal when the private ~/.claude/seed-admin git directory could not be prepared (non-placement failure)."
+  },
+  "1ec8ed944396c48f09848585dabb82df813b0399": {
+    "facing": "model",
+    "id": "tool-result-computer-use-hit-test-self-intercept-lead",
+    "name": "Computer-Use Hit Test Self Intercept Lead",
+    "desc": "Opening of the hit_test_self_intercept tool_result when the Claude overlay intercepted the click hit test."
+  },
+  "30798ac9b72b8abcad11cbdd8ec60f73bf6087c2": {
+    "facing": "model",
+    "id": "tool-result-artifact-delete-unavailable-cloud-session",
+    "name": "Tool Result: Artifact Delete Unavailable Cloud Session",
+    "desc": "Permission-deny tool_result when deleting Artifacts is not available in this cloud session."
+  },
+  "9edab22e54879bd0161c7c8178ed80ad4607edb9": {
+    "facing": "model",
+    "id": "tool-result-designsync-needs-login-non-interactive-code-web",
+    "name": "Tool Result: DesignSync Needs Login Non-Interactive Code Web",
+    "desc": "DesignSync needs_design_login error for non-interactive sessions, including the claude.ai/code Send-to-Claude-Code-Web remedy."
+  },
+  "d8ccfc8afbce2a7e91d56077b41044fe3c8bee20": {
+    "facing": "model",
+    "id": "tool-result-app-action-dont-escalate-user-working-lead",
+    "name": "Tool Result: App Action Don't Escalate User Working Lead",
+    "desc": "Opening of the unsupported-action trailer telling the model not to escalate to display-scope control while the user holds that focus."
+  },
+  "fe925430f19d69807a96ab1a73c45362392bd3bb": {
+    "facing": "model",
+    "id": "tool-result-computer-use-file-dialog-drag-lead",
+    "name": "Computer-Use File Dialog Drag Lead",
+    "desc": "Opening of the file_dialog_restricted tool_result forbidding drag-and-drop inside a Windows file dialog."
+  },
+  "2a7fdaaa60e63d00d27d948ae3afbfef0f5b5156": {
+    "facing": "model",
+    "id": "tool-description-computer-request_access-elevated-process-prefix",
+    "name": "Tool Description: Computer request_access elevated process prefix",
+    "desc": "Introduces the elevated Windows processes that Computer cannot control"
+  },
+  "ec37c9f1abebd58d5b907ace9a7e768d48a7e92a": {
+    "facing": "model",
+    "id": "tool-result-computer-use-ax-summary-header-element-index-lead",
+    "name": "Computer-Use Ax-Summary Header Element Index Lead",
+    "desc": "Opening of the ax-summary header telling the model to pass element_index to app_click/app_type."
+  },
+  "a84097d10286b67fc9c4a2afa1345c4c2ec0bd57": {
+    "facing": "model",
+    "id": "tool-result-app-action-ax-write-silent-noop-retry-without-click",
+    "name": "Tool Result: App Action Ax Write Silent Noop Retry Without Click",
+    "desc": "ax_write_silent_noop reason fragment stating that retrying app_type without clicking the field first will not help."
+  },
+  "f45f386f1459b8c039c087bb741312160ee41f2f": {
+    "facing": "model",
+    "id": "tool-result-computer-use-app-action-screen-locked-accessibility-mid",
+    "name": "Computer-Use App Action Screen Locked Accessibility Mid",
+    "desc": "Middle fragment of the locked-screen action refusal: macOS blocks window-level Accessibility until unlocked."
+  },
+  "50fcbed52d9ccb4b328b6cc5b20ffe877af52e9b": {
+    "facing": "model",
+    "id": "tool-result-computer-use-app-scroll-horizontal-unsupported-ax-path",
+    "name": "Computer-Use App Scroll Horizontal Unsupported Ax Path",
+    "desc": "Middle fragment of the app_scroll horizontal-dx refusal stating the background AX path does not implement it."
+  },
+  "39d000a2540a105e7a7a480b930df1a90d568524": {
+    "facing": "model",
+    "id": "tool-result-cloud-session-folder-seed-git-entry-unvouched",
+    "name": "Tool Result: Cloud Session Folder Seed Git Entry Unvouched",
+    "desc": "onCreateFail when a folder's .git entry cannot be read as a git checkout, so it is neither uploaded nor folder-synced."
+  },
+  "96e8d9b9b834560cb65517e83fdb2641a957b992": {
+    "facing": "model",
+    "id": "tool-result-git-bundle-settings-runtime-change",
+    "name": "Tool Result: Git Bundle Settings Runtime Change",
+    "desc": "Git-bundle refusal when an env var that locates settings was changed by a settings file after process start."
+  },
+  "4495bfa03709724e6618e16591b0e647ccbf493a": {
+    "facing": "model",
+    "id": "tool-result-git-bundle-settings-file-names-env",
+    "name": "Tool Result: Git Bundle Settings File Names Env",
+    "desc": "Git-bundle refusal when a cloud-reachable settings file names an env var that the upload's git runs would have to trust."
+  },
+  "c9e09f030ab01264f391258d1323b35815cbea74": {
+    "facing": "model",
+    "id": "tool-result-git-bundle-settings-file-names-settings-path",
+    "name": "Tool Result: Git Bundle Settings File Names Settings Path",
+    "desc": "Git-bundle refusal when a cloud-reachable settings file names the env var that decides where settings are found."
+  },
+  "990aa88420c97839b5d3b7f7611a033b379898b7": {
+    "facing": "model",
+    "id": "tool-result-git-bundle-admin-dir-cloud-writable-placement",
+    "name": "Tool Result: Git Bundle Admin Dir Cloud Writable Placement",
+    "desc": "Git-bundle placement refusal when the private git directory would sit where a cloud session can write."
+  },
+  "e4032650df30fc7decdde393f496b4e07f3b7cb3": {
+    "facing": "model",
+    "id": "tool-result-git-bundle-git-not-on-path-cloud-writable-excluded",
+    "name": "Tool Result: Git Bundle Git Not On Path Cloud Writable Excluded",
+    "desc": "Hardened git-bundle refusal when git is missing from PATH after cloud-writable directories are left out."
+  },
+  "5a917d844f005cbcd2ad92e938852339b4a59720": {
+    "facing": "model",
+    "id": "slash-command-cloud-plugins-nothing-decided-attached-session",
+    "name": "Slash Command: Cloud Plugins Nothing Decided Attached Session",
+    "desc": "local-jsx /cloud-plugins onDone when Not now is chosen while an attached session is set aside from the saved Yes."
+  },
+  "02b1af8e4b14b0a126b66c9b2fbeaba4385c1fe4": {
+    "facing": "model",
+    "id": "tool-parameter-artifact-auto-open",
+    "name": "Tool Parameter: Artifact Auto Open",
+    "desc": "Artifact auto_open param describing when a type_url-created Artifact opens (at_create vs after_first_write)."
+  },
+  "d64c5f23dda0c9da09e222256191bcf93676184c": {
+    "facing": "model",
+    "id": "tool-parameter-sendmessage-message-first-line-preview",
+    "name": "SendMessage Message First Line Preview",
+    "desc": "Tool-parameter description for SendMessage's message field telling the model to make the first line a self-contained preview."
+  },
+  "0fa79bf293643e7101b0838ac61a51ca9118b4b2": { "facing": "internal" },
+  "bf8567097d1b464a0d913b60fac32e32d215f9c1": {
+    "facing": "model",
+    "id": "tool-parameter-artifact-preview-themes",
+    "name": "Artifact Preview Themes",
+    "desc": "Artifact tool parameter description for preview-only color themes (light/dark) sent in the tool schema."
+  },
+  "853415dd7575184a01a4c5686a639c93babc7ac1": {
+    "facing": "model",
+    "id": "tool-parameter-artifact-preview-widths",
+    "name": "Artifact Preview Widths",
+    "desc": "Artifact tool parameter description for preview-only viewport widths sent in the tool schema."
+  },
+  "73662313f97ecdf710b0f2a9b0fbc4c6face531d": {
+    "facing": "model",
+    "id": "tool-result-remote-host-unverified-refusal-no-approval",
+    "name": "Remote Host Unverified Refusal No Approval",
+    "desc": "Tool-result text when an unverifiable sender reports a remote call refused for missing approval."
+  },
+  "47693fce59fd20bd0086600240ec959b371aeec2": {
+    "facing": "model",
+    "id": "tool-result-computer-use-file-dialog-right-click",
+    "name": "Computer Use File Dialog Right Click",
+    "desc": "Computer-use tool-result fragment refusing a right-click inside a file dialog."
+  },
+  "5860f50aabf9a62f94ca447432b6600f6dd12c14": { "facing": "ui" },
+  "de8fdabb7ec8e1bc3c13373ac0a80df05520af67": { "facing": "internal" },
+  "749ac364292ccb1b32a8e0fe2bdd6d71542b3c9d": { "facing": "internal" },
+  "77643ef8fee0067688598b6acd1b12fbcebf49de": {
+    "facing": "model",
+    "id": "tool-result-device-bridge-approval-unverified-request-may-stay-open",
+    "name": "Device Bridge Approval Unverified Request May Stay Open",
+    "desc": "Tool result when host-side approval could not be verified as the user's, noting the earlier ask may stay open."
+  },
+  "69312b7f6b1f91d26f213cbb27b55656bf5481d2": {
+    "facing": "model",
+    "id": "tool-result-device-bridge-approval-unverified",
+    "name": "Device Bridge Approval Unverified",
+    "desc": "Tool result when this session could not verify the user's approval, so the remote call did not run."
+  },
+  "efe26d68f54fe9707c2230da720eff41938b6c7f": {
+    "facing": "model",
+    "id": "tool-result-device-bridge-tools-not-ready",
+    "name": "Device Bridge Tools Not Ready",
+    "desc": "Tool result when the attached machine's tools cannot be matched yet, so the call did not run."
+  },
+  "40831c6d12a3c2a1b0a18c829c8a313fe17979f6": {
+    "facing": "model",
+    "id": "tool-result-remote-host-approval-liveness-send-backed-up",
+    "name": "Remote Host Approval Liveness Send Backed Up",
+    "desc": "Tool result when a post-ask liveness check could not be sent because this session's connection was backed up."
+  },
+  "02e6de3a155579c144db7e1241c75d297c3a8178": {
+    "facing": "model",
+    "id": "tool-result-remote-host-call-send-backed-up",
+    "name": "Remote Host Call Send Backed Up",
+    "desc": "Tool result when a remote call was withdrawn from the send queue because this session's connection was backed up."
+  },
+  "ae1c2930da8afa815d51b6e3447a2389cf887f4d": {
+    "facing": "model",
+    "id": "tool-result-remote-host-result-missing-after-timeout",
+    "name": "Remote Host Result Missing After Timeout",
+    "desc": "Tool result when a remote call was sent but no result arrived and the host could not be reached afterwards."
+  },
+  "ec5cc101677993ccb4e3f8c227843377ef9acfcd": {
+    "facing": "model",
+    "id": "data-task-notification-container-restarted-work-lost",
+    "name": "Task Notification Container Restarted Work Lost",
+    "desc": "Task-notification summary telling the model background work was lost when the container restarted."
+  },
+  "7f34b5b92fbfa338e358603b73905d93fa88cc5d": {
+    "facing": "model",
+    "id": "tool-result-computer-use-save-panel-name-is-path",
+    "name": "Computer Use Save Panel Name Is Path",
+    "desc": "Save-sheet typing-refusal reason interpolated into the computer-use tool result."
+  },
+  "734f28026a2a1c3bf2ab8728fd255da3f0923391": { "facing": "internal" },
+  "379fdf2445c24187a8844092ba9c3b25614b3f60": {
+    "facing": "model",
+    "id": "tool-result-computer-use-next-display-scope-will-prompt",
+    "name": "Computer Use Next Display-Scope Will Prompt",
+    "desc": "Tool-result fragment warning that the next display-scope call will prompt for full-screen approval."
+  },
+  "6ea95c03ebfd0e70b572760bbe4d5d004cf869b9": {
+    "facing": "model",
+    "id": "tool-result-computer-use-next-display-scope-will-take-over",
+    "name": "Computer Use Next Display-Scope Will Take Over",
+    "desc": "Tool-result fragment warning that the next display-scope call will take over the screen."
+  },
+  "a2944478e558cee37bea947a968e79d836cb980b": { "facing": "ui" },
+  "122bfb5728845ee5ea67662d1f82eaa93dc4c693": {
+    "facing": "model",
+    "id": "tool-result-remote-host-approval-send-backed-up",
+    "name": "Remote Host Approval Send Backed Up",
+    "desc": "Tool result when the user's approval could not be forwarded because this session's connection was backed up."
+  },
+  "bfa7e30572a28f8096ac4479daa196d889f38e8b": {
+    "facing": "model",
+    "id": "tool-result-artifact-publish-live-version-read-same-turn",
+    "name": "Artifact Publish Live Version Read Same Turn",
+    "desc": "Artifact publish tool error when this turn already received a newer live version, so nothing was published."
+  },
+  "9d65b267edbe456e0aabbee69bf75ce82b489aec": {
+    "facing": "model",
+    "id": "tool-result-device-bridge-waited-tools-not-announced",
+    "name": "Device Bridge Waited Tools Not Announced",
+    "desc": "Tool result after waiting for the attached machine to announce tools; nothing was sent."
+  },
+  "500d1ffbd241d76771fab6217412d9a889f528df": {
+    "facing": "model",
+    "id": "system-reminder-dir-sync-checkout-follows-user-branch",
+    "name": "Dir Sync Checkout Follows User Branch",
+    "desc": "System-reminder that this cloud checkout follows the user's branch and syncs commits that way."
+  },
+  "61c0d315684fbf62a0548a83397c8776a90f9114": { "facing": "ui" },
+  "992d5902d7e56a6b5d3d0527e1f213627ae9a719": {
+    "facing": "model",
+    "id": "tool-result-app-action-foreign-pid",
+    "name": "App Action Foreign Pid",
+    "desc": "App-action error lead: the targeted element belongs to another process's system panel."
+  },
+  "bd0ce631f39a3da36a861a819713a40f6a37d4de": { "facing": "ui" },
+  "70c344a7e26fcdfc80442bdedee741601c1d80db": { "facing": "ui" },
+  "adecfe86c9a41086f7aeb3364b99c1307fdf8756": { "facing": "ui" },
+  "b31a36a68fb99ba5f09f7910819d97d6a6b4d02a": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-record-unreadable",
+    "name": "Artifact Preview Record Unreadable",
+    "desc": "Artifact preview tool_result when a stored preview record fails to parse."
+  },
+  "6549870b278e5db2e5ca428678ef5cdd9414bf1b": {
+    "facing": "model",
+    "id": "tool-result-device-bridge-already-waited-tools-not-announced",
+    "name": "Device Bridge Already Waited Tools Not Announced",
+    "desc": "Tool result after a second wait for the attached machine still produced no tool announcement."
+  },
+  "6b4103f02ebdf0ed885df12fad4acfcea580fc21": {
+    "facing": "model",
+    "id": "tool-result-computer-use-next-display-scope-prompt-user",
+    "name": "Computer Use Next Display-Scope Prompt User",
+    "desc": "Tool-result fragment that the next display-scope call will prompt the user for full-screen approval."
+  },
+  "5acee9eb5c8035e16c5fd2297825675c64a42110": { "facing": "internal" },
+  "b9094fb11126ee4482e74728f2fd30087bb11101": {
+    "facing": "model",
+    "id": "tool-result-computer-use-unattended-open-app-takeover-mid",
+    "name": "Computer Use Unattended Open App Takeover Mid",
+    "desc": "Middle fragment of the unattended open-application takeover refusal tool result."
+  },
+  "668fddce277cfb459413a260d142e8c86c302eb7": { "facing": "ui" },
+  "907297c954c55d10b2fe3bf7c8954aa60eb7e89d": { "facing": "ui" },
+  "2a1d40d112fcf70ffa51cde2725e354e0dfd6af5": { "facing": "internal" },
+  "745e3c9a1d92f4de457f6d2bbed76a74c8eed5a8": { "facing": "internal" },
+  "582a43c0dd1aeb5f9baae072a352131c1df8d016": { "facing": "internal" },
+  "0f16d76365c39c2238390ef56e9dd229832d148d": { "facing": "internal" },
+  "ecaa988aa3cc440557bb3438994a08a67e46f9c0": { "facing": "internal" },
+  "30062546d3bd25aa400e52390e7b411d2d8320fa": { "facing": "internal" },
+  "311a28fe4ca5fa8a76c421ae0457ef2f9f966179": { "facing": "internal" },
+  "6a3465d0bcc00259376d93e78050d2428c03fecc": { "facing": "internal" },
+  "6f7170d82a127a02b0ca5aba6cbc59228fec4556": { "facing": "internal" },
+  "a897ec938e554729a3d8a1a9b6b06889fb1a0d1b": { "facing": "internal" },
+  "55c612c725a48d10c97ef6f9d6a467e479589839": { "facing": "internal" },
+  "2665ff7df93124726cb47b3b67b5cb798ea63882": { "facing": "internal" },
+  "2e5d2ee02571308109ae584876f74fb7c5bf795d": { "facing": "internal" },
+  "be9fdfee5681468439b434ac65ae3bb5bc99c613": { "facing": "internal" },
+  "a94e1d714f75ed48589b1d6cec79c0c72da91bf2": { "facing": "internal" },
+  "861027d678061ce4efd99c5d85f7f6e89215f38f": { "facing": "ui" },
+  "ea472af860438a64717eb568bfe492d020faee15": { "facing": "ui" },
+  "5363501b907dae1cee959c2637e615417bbfdddc": {
+    "facing": "model",
+    "id": "system-prompt-memory-write-file-size-limit",
+    "name": "Memory Write File Size Limit",
+    "desc": "System-prompt rule to keep each memory file under a size cap and the description to one line."
+  },
+  "9a5d99feb184c7b119018125a41d293f9732ad49": {
+    "facing": "model",
+    "id": "tool-result-permission-denied-seed-admin",
+    "name": "Permission Denied Seed Admin",
+    "desc": "Permission-deny tool_result forbidding direct writes to ~/.claude/seed-admin."
+  },
+  "7b06783d65e3a06a9e2789c2c911d3c4a438fde4": { "facing": "internal" },
+  "808373a292ff496b302e85793426052dfb0a23e1": { "facing": "internal" },
+  "e133ce52d73612cbadad19b122033a40b40a4787": { "facing": "internal" },
+  "b9fecdb19adbabe35987c6e17601514f1fbb38d2": { "facing": "internal" },
+  "c37dc518563fb23f0aa452e21ee358766aacaa05": {
+    "facing": "model",
+    "id": "tool-result-git-bundle-settings-location-changed-after-start",
+    "name": "Tool Result: Git Bundle Settings Location Changed After Start",
+    "desc": "Detail interpolated into the private git-dir placement refusal when CLAUDE_CONFIG_DIR, HOME, or the cowork settings switch changed after process start."
+  },
+  "cfea4ea2bdc2e40b0eb93e680dbe655ff486e86c": { "facing": "internal" },
+  "920d2ac18983f70f66441dbe3dd5cace17ee980e": { "facing": "internal" },
+  "c28d094edf985b481ed302dc47ce01c927d5881c": { "facing": "internal" },
+  "31bed27f947c2d093936f9919fbf05634b73357d": { "facing": "internal" },
+  "355f3786676e51dd2755c45cf49e98c96688c32f": { "facing": "internal" },
+  "e1c25cda60316249cc7f2453a7469f0484117d48": { "facing": "internal" },
+  "8efaa0253431a481b4b75f334715d308c5eb6804": { "facing": "internal" },
+  "95f9041bda7ebcb1700e57bdbf7004655e7a3acd": {
+    "facing": "model",
+    "id": "data-memory-sync-empty-files-restored",
+    "name": "Memory Sync Empty Files Restored",
+    "desc": "PostToolUse additionalContext notice that empty local memory files were restored from shared memory because an empty file is never synced over shared content."
+  },
+  "95cb89fd9ef03a39e749a0848ccb4d5f36415d84": {
+    "facing": "model",
+    "id": "data-memory-sync-empty-restore-delete-tail",
+    "name": "Memory Sync Empty Restore Delete Tail",
+    "desc": "Optional tail on the empty-file restore notice telling the model that emptying a memory file does not delete it."
+  },
+  "93339ecfabc20d0861a638da43f01d7d4ecfa938": {
+    "facing": "model",
+    "id": "tool-result-send-message-uds-non-local-ipc-path",
+    "name": "Tool Result: Send Message UDS Non-Local IPC Path",
+    "desc": "UdsSendRefusedError message interpolated into the SendMessage local-socket failure tool result when the target path is not a usable local IPC path."
+  },
+  "515cc70ba709a6a74cf9e55a997b046525ab8dc9": {
+    "facing": "model",
+    "id": "tool-result-artifact-read-unterminated-newline-clause",
+    "name": "Artifact Read Unterminated Newline Clause",
+    "desc": "Parenthetical on an artifact-read tool result when the saved file has no trailing newline, so wc -l under-counts and the model must Read every line."
+  },
+  "42006dd417ed783489d8c8637939226df105375a": {
+    "facing": "model",
+    "id": "tool-result-artifact-read-unread-lines-clause",
+    "name": "Artifact Read Unread Lines Clause",
+    "desc": "Parenthetical listing line ranges of a saved artifact file that the model has not yet Read."
+  },
+  "4433a07b7577619d8b6364f884996ce6c4597536": {
+    "facing": "model",
+    "id": "tool-result-artifact-read-session-gateway-not-served",
+    "name": "Tool Result: Artifact Read Session Gateway Not Served",
+    "desc": "Artifact-read tool error when the session gateway returns relay-not-served, so this session cannot fetch the artifact."
+  },
+  "3a74a0a2f690bdc84e2a2c0fc579bd5e2f24706d": {
+    "facing": "model",
+    "id": "tool-result-artifact-read-summary-html-saved",
+    "name": "Artifact Read Summary Raw HTML Saved",
+    "desc": "Header clause naming the on-disk path where the artifact's raw HTML was saved alongside the summary, including republish and untrusted-data instructions."
+  },
+  "372e991d0e20d661feef24f94721dec5b725d32d": {
+    "facing": "model",
+    "id": "tool-result-artifact-read-summary-html-saved-untrusted-republish-clause",
+    "name": "Artifact Read Summary HTML Saved Untrusted Republish Clause",
+    "desc": "Clause on the summarized artifact-read path telling the model to republish from the saved file and treat the page as untrusted data."
+  },
+  "ff5c42eed771bba5703d25430d7b7526c97912f9": {
+    "facing": "model",
+    "id": "tool-result-artifact-read-summary-viewed-once-clause",
+    "name": "Artifact Read Summary Viewed-Once Clause",
+    "desc": "Inner clause of the summarized HTML-saved header stating the version counts as viewed only after every line of the saved file has been Read."
+  },
+  "9b33252c84d83093887cd4ec3196e91f00394ec0": {
+    "facing": "model",
+    "id": "tool-result-artifact-html-saved-viewed-once-clause",
+    "name": "Artifact Html Saved Viewed-Once Clause",
+    "desc": "Clause on the full-HTML-saved artifact-read path stating the version counts as viewed only after every line of that file has been Read."
+  },
+  "61e2db2f144a7042533d40c8847b0e1a77e34aa6": { "facing": "internal" },
+  "857b5b5b0601f3ce684a0908ece59aee30d695fa": {
+    "facing": "model",
+    "id": "tool-result-task-output-omitted-disk-write-failed",
+    "name": "Task Output Omitted Disk Write Failed",
+    "desc": "Marker spliced into bash/task stdout telling the model that output could not be written to disk and was omitted."
+  },
+  "97cbc3d52048f31b7630aa0039d34ad6947850c8": {
+    "facing": "model",
+    "id": "tool-result-task-output-truncated-incomplete-file",
+    "name": "Task Output Truncated Incomplete File",
+    "desc": "Bash/task stdout tail when output was truncated and the on-disk full-output file may be missing or incomplete."
+  },
+  "ec8b962a3c29d86172a5ed51f556b2246fef60d5": { "facing": "internal" },
+  "6791d8317d13a38ec57ef31ee711a02620e08b5c": { "facing": "internal" },
+  "8c40eb54b61c4ea11a8c47135f0cf7f73218bf0c": { "facing": "internal" },
+  "5569c3c35bd7427596c831e046f52e9f94288b5d": { "facing": "internal" },
+  "9b2fdeb51f6bb051764f5bd9e650cab273afe548": { "facing": "internal" },
+  "f11f4baa6ab59a4dbcbf6a362f853c4d5044f876": { "facing": "internal" },
+  "6b3dfea1387963c782bc095788230c2119f12237": { "facing": "internal" },
+  "7ee00085ee90218a3ff36af7d44242e2ee82e01c": { "facing": "internal" },
+  "8b0dce9f7c705d9a4d94185ec2056c7d50c2c347": { "facing": "internal" },
+  "933e193aa24870eaf1c3838d8df745384a8d9bff": { "facing": "internal" },
+  "070f265c6df255abdffac7d9d4a7dc4a13cb6a44": { "facing": "internal" },
+  "c2eb651b2bbb06de3d59d6b1270f9e8dd0e7a81f": { "facing": "ui" },
+  "e6401023b90f677445337ff00a58a60dd9e8d5ec": { "facing": "ui" },
+  "131af069528e66482c6aa0c8bdd8d7d8ce580d3a": { "facing": "ui" },
+  "ddc4e34a4d2d9f16e2d20419ff1261f98f984b1c": { "facing": "ui" },
+  "7efe250064dc3462b4ba1f9c4442f9c3c4a67dbf": { "facing": "ui" },
+  "ffecd4340d9cc8a60af6a1d9719724b0d037f627": {
+    "facing": "model",
+    "id": "tool-result-cloud-session-reason-linked-worktree",
+    "name": "Tool Result: Cloud Session Reason Linked Worktree",
+    "desc": "Reason clause interpolated into the cloud-session local-changes bundle-failed tool result when the checkout is a linked working tree that cannot be compared with GitHub."
+  },
+  "896409b95c1e29d865817f172902403bae05974a": {
+    "facing": "model",
+    "id": "tool-result-cloud-session-reason-unserved-layout",
+    "name": "Tool Result: Cloud Session Reason Unserved Layout",
+    "desc": "Reason clause interpolated into the cloud-session local-changes bundle-failed tool result when the checkout keeps git outside the working tree."
+  },
+  "e5c7b0212e94012dcac0e43e2b2c7e4347132f3b": {
+    "facing": "model",
+    "id": "tool-result-git-bundle-no-changes-read-rule-clause",
+    "name": "Tool Result: Git Bundle No-Changes Read-Rule Clause",
+    "desc": "Clause in the no_changes bundle-fail tool result noting leftover files are covered by a Read rule in settings."
+  },
+  "aee4767f7ede897e7ba7edeab5983468a6d70ec7": { "facing": "internal" },
+  "e0b61e52932db3a718171b91c3e352839e0ce427": {
+    "facing": "model",
+    "id": "tool-result-git-bundle-settings-name-no-longer-set",
+    "name": "Tool Result: Git Bundle Settings Name No Longer Set",
+    "desc": "Hardened git-bundle refusal when a settings-steered name was set by a cloud-reachable settings file that no longer names it."
+  },
+  "d802332198c7d99a90f102395d6d4f4d8cbdc5c9": { "facing": "ui" },
+  "068882f7c9a426eb6f10b521c7832997951fbdb7": { "facing": "ui" },
+  "a9f1e8d0fbbddf19feabf1006e75ca05f5030120": {
+    "facing": "model",
+    "id": "tool-result-git-bundle-linked-worktree-not-vouched",
+    "name": "Tool Result: Git Bundle Linked Worktree Not Vouched",
+    "desc": "Teleport git-bundle refusal when the checkout is a linked working tree whose pointer files this upload does not vouch for."
+  },
+  "e7fd2b91da98e04cf631f9066deec7e55c239615": {
+    "facing": "model",
+    "id": "tool-result-git-bundle-temp-root",
+    "name": "Tool Result: Git Bundle Temp Root",
+    "desc": "Refuses the upload when the checkout stands under cloud-session scratch space so its contents cannot be told apart from session writes."
+  },
+  "51b885f84fb4b3724e0c4460b277f4529dfdc6d0": {
+    "facing": "model",
+    "id": "tool-result-git-bundle-git-not-on-path",
+    "name": "Tool Result: Git Bundle Git Not On PATH",
+    "desc": "Git-bundle refusal when git was not found on the process PATH, so nothing was uploaded."
+  },
+  "160935665124d69e81d913b60a7fc3f8512ef3ae": { "facing": "internal" },
+  "ba9177f4561f10aa4f49bc1b397b82c6588f9f6a": {
+    "facing": "model",
+    "id": "tool-result-git-bundle-linked-worktree-git-file-pointer",
+    "name": "Tool Result: Git Bundle Linked Worktree Git File Pointer",
+    "desc": "bXo.git_file clause interpolated into the linked-worktree git-bundle refusal when .git is not git's single pointer."
+  },
+  "51e040c3cd7e1397b69004830e19649122b2201b": {
+    "facing": "model",
+    "id": "tool-result-git-bundle-linked-worktree-admin-dir",
+    "name": "Tool Result: Git Bundle Linked Worktree Admin Dir",
+    "desc": "bXo.admin_dir clause interpolated into the linked-worktree git-bundle refusal when .git does not name the worktree admin directory."
+  },
+  "52c961acb26e4e5970982d4799e10afa4c726cb6": {
+    "facing": "model",
+    "id": "tool-result-git-bundle-linked-worktree-back-link",
+    "name": "Tool Result: Git Bundle Linked Worktree Back Link",
+    "desc": "bXo.back_link clause interpolated into the linked-worktree git-bundle refusal when the admin directory does not point back at the working tree."
+  },
+  "959e8216fe7a0243b56cfaebd0cc49dc180d3e01": {
+    "facing": "model",
+    "id": "tool-result-git-bundle-linked-worktree-common-dir",
+    "name": "Tool Result: Git Bundle Linked Worktree Common Dir",
+    "desc": "bXo.common_dir clause interpolated into the linked-worktree git-bundle refusal when the admin directory names a different repository."
+  },
+  "182a1ea542575909ed64bfe7515d20ebfe77d91f": {
+    "facing": "model",
+    "id": "tool-result-git-bundle-linked-worktree-placement",
+    "name": "Tool Result: Git Bundle Linked Worktree Placement",
+    "desc": "bXo.placement clause interpolated into the linked-worktree git-bundle refusal when the repository sits in a place this upload will not take."
+  },
+  "b21af0151e969d1edf8003fcb7862d3ef11c97e1": {
+    "facing": "model",
+    "id": "tool-result-git-bundle-linked-worktree-worktree-config",
+    "name": "Tool Result: Git Bundle Linked Worktree Worktree Config",
+    "desc": "bXo.worktree_config clause interpolated into the linked-worktree git-bundle refusal when per-worktree configuration is in use."
+  },
+  "1ea2f4e1b92977fefed34bc1110f7bdedb61d79b": { "facing": "ui" },
+  "1c9bd3df9832678708b69aac73850a7f7edf7179": { "facing": "internal" },
+  "a311d6cbf150a4ee43913683a7eec884beb87b2f": { "facing": "ui" },
+  "4ffe0bf70b6e952e44a519ac77ce75fbeee35893": { "facing": "internal" },
+  "d3d97ee3f0ed49a2150f7cc99de502fd4f89ee0c": { "facing": "internal" },
+  "afa8a6a559aa7f63d79349c857b55d324ec8531e": { "facing": "internal" },
+  "dd90341b1dd20832ae0c861c306479c18337f6fb": { "facing": "internal" },
+  "9c3d5e5898b98f2fea9ca5729316663737350d90": { "facing": "internal" },
+  "26a3126af14240077ad884c5c7f0823158655789": { "facing": "ui" },
+  "981fff909553aaac4d8effc90fe8dc233a275f6b": { "facing": "ui" },
+  "80a491f535c89a26d072207f0a61bf2c6f928518": { "facing": "ui" },
+  "8147d35e011a09b610161e3a999a1bd15f13d197": { "facing": "ui" },
+  "9ce795d803815a29db13e300af885cb95c12aec6": {
+    "facing": "model",
+    "id": "tool-result-mcp-task-elicitation-dialog-open",
+    "name": "MCP Task Output: Elicitation Dialog Open",
+    "desc": "Line in the TaskOutput `<output>` block for a running mcp_task whose mcpStatus is input_required, telling the model an elicitation dialog is open."
+  },
+  "922204f6a5a2dcce8e143d56c8914dae6a4fa21f": {
+    "facing": "model",
+    "id": "tool-result-mcp-task-survives-session",
+    "name": "MCP Task Output: Survives Session Exit",
+    "desc": "Line in the TaskOutput `<output>` block for a sep2663 mcp_task explaining it keeps running on the server and completes via a task notification."
+  },
+  "4eee3558a6402be700bedd2ce4e337362f680369": { "facing": "internal" },
+  "49a09f53e8a3114cce30a174b8cee4d342b80a98": {
+    "facing": "model",
+    "id": "tool-result-send-message-delivery-unconfirmed-older-version",
+    "name": "SendMessage Delivery Unconfirmed — Older Version",
+    "desc": "Clause appended to the SendMessage success `message` (via lNt().message and identityNote) when the Remote Control peer has not reported it can receive cross-session replies."
+  },
+  "753fb5fcbf900a05c35d7cf3ba311eccc674d555": { "facing": "ui" },
+  "c88f281ce7bcd090664037e9f56d67b7200228ae": { "facing": "internal" },
+  "d6e5b32e1602cfec3b9edbe0d53201d25482b078": { "facing": "internal" },
+  "8af70a47d2d255df80c6e0fd1eeb295f1305685c": { "facing": "ui" },
+  "a78342ce8f8f99b3a61bba60e5b74772e1036a39": {
+    "facing": "model",
+    "id": "tool-result-artifact-comments-fetch-relay-unavailable",
+    "name": "Comments Fetch Failed — Relay Did Not Carry The Read",
+    "desc": "Artifact comments-read `{err}` when this session's comment connection (relay-unavailable) carried no read, telling the model to retry once then tell the user."
+  },
+  "4e3427e38eb8ae7f3e24ccbbb7947e6dc300fdbc": {
+    "facing": "model",
+    "id": "tool-result-artifact-comment-reply-relay-unavailable",
+    "name": "Comment Reply Not Sent — Relay Did Not Carry It",
+    "desc": "Artifact comment-reply `{kind:\"error\",message:Sks}` when relay-unavailable so nothing was posted, telling the model to retry the reply once."
+  },
+  "189671db43d4a67186f12cd5b10d27fb3e8b8067": {
+    "facing": "model",
+    "id": "tool-result-artifact-delete-relay-unconfirmed",
+    "name": "Artifact Delete Unconfirmed — Cloud Relay Failed",
+    "desc": "Artifact delete `{err}` from gxr() when the cloud relay failed, telling the model the delete may have gone through and to list before retrying."
+  },
+  "c215d25127f505a0cbbac6d864495808a43fa684": {
+    "facing": "model",
+    "id": "tool-result-artifact-delete-not-found-foreign",
+    "name": "Artifact Delete Unconfirmed — Foreign 404",
+    "desc": "Artifact delete `{err}` when a 404 did not come from the Artifact service, so the Artifact may still be online."
+  },
+  "3e21e3f7d5507c9c5c040b6edfa368b76a6e6b95": {
+    "facing": "model",
+    "id": "tool-result-artifact-delete-ok-foreign",
+    "name": "Artifact Delete Unconfirmed — Foreign OK",
+    "desc": "Artifact delete `{err}` when a non-204 or relayed response was not the Artifact service's own, so the Artifact may still be online."
+  },
+  "ef3a8128596ea27b2dfc1a5d4c2c81ffc513bca6": {
+    "facing": "model",
+    "id": "tool-result-artifact-asset-store-relay-not-served",
+    "name": "Asset Store Unavailable From This Session Kind",
+    "desc": "Artifact asset error for store_unavailable/relay_not_served: uploads, listing, and deletes are not available from this kind of session."
+  },
+  "09f08112cae4d1727898f89c6789e2927b06a0af": {
+    "facing": "model",
+    "id": "tool-result-artifact-file-relay-not-served",
+    "name": "Published-File Reads Unavailable From This Session Kind",
+    "desc": "Artifact file-read error for relay_not_served: published-file reads are not available from this kind of session."
+  },
+  "e4b1f7ae56ccd6002163e3098ce6434336c58050": {
+    "facing": "model",
+    "id": "tool-parameter-artifact-file-path-preview",
+    "name": "Tool Parameter: Artifact file path — preview use",
+    "desc": "Clause appended to the Artifact file_path parameter description explaining its meaning for action preview."
+  },
+  "775770e37bcf6f5c14fb1453ea1600ca9eed12ae": {
+    "facing": "model",
+    "id": "tool-result-artifact-db-read-not-saved-line",
+    "name": "Artifact Db Read Not Saved Line",
+    "desc": "Tool-result line listing returned artifact-db documents that were not written to out_dir, with the reason and ids."
+  },
+  "44125376a6c1dc9bce6390a445ccbbfab96e927a": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-browser-message-too-large",
+    "name": "Artifact Preview: Browser Message Too Large",
+    "desc": "PreviewBrowserGone error when a CDP message exceeds the size cap, surfaced as preview renderError/shot error in the preview tool_result."
+  },
+  "b0506e0dce737c4977dee322858627a218eec451": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-server-start-failed",
+    "name": "Artifact Preview: Local Preview Server Failed To Start",
+    "desc": "renderError text when the local preview page server throws during start, included in the preview tool_result."
+  },
+  "f5d50303883b2ff6b21c76eb08f2b35304c45455": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-checks-could-not-run",
+    "name": "Artifact Preview: In-Page Checks Could Not Run",
+    "desc": "Preview issue text when measure/checks throw on a capture, listed in the preview report the model reads."
+  },
+  "213f06feeb8c6ed310788dd245faac47f64d51f5": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-theme-top-identical",
+    "name": "Artifact Preview: Light/Dark Top Identical",
+    "desc": "Preview theme issue when the captured top of the page matches in light and dark, so no dark-theme styles show there."
+  },
+  "0fa573c446de4e07c6c0bba41985cdd99883471c": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-theme-renders-identical",
+    "name": "Artifact Preview: Light And Dark Renders Identical",
+    "desc": "Preview theme issue when full light and dark captures are identical, meaning the page has no dark-theme styles."
+  },
+  "c6b7056755fe72c9db91be7d9ce421ab743de36a": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-title-too-late",
+    "name": "Artifact Preview: Title Sits Too Late",
+    "desc": "Static preview issue that <title> is past the first N characters or after an svg, so publish will not see it."
+  },
+  "a6583420fa860c3e664c0a4f8f0a742180296c19": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-over-publish-size",
+    "name": "Artifact Preview: Over Publish Size Limit",
+    "desc": "Static preview size issue when the composed page exceeds the publish megabyte cap including inlined runtimes."
+  },
+  "ac55daff258665cab39b022960e54764901049c6": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-theme-only-color",
+    "name": "Artifact Preview: Theme-Only Color Variables",
+    "desc": "Static preview issue listing color variables set only inside prefers-color-scheme or data-theme blocks."
+  },
+  "ec3c575783f65d9aaa30c1a00e7fef0ce7ce4799": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-horizontal-scroll",
+    "name": "Artifact Preview: Page Scrolls Horizontally",
+    "desc": "In-page preview overflow issue when scrollWidth exceeds the viewport."
+  },
+  "5ee6df261837c72a0b73a4a42bfe53319cede10e": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-svg-label-clipped",
+    "name": "Artifact Preview: SVG Label Clipped",
+    "desc": "In-page preview issue that an SVG label is clipped by its svg viewport."
+  },
+  "1c4ee84d0cae173b2e82f7e43eff438c1471b1ce": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-mermaid-runtime-missing",
+    "name": "Artifact Preview: Mermaid Runtime Did Not Load",
+    "desc": "In-page preview issue that mermaid pre blocks are present but the diagram runtime did not load."
+  },
+  "1300a783ddd7b13074b62440b2caa7f571fc4caa": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-csp-blocked",
+    "name": "Artifact Preview: Blocked By Artifact Content Policy",
+    "desc": "Preview CSP issue that a URI is blocked by the artifact content policy (only Google Fonts load from outside)."
+  },
+  "f54d6fc71603754488d1db294a55ce43f8a6abe6": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-js-dialog-on-load",
+    "name": "Artifact Preview: JavaScript Dialog On Load",
+    "desc": "Preview load issue from in-page dialog measurement that the page opened a JS dialog on load, which the published viewer never shows."
+  },
+  "ce3b8bababa4f9c6d15ee0f098294be7b6990f8f": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-popup-target-same-artifact",
+    "name": "Artifact Preview: Popup Target Is Another Page Of This Artifact",
+    "desc": "Fragment interpolated into the on-load popup issue identifying the target as another page of this artifact."
+  },
+  "16a842de46b80d9f16b328b5372c29b7e5354c40": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-popup-target-outside-directory",
+    "name": "Artifact Preview: Popup Target Outside Artifact Directory",
+    "desc": "Fragment interpolated into the on-load popup issue identifying the target as a page outside this artifact's directory."
+  },
+  "62d356aa1dac02bb5ed3f2fae12c6f9ab0c2957e": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-popup-on-load",
+    "name": "Artifact Preview: New Window On Load",
+    "desc": "Preview load issue that the page opens a new window on load (blocked in preview; published viewer allows pop-ups only from a click)."
+  },
+  "8682558984297908f4fb769f6df881b05aa99e91": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-js-dialog-on-load-cdp",
+    "name": "Artifact Preview: CDP JavaScript Dialog On Load",
+    "desc": "Preview load issue from a CDP dialog event that the page opened a JS dialog on load, which the published viewer never shows."
+  },
+  "54b0dd4a177626c5e6758ec2505ffd778eedf21c": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-download-on-load",
+    "name": "Artifact Preview: Download Starts On Load",
+    "desc": "Preview load issue that the page starts a download on load, refused in preview and blocked in the published viewer."
+  },
+  "f1cdaf2f7bbd9cd0f238da7cfd619ed8076c339e": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-relative-ref-needs-files",
+    "name": "Artifact Preview: Relative Reference Missing From Files",
+    "desc": "Preview local_ref issue that a relative URL does not load in preview and exists after publish only if passed in files."
+  },
+  "230c0be3c991fd3c29612eabf2771c62cf742541": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-origin-stylesheets-fonts-only",
+    "name": "Artifact Preview: Origin Load Not Taken In Preview",
+    "desc": "Preview load issue that preview only fetches stylesheets and font files from that origin, so this request was skipped."
+  },
+  "ddb8a173acc695a0fcf70a3f8cd1bdc44db29771": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-outside-publish-policy",
+    "name": "Artifact Preview: Outside What The Published Page May Load",
+    "desc": "Preview CSP issue that a URL is outside what the published page may load."
+  },
+  "d0b331e3e5a7a6d84718929a5450c488339f136d": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-blob-refs-not-loaded",
+    "name": "Artifact Preview: Uploaded-Asset Blob Refs Not Loaded",
+    "desc": "Preview local_ref issue that uploaded-asset _blob/ references are not loaded in preview."
+  },
+  "842c68c5498935bc8c90c777fbdcdfb73a3643c1": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-chrome-not-found",
+    "name": "Artifact Preview: Chrome Not Found",
+    "desc": "Preview error when no Chrome/Chromium binary is resolved and there is no install hint, returned as renderError in the preview tool_result."
+  },
+  "a65e34dcf85c65c626eee42e0fbf9bd2a9523f8f": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-outside-sandbox",
+    "name": "Artifact Preview: Page Started Outside Sandbox",
+    "desc": "PreviewBrowserGone error when a worker/worklet attaches without waiting for debugger, stopping preview and surfacing in the tool_result."
+  },
+  "baa70ea68a7e76fa88aa5f424b687abba9b548d9": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-unavailable-in-session",
+    "name": "Artifact Preview Unavailable In This Session",
+    "desc": "Permission-deny and call() error when the preview gate is closed, returned to the model as the Artifact preview tool_result."
+  },
+  "18d0869c9b2048ef3dc9654a216e6f4bc4148d6b": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-not-regular-html",
+    "name": "Artifact Preview Needs A Regular HTML File",
+    "desc": "Preview error when file_path is a directory or special file rather than a regular .html page."
+  },
+  "7843bdff16ed87353e938d6981cdd7cb8ae67b65": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-network-share",
+    "name": "Artifact Preview Refuses Network Paths",
+    "desc": "Permission-deny and call() error that preview renders local files only and this path reaches a network share."
+  },
+  "867da52de5a806b1bf1cd2eadd6c41e1ae45af18": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-symlink-needs-ask",
+    "name": "Artifact Preview: Symlink Outside Read-Without-Ask",
+    "desc": "Permission-deny message when file_path is a symlink to a file this session may not read without asking."
+  },
+  "8c22ef71c3f1b9a5f74515051cdaa8f703a7682f": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-hard-link",
+    "name": "Artifact Preview: Hard Link Not Allowed",
+    "desc": "Permission-deny message when file_path shares contents with another hard link, so preview wants a plain copy."
+  },
+  "5511fe0e7e553d9b5ce8057061cb39aaada3ac9d": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-browser-in-writable-dir",
+    "name": "Artifact Preview: Browser Binary In Writable Directory",
+    "desc": "Permission-deny and call() error when Chrome would launch from a directory this session can write without asking."
+  },
+  "45c884f740ae6e982fe72b3adea1c6b617e15880": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-report-summary",
+    "name": "Artifact Preview Report Summary Line",
+    "desc": "Opening summary line of the preview tool_result stating what was previewed, capture counts, and issues found."
+  },
+  "4eec57901644b88047788b0304d95b77c86123f9": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-browser-did-not-start",
+    "name": "Artifact Preview Report: Browser Could Not Start",
+    "desc": "Preview report line when renderError is set so only static checks ran."
+  },
+  "d50a4ff12efece85f25fc75814e2d2d2222fde8f": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-no-capture",
+    "name": "Artifact Preview Report: No Capture Succeeded",
+    "desc": "Preview report line when every shot failed so in-page checks did not run."
+  },
+  "a693e6d6722f8106d3567a7385d0d5a943dd1a29": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-checks-found-nothing",
+    "name": "Artifact Preview Report: Mechanical Checks Found Nothing",
+    "desc": "Preview report line when issues is empty, reminding the model to judge look-and-feel from the captures."
+  },
+  "def3dec42b9695463afc8b3e5780253591a69794": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-report-begin-fence",
+    "name": "Artifact Preview Report Begin Fence",
+    "desc": "Authority-warning fence opening the preview report so page-produced text below is treated as data, not instructions."
+  },
+  "adb2fa2988ba3d6944aa4d48f9b66f0b55965b21": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-capture-top-crop",
+    "name": "Artifact Preview Capture Top-Crop Note",
+    "desc": "Parenthetical on a successful capture line noting that only the top of a taller page was captured."
+  },
+  "1b18bf94cdd9c3b02affbb0366db529798bc83fb": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-file-path-changed",
+    "name": "Artifact Preview: File Path Changed After Permission Check",
+    "desc": "Preview call() error from yxs.changed when file_path changed between the permission check and the render."
+  },
+  "30c2db12fc18f8ded2cc7341d056265bb240e398": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-via-link",
+    "name": "Artifact Preview Via-Link Denial",
+    "desc": "Preview tool_result thrown from yxs.via_link when file_path now resolves through a symlink to a different file."
+  },
+  "f528b9952d8a03b5587eae20ce3126d021ae30fc": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-hard-link",
+    "name": "Artifact Preview Hard-Link Denial",
+    "desc": "Preview tool_result thrown from yxs.hard_link when file_path shares contents with another hard link."
+  },
+  "a6a5f0c57c9005d7debf695d62eaa3aba69d81f7": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-no-identity",
+    "name": "Artifact Preview No File Identity",
+    "desc": "Preview tool_result from yxs.no_identity when the volume cannot identify the file."
+  },
+  "7c4f3d8d30b17259141202af1c9fd3bfa456b419": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-read-denied",
+    "name": "Artifact Preview Read Denied",
+    "desc": "Preview tool_result from yxs.read_denied when Read rules block the resolved path."
+  },
+  "1ac9be0821ae4b68faae2f5ed03d7d4238e4c2af": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-empty-or-over-size",
+    "name": "Artifact Preview Empty Or Over Size",
+    "desc": "Preview tool_result from yxs.size when the page is empty or over the publish size limit."
+  },
+  "2cda385a430846b6918ceb644267c109145b6054": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-needs-file-path",
+    "name": "Artifact Preview Needs File Path",
+    "desc": "Preview checkPermissions deny and validateInput error when file_path is missing."
+  },
+  "a3a52dc0f3d9c18792b8eb42e9e0fda6318c95ee": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-consent-ask",
+    "name": "Artifact Preview Consent Ask",
+    "desc": "checkPermissions ask message for previewing a local HTML page in a headless browser; on decline it becomes the tool_result the model reads."
+  },
+  "ec42b05a926a7ef264d7b08d274e0a8f83a3482e": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-sidecars-not-loaded",
+    "name": "Artifact Preview Sidecar Files Not Loaded",
+    "desc": "validateInput suffix when preview is passed files or root, explaining those sidecar publishes are not loaded locally."
+  },
+  "f5bf50243db2ffad96bf767188530a836a2165f1": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-markdown-not-previewable",
+    "name": "Artifact Preview Markdown Not Previewable",
+    "desc": "validateInput refusal when preview is aimed at a markdown file instead of hand-built HTML."
+  },
+  "3721a15577cfbff9af390b82e3583f0137d90cb5": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-not-html",
+    "name": "Artifact Preview Not HTML",
+    "desc": "validateInput refusal when file_path is neither .html/.htm nor markdown."
+  },
+  "c26e6db43f07b631644f4df35eb1b887e12191b9": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-empty-file",
+    "name": "Artifact Preview Empty File",
+    "desc": "Sne validateInput empty-file message telling the model to write the page before previewing."
+  },
+  "d938b00facf117e4eeb13d29352effc1d374e794": {
+    "facing": "model",
+    "id": "tool-result-artifact-preview-no-identity-validate",
+    "name": "Artifact Preview No File Identity Validate",
+    "desc": "Sne validateInput noIdentity string (no trailing period; Sne appends one) when the file cannot be identified."
+  },
+  "865931fcb52e1c7ce32a255e86df9a46e1785b6c": {
+    "facing": "model",
+    "id": "data-artifact-preview-auto-classifier-input",
+    "name": "Artifact Preview Auto-Classifier Input",
+    "desc": "toAutoClassifierInput line describing a local preview render for the auto-permission classifier model."
+  },
+  "9340f4e024f49c06d94553d2be01bec805fbc9a9": {
+    "facing": "model",
+    "id": "tool-description-artifact-preview-dynamic",
+    "name": "Artifact Preview Action Description",
+    "desc": "Per-call description for Artifact action preview: render a local page in a headless browser without uploading."
+  },
+  "72ed44faa61c890b941e29453acd4d108e17dfdb": {
+    "facing": "model",
+    "id": "tool-result-artifact-stale-guard-persisted-body",
+    "name": "Artifact Stale Guard Persisted Autoread Body",
+    "desc": "Persisted-mode stale-version guard body: the live source is saved at a path, counts as viewed, and must be Read and merged before republishing."
+  },
+  "bfa8ff3f0da3597beea68fd6a931fb6b17b2a0eb": {
+    "facing": "model",
+    "id": "tool-result-artifact-stale-guard-persisted-read-in-full-clause",
+    "name": "Artifact Stale Guard Persisted Read-In-Full Clause",
+    "desc": "Seed-on-read branch of the persisted stale-guard body telling the model that version counts as viewed only once every line has been Read."
+  },
+  "dec627f86c5167d81d57c4a8d0bf65b5cd2cd716": {
+    "facing": "model",
+    "id": "tool-result-artifact-identical-resubmission-unviewed",
+    "name": "Artifact Identical Resubmission Unviewed",
+    "desc": "identical_resubmission_unviewed publish tool_result stem when the newer live version still does not count as viewed."
+  },
+  "c77375dd4e190cc24ea76fc2ae5ff2aeb26fb684": {
+    "facing": "model",
+    "id": "tool-result-artifact-identical-resubmission-fetch-to-confirm",
+    "name": "Artifact Identical Resubmission Fetch To Confirm",
+    "desc": "Clause telling the model a Read of the saved copy does not confirm the live version and to fetch the artifact URL again."
+  },
+  "89b60d4621604b6da12b7cd02ad371fce8d5fdcf": {
+    "facing": "model",
+    "id": "tool-result-artifact-identical-resubmission-resent-unchanged",
+    "name": "Artifact Identical Resubmission Resent Unchanged",
+    "desc": "identical_resubmission publish tool_result stem when the same refused content is resent unchanged."
+  },
+  "23497456eb654b929cf07d9b423f86945f9f5ed3": {
+    "facing": "model",
+    "id": "tool-result-artifact-identical-resubmission-sourceless",
+    "name": "Artifact Identical Resubmission Sourceless",
+    "desc": "identical_resubmission clause covering both unseen live versions and versions that arrived only as summary or page data."
+  },
+  "2c848eee953e1f2985db7b376f126b13be7db24a": {
+    "facing": "model",
+    "id": "tool-result-artifact-identical-resubmission-sourceless-clause",
+    "name": "Artifact Identical Resubmission Sourceless Clause",
+    "desc": "identical_resubmission publish error clause when the live version reached the model only as a summary or page data, never as source."
+  },
+  "59a656bdf2bbf741decb12637ba434558571e9df": {
+    "facing": "model",
+    "id": "tool-result-artifact-delete-consent-ask",
+    "name": "Artifact Delete — Consent Ask",
+    "desc": "The permanent-delete confirmation prompt, used both as the ask message and as its safetyCheck decisionReason."
+  },
+  "f6134d702d1265cddb12c96c4c16be74a1062090": {
+    "facing": "model",
+    "id": "tool-description-artifact-delete-dynamic",
+    "name": "Artifact Delete Action Description",
+    "desc": "Per-call description for action delete: permanently deletes an artifact the user owns; every delete asks the user."
+  },
+  "6794661fcd08c5adfaebdbed6acf641747009526": {
+    "facing": "model",
+    "id": "tool-result-artifact-auto-open-after-first-write",
+    "name": "Artifact Auto-Open After First Write",
+    "desc": "validateInput refusal when auto_open is after_first_write on a type_url create, which is already the first write."
+  },
+  "b2795dc734717510bbeaefe23a2a99937660821d": {
+    "facing": "model",
+    "id": "tool-description-bash-sandbox-default-intro",
+    "name": "Tool Description: Bash Sandbox Intro",
+    "desc": "Opening paragraph of the command-sandbox section of the Bash tool description stating commands run in a sandbox that controls filesystem and network access."
+  },
+  "c7fc4746b9d14bc79e792baa8554087bcef4d4f6": { "facing": "ui" },
+  "17007d7abed1c103a99be18c22c9dfba9f2d4eca": {
+    "facing": "model",
+    "id": "tool-result-worktree-create-filter-name-unrepresentable",
+    "name": "Tool Result: Worktree Create Filter Name Unrepresentable",
+    "desc": "WorktreeIsolationError when a git filter driver name cannot be neutralized; returned to the model as an EnterWorktree tool error."
+  },
+  "84b962693273a763c91ce66b918db64c3513be44": {
+    "facing": "model",
+    "id": "tool-result-worktree-create-conditional-include",
+    "name": "Tool Result: Worktree Create Conditional Include",
+    "desc": "WorktreeIsolationError when includeIf makes checkout filter drivers unknowable; returned to the model as an EnterWorktree tool error."
+  },
+  "17114e2078ffcf1ad57de67fd31126754966e375": {
+    "facing": "model",
+    "id": "system-reminder-memory-file-over-recall-limit",
+    "name": "System Reminder: Memory File Over Recall Limit",
+    "desc": "PostToolUse additionalContext after a memory-file write that exceeded the recall cap, telling the model to rewrite it under the limit."
+  },
+  "22db0f0a984fb200e21ff13ca7168130b7ddb9e5": {
+    "facing": "model",
+    "id": "system-reminder-memory-file-approaching-recall-limit",
+    "name": "System Reminder: Memory File Approaching Recall Limit",
+    "desc": "PostToolUse additionalContext when a memory file is approaching the recall cap."
+  },
+  "07b22c0e17a3387b8f1e2e2fe11f2e36c5d7ac5b": {
+    "facing": "model",
+    "id": "system-reminder-memory-file-missing-description",
+    "name": "System Reminder: Memory File Missing Description",
+    "desc": "PostToolUse additionalContext lint telling the model a memory file lacks frontmatter description."
+  },
+  "3ac7b9cf5bba2ee3b5909af24dd8d6cd0ca5fe0b": {
+    "facing": "model",
+    "id": "system-reminder-memory-file-long-description",
+    "name": "System Reminder: Memory File Long Description",
+    "desc": "PostToolUse additionalContext lint telling the model to shorten a memory file's description."
+  },
+  "0822c874541630fae236a06a382db01a403b4f26": { "facing": "internal" },
+  "978dc9b7f527c34aa4d3871a3aef63744c02d9d4": { "facing": "internal" },
+  "fc0477a0ef24810dd82cb89ca91e2c971d63ff63": {
+    "facing": "model",
+    "id": "system-reminder-command-sandbox-disabled",
+    "name": "System Reminder: Command Sandbox Disabled",
+    "desc": "Meta reminder injected when sandbox_instructions content is empty, telling the model commands now run unsandboxed."
+  },
+  "42abca2a8546eaf11013c51ab9d10da83fad02cb": {
+    "facing": "model",
+    "id": "system-reminder-cowork-memory-snapshot-withdrawn",
+    "name": "System Reminder: Cowork Memory Snapshot Withdrawn",
+    "desc": "Meta reminder when cowork_memory_context content is null, telling the model to disregard the previous memory snapshot."
+  },
+  "2c5392aec6f16061f8ac2158c866a79f914b7c23": { "facing": "internal" },
+  "75ef913227c05332f3212fe2cdcb80584aac1ee4": { "facing": "internal" },
+  "17596a161a312df92d84f2ba74415d7b6fbb03af": { "facing": "ui" },
+  "ab06a2c06d7a98b008f59aea62d96965434e83c2": { "facing": "ui" },
+  "e3a0be71e5119673146b0038e304bc8fbe106f3c": { "facing": "ui" },
+  "1c17793bf7ab1b4e79c7dd3f1ac3bd7fac95779f": { "facing": "ui" },
+  "21af6c6ff889e286b0ba194385f90bda90e70b59": { "facing": "ui" },
+  "88b8be93df66eed7fff0152a449519dfbe9e4ccb": { "facing": "internal" },
+  "6439b39891cca5695959da2088f802a2c0627e51": { "facing": "ui" },
+  "3d46ac7442160ad610d3ed3fceb762666dd717c8": { "facing": "internal" },
+  "8811150973982a724f01fc1e973031b07093e915": { "facing": "internal" },
+  "ccd7f39b8359a10a0d8e118ab41481ae1bde02a3": { "facing": "internal" },
+  "0adc8710678536f87a3e1b004c71010fd752551b": { "facing": "internal" },
+  "b2f01dda3df5f6776ea9ae7507384cfa36db631c": { "facing": "internal" },
+  "7cd4501031d92795e9805273749b181bd2e2127f": { "facing": "internal" },
+  "e93133b2c39e0279448ea13d7090834a1337a747": { "facing": "internal" },
+  "f58c4b3e3ac16c315b86024d94fd73ba2ddfda00": { "facing": "internal" },
+  "f5712ba1e9c305b769cd054fa0056e98f2e806e5": { "facing": "internal" },
+  "51a70f5d157f5453a0f59e8f6dff6663341962d5": { "facing": "internal" },
+  "e2ed1da9d69751e5a2485e8211b4c8a37fd2d466": { "facing": "internal" },
+  "cb40c17312abd746b1b15b0f74284ccb9d303e5d": { "facing": "internal" },
+  "034f6bfc5f4a42d312ea45f9b60baa2b7e94492b": { "facing": "ui" },
+  "2f00d88926cec6e2b1181aa6c67a554037d081cb": { "facing": "ui" },
+  "51e748c6b5001899f22d814df6896de39d8ab6f6": {
+    "facing": "model",
+    "id": "slash-command-terminal-setup-terminal-native-shift-enter",
+    "name": "Slash Command: /terminal-setup — This Terminal Supports Shift+Enter Natively",
+    "desc": "Tells the model the named terminal (Ghostty/Kitty/Warp/WezTerm/Windows Terminal) needs no setup, so a follow-up install attempt would be pointless."
+  },
+  "e12063496aee4b39a50128afe01e87f8c3ba875a": {
+    "facing": "model",
+    "id": "slash-command-terminal-setup-zed-keymap-manual-block",
+    "name": "Slash Command: /terminal-setup — Zed Keymap Manual Block",
+    "desc": "/terminal-setup dim helper showing the Zed keymap.json Shift+Enter binding to add by hand when the installer cannot write it."
+  },
+  "2ac44f001d1e3059570ba679b2c5df0712aae058": {
+    "facing": "model",
+    "id": "slash-command-terminal-setup-zed-keymap-unreadable",
+    "name": "Slash Command: /terminal-setup — Zed Keymap Unreadable",
+    "desc": "Assembled /terminal-setup warning when Zed keymap.json cannot be read, including the manual binding block."
+  },
+  "1f80b601ece681df104d0a186efec9a9423c85c2": {
+    "facing": "model",
+    "id": "slash-command-terminal-setup-zed-keymap-unreadable-text",
+    "name": "Slash Command: /terminal-setup — Zed Keymap Unreadable Text",
+    "desc": "Warning sentence when /terminal-setup cannot read Zed keymap.json, so the file is left unchanged."
+  },
+  "a312fc9a88cae1753ea1c00d158008ae4cad4e7b": {
+    "facing": "model",
+    "id": "slash-command-terminal-setup-zed-keymap-not-a-list",
+    "name": "Slash Command: /terminal-setup — Zed Keymap Not A List",
+    "desc": "Assembled /terminal-setup warning when keymap.json parses but is not an array of bindings."
+  },
+  "1e92bcfbc781363057ab95badb833cd9c987715e": {
+    "facing": "model",
+    "id": "slash-command-terminal-setup-zed-keymap-not-a-list-text",
+    "name": "Slash Command: /terminal-setup — Zed Keymap Not A List Text",
+    "desc": "Warning sentence when Zed keymap.json is not a readable list of keybindings."
+  },
+  "6201090f1cd84d5a491c218ce2959160890137d6": {
+    "facing": "model",
+    "id": "slash-command-terminal-setup-zed-keymap-backup-failed",
+    "name": "Slash Command: /terminal-setup — Zed Keymap Backup Failed",
+    "desc": "Assembled /terminal-setup warning when the keymap backup cannot be written, so the file is not modified."
+  },
+  "00352ce15412c8619969e67463439d995af19d07": {
+    "facing": "model",
+    "id": "slash-command-terminal-setup-zed-keymap-backup-failed-text",
+    "name": "Slash Command: /terminal-setup — Zed Keymap Backup Failed Text",
+    "desc": "Warning sentence when /terminal-setup cannot back up Zed keymap.json and therefore refuses to edit it."
+  },
+  "7578b06f9d42d0f76d68f6ee7c5fffd9c7ebb7f9": {
+    "facing": "model",
+    "id": "slash-command-terminal-setup-zed-keymap-update-failed",
+    "name": "Slash Command: /terminal-setup — Zed Keymap Update Failed",
+    "desc": "Assembled /terminal-setup warning when the edited keymap.json cannot be re-parsed as containing the binding."
+  },
+  "83969c3f6ced36197ac4131ffe8e01314cbc394e": {
+    "facing": "model",
+    "id": "slash-command-terminal-setup-zed-keymap-update-failed-text",
+    "name": "Slash Command: /terminal-setup — Zed Keymap Update Failed Text",
+    "desc": "Warning sentence when /terminal-setup cannot apply the Shift+Enter edit to Zed keymap.json."
+  },
+  "851b12c256a840fe4268cd241bbc1d7237340c94": { "facing": "ui" },
+  "b3165fa52f08768304ccdb7ed476f99dc9568ee6": { "facing": "ui" },
+  "7ea0fa7795cf1dded3951aebae26cabdd430d274": { "facing": "ui" },
+  "cea14f54f36ec7951fd5475a6d4911c3948607f1": { "facing": "internal" },
+  "948d0066df9ccd008fd562bebbfcf06dd527b7aa": { "facing": "ui" },
+  "9fe5c0b913509affa7ebb31a2aa018d51b424b75": { "facing": "internal" },
+  "f2f0583519605fc83128ade3d722f977017a0b5f": {
+    "facing": "model",
+    "id": "tool-result-git-bundle-gitattributes-symlink-old-git",
+    "name": "Tool Result: Git Bundle Gitattributes Symlink On Old Git",
+    "desc": "Bundle/dir-sync refusal detail when a committed .gitattributes is a symlink that old git follows, telling the model to update git and retry."
+  },
+  "76fe261d6ba2a650d4adcf84b94597c74e33414a": {
+    "facing": "model",
+    "id": "system-reminder-dir-sync-uncommitted-too-large-largest-file",
+    "name": "System Reminder: Dir Sync Uncommitted Too Large Largest File",
+    "desc": "Inner branch of the dir-sync skip notice naming the per-message size cap and the largest file that blew it."
+  },
+  "c1491c9386eeab9a6fe5059edb9fd7fa7e33911e": { "facing": "ui" },
+  "3342c3336d064c3c0703d12f42507cbf27f952ea": { "facing": "ui" },
+  "58a4fc11488a78e30f8f4023763fbf10440f7461": { "facing": "internal" },
+  "26f57b07875b4131c205fa6451cf3a79968fc955": { "facing": "internal" },
+  "f566f38851eb2127a8d820885f9368d72282cdce": { "facing": "ui" },
+  "0ed75e28e924a51420eb88ac92a0023363d8faf0": { "facing": "ui" },
+  "86ed337e11d0b73ded93db9ebba3ac9c3d861876": { "facing": "ui" },
+  "64de5c9d81084f172c779ed3710b387f0f00ce75": { "facing": "ui" },
+  "17f5acadd629bd69fcfbd294b1bfd94cd49a688b": { "facing": "ui" },
+  "b3c9896b9aa2fb7159e8e2dc84b868a0d158b0b4": { "facing": "ui" },
+  "b87874d7861d2a3cf0a76a488f1f341faf464fac": { "facing": "ui" },
+  "7e5abac79fef69cc49fbf2c5ddf75581f2c4beb9": { "facing": "ui" },
+  "e7d56ac96e0f7658012f329264f58bf6b10624c9": {
+    "facing": "model",
+    "id": "system-reminder-orphaned-agent-resumable",
+    "name": "Orphaned Background Agent (Resumable) Notice",
+    "desc": "Notification injected into model context on resume about a stopped-or-interrupted background agent whose transcript is resumable."
+  },
+  "e800b8ffda4b234614eaaa378eea093ecc3edf79": {
+    "facing": "model",
+    "id": "system-reminder-orphaned-agents-aggregate-stopped-count",
+    "name": "Orphaned Agents Aggregate — Stopped",
+    "desc": "Aggregate system-reminder listing background agents from a previous session with no completion record (stopped variant), injected as a task-notification."
+  },
+  "f32b2e6f093a368e12568bc5f842c6132568822b": {
+    "facing": "model",
+    "id": "tool-result-remote-tool-unverified-refusal",
+    "name": "Remote Tool: Unverified Refusal",
+    "desc": "Rebuilt served-call refusal content when the device's answer is below the attestation floor, telling the model to check effects before re-running."
+  },
+  "62440300f89738ba3d964df6b115c17eff042a01": {
+    "facing": "model",
+    "id": "tool-result-remote-tool-unverified-unrecognized-refusal",
+    "name": "Remote Tool: Unverified Unrecognized Refusal",
+    "desc": "Same unverified-refusal tool result for a refusal code this session does not recognise."
+  },
+  "47886db44978f73748c529bf7f85a27c696acc87": { "facing": "internal" },
+  "fd0e6d6cb520676a7ed5051ad3411d0ed0f6d060": { "facing": "internal" },
+  "313509d6defead83dc6456da212d64a149a594bf": { "facing": "internal" },
+  "85e949aa0350800e810f07932918285f7e8a8bb4": { "facing": "internal" },
+  "f637e408efd00d31223aec5233f3ce5bd111365a": { "facing": "internal" },
+  "11f91fb3e2ff342632564a697984341f1e48f97b": { "facing": "ui" },
+  "f1f6417f637d1ea2f78f650c5ac2c87ffd35fe44": { "facing": "ui" },
+  "4c0251e3a81f1f93fddcb275a60a2a6e0660c056": { "facing": "internal" },
+  "7380a41b3e76d4d61cb597b95e6367266c561aec": { "facing": "internal" },
+  "9778895e9fe212b6e3f8dd160a032a6361ca17ff": { "facing": "ui" },
+  "0f36f3d7b46d9c6fb7d6bd5c954a777927a838cd": { "facing": "ui" },
+  "dd5d3c931364aa8b32813b4240a78c644ba4d621": { "facing": "internal" },
+  "10d94a95c453fc0b729f87c11b12e87c20c59efa": { "facing": "ui" },
+  "f1a9e878a26d2a945b62690c74f2daf30bd9c1e2": { "facing": "ui" },
+  "7c2a5357b244408c3c65e17c41320b26e454bd0f": { "facing": "ui" },
+  "c9a449acfe14616cb1e83e39a00c17e65d1301c3": { "facing": "ui" },
+  "e2f6e1a22bcf4112532648a348dd912da93fa222": { "facing": "ui" },
+  "8785ba1ac3f48ec838df5b4f7dbf99841acbca79": { "facing": "ui" },
+  "c5f0645df7c7963c9ce057dd654d5cf052d0d40a": { "facing": "ui" },
+  "879b2e49567018c707045694aefdfb0d19fb9355": { "facing": "ui" },
+  "f778ed9403347d2e9eb8d62335050ea35c53e05b": { "facing": "ui" },
+  "a0e3c2ee3911dd1123e74349df446d8894041aba": { "facing": "ui" },
+  "4d8ecfab35d5a80c1518cb8066cec4ff7aa0c7c0": { "facing": "ui" },
+  "b8116295414011d36f1115f9312f4fbb9b8dfa48": { "facing": "ui" },
+  "aa8d2955c59b5aa4e0b62c158dd8186f17083c1e": { "facing": "ui" },
+  "809560217e344a8d3179400e97e845dc4ec5b539": { "facing": "ui" },
+  "44b77e361de8c70e5ee5fdc258089d132321fafb": { "facing": "ui" },
+  "2a86f3c108893111bd55c8623b2fc4ddb660237c": { "facing": "ui" },
+  "90db4163ea1ef88261cd4642b72fe3e5d93816aa": { "facing": "ui" },
+  "16671954c6032b2b49742d4304b5b0b0061bacac": { "facing": "ui" },
+  "148ffdf1b920ce88309552712299ced9c5a31059": { "facing": "internal" },
+  "e9a69a80988b93fa70c3cf888aefc2974b239e2a": { "facing": "internal" },
+  "ce061f62e750720177f232691d637d29543954df": { "facing": "ui" },
+  "7222f32b8d8b23183cd74212edb4137e5263a411": { "facing": "ui" },
+  "b5ff9b63ed314ce4257211372f5ae317a4cdbbde": { "facing": "ui" },
+  "04a843e4cc0201cdb84f12ce27f2820f97348f79": { "facing": "ui" },
+  "88f72a28335c8012c8cfb967da089238e501118d": { "facing": "ui" },
+  "36e6a37a1354db33e019a7e1f80fa58260049a80": { "facing": "ui" },
+  "819c5ba1931e1cab18b400d6e4d873302cab1130": { "facing": "internal" },
+  "b15d544bc224afcbe99ff26131479a110d6fa4e9": {
+    "facing": "model",
+    "id": "tool-result-remote-host-event-stream-not-accepting-clause",
+    "name": "Tool Result: Remote Host Event Stream Not Accepting Clause",
+    "desc": "unreachable detail interpolated into the session-channel host_offline tool_result when the event stream is not accepting requests, so nothing was sent."
+  },
+  "7691de8ca020a98042e9de99f57f16d23503b428": {
+    "facing": "model",
+    "id": "tool-result-remote-host-liveness-stream-lost-clause",
+    "name": "Tool Result: Remote Host Liveness Stream-Lost Clause",
+    "desc": "unreachable detail interpolated into the session-channel host_offline tool_result when the liveness check failed because the event stream closed or the write was refused."
+  },
+  "58b6736a170c86fda4dd4b8555b0ddcddc06ed59": {
+    "facing": "model",
+    "id": "tool-result-remote-host-withdrew-during-probe-clause",
+    "name": "Tool Result: Remote Host Withdrew During Probe Clause",
+    "desc": "unreachable detail interpolated into the session-channel host_offline tool_result when the machine withdrew while a liveness check was in flight."
+  },
+  "984dbc278159d630720870446628662eef7fe5b4": {
+    "facing": "model",
+    "id": "tool-result-remote-host-liveness-unanswered-clause",
+    "name": "Tool Result: Remote Host Liveness Unanswered Clause",
+    "desc": "unreachable detail interpolated into the session-channel host_offline tool_result when the machine did not answer a liveness check."
+  },
+  "e7c4a4b0819944238d85cfed0ff79b4193e6f00e": {
+    "facing": "model",
+    "id": "tool-result-remote-host-event-stream-closed-clause",
+    "name": "Tool Result: Remote Host Event Stream Closed Clause",
+    "desc": "unreachable detail interpolated into the session-channel host_offline tool_result when the event stream is closed, so the call was not sent."
+  },
+  "bc3f1d6fb2f5c4776f3d8532f7cdd374708b3897": { "facing": "internal" },
+  "698415b0bb1f557d19b707e43f5e538035fbaaea": { "facing": "internal" },
+  "b39680ab7e623d658a9b0152af8a0d65c3c71ac4": {
+    "facing": "model",
+    "id": "tool-result-remote-host-service-refused-clause",
+    "name": "Tool Result: Remote Host Service Refused Clause",
+    "desc": "unreachable detail interpolated into the session-channel host_offline tool_result when the session service refused the request (optional HTTP status), so nothing was delivered."
+  },
+  "9ef7b14f6bc02ea07955503f9a01d175f3f1b496": { "facing": "internal" },
+  "6174511af184c80ccc1286a6f17b623793a03719": { "facing": "internal" },
+  "12deecb104738b0f51477281b33f1e3b6c95b3f6": { "facing": "internal" },
+  "877e4c8abeea84ea59915dee86004f435b79d580": { "facing": "internal" },
+  "53b2ac43d6fd605423d95b91177776f4082ef574": { "facing": "internal" },
+  "2c80a0ddbd15fef368a34b4e06f5c4e1756da0ce": { "facing": "internal" },
+  "62fe2d9d005b87e3084e9e1df19e2e8dffcc79d2": { "facing": "internal" },
+  "1c01e0f87a87776f16acdbe4e8b262ba12bd9dc7": { "facing": "internal" },
+  "c7c6338ed6406ab1d142f57ebc92ec8f9fc4c015": {
+    "facing": "model",
+    "id": "tool-result-remote-host-unknown-respell",
+    "name": "Tool Result: Remote Host Unknown — Respell",
+    "desc": "unknown_host tool_result when an attached machine matches ignoring case or an (offline) suffix, telling the model the exact lower-case name to use."
+  },
+  "751355b9b624a3cb2cda9d76866ff3fff65f4472": {
+    "facing": "model",
+    "id": "tool-result-remote-host-unknown-offline-clause",
+    "name": "Tool Result: Remote Host Unknown Offline Clause",
+    "desc": "Clause appended to the respell unknown_host tool_result when the matched name did not answer last time, so a retry may fail until it is reachable again."
+  },
+  "e593977ce9606e773dd2ae20a9eeb72de759a670": {
+    "facing": "model",
+    "id": "tool-result-remote-host-bridge-and-no-announce",
+    "name": "Tool Result: Remote Host Bridge Unreachable And No Announce",
+    "desc": "Clause in the not-reannounced host_offline tool_result naming a machine that could not be reached through the device bridge and whose Claude Code did not announce tools."
+  },
+  "76ed8e15ae81146704a38828cb57e7c1bc294a4b": {
+    "facing": "model",
+    "id": "tool-result-remote-host-offline-reasons",
+    "name": "Tool Result: Remote Host Offline Reasons",
+    "desc": "Shared reasons clause interpolated into bound-machine-not-connected and not-reannounced host_offline tool_results (asleep, offline, not running, serving off, or unverified)."
+  },
+  "8744dd6ee5fda61c59bc599092158a6503a34bf1": {
+    "facing": "model",
+    "id": "tool-result-remote-host-serves-nothing",
+    "name": "Tool Result: Remote Host Serves Nothing",
+    "desc": "host_offline tool_result when the attached machine last announced it serves no tools, so the named tool cannot run and nothing was sent."
+  },
+  "10b732a32e94fdb41abfac7fe35f6a1e551bcaf9": {
+    "facing": "model",
+    "id": "tool-result-remote-host-bound-machine-not-connected",
+    "name": "Tool Result: Remote Host Bound Machine Not Connected",
+    "desc": "host_offline tool_result when a machine is bound but its Claude Code has not connected, telling the model to ask the user to check that machine."
+  },
+  "6f4d708fa61b8fe61db2cbae8d8ee8bc5942cfb8": {
+    "facing": "model",
+    "id": "tool-result-remote-host-session-unreachable",
+    "name": "Tool Result: Remote Host Session Unreachable",
+    "desc": "unreachable tool_result on the session channel: the named machine could not be reached (detail in parentheses), so the call did not run and an oversized payload will not succeed on retry."
+  },
+  "9b2c6348a116a732cf40bf6438adb9cbc799d38b": {
+    "facing": "model",
+    "id": "tool-result-remote-host-unverified-refusal-unknown-run",
+    "name": "Tool Result: Remote Host Unverified Refusal Unknown Run",
+    "desc": "dropped tool_result when an unverified sender reported the call refused and the machine could not be asked what became of it, so the model must check before re-running."
+  },
+  "dfdee7eb471a707bc48f202887d703fec09095e7": {
+    "facing": "model",
+    "id": "tool-result-remote-host-approval-unverified-not-received",
+    "name": "Tool Result: Remote Host Approval Unverified Not Received",
+    "desc": "Prefix of both the withdrawn-approval and withdrawn-race tool_results when an unverified sender reported the approval refused and the host had not received it when asked."
+  },
+  "3e913881e0036b8019118e8e02ad4e43e20fce39": {
+    "facing": "model",
+    "id": "tool-result-remote-host-approval-withdrawn",
+    "name": "Tool Result: Remote Host Approval Withdrawn",
+    "desc": "approval_not_received tool_result when the permission request was withdrawn on the host and nothing ran; retry is safe unless the refusal was unverified, in which case the user must re-approve from the terminal or desktop prompt."
+  },
+  "27ddb60f4a5fac32a186698ac33a554bd24ff330": {
+    "facing": "model",
+    "id": "tool-result-remote-host-approval-withdrawn-unverified-surface",
+    "name": "Tool Result: Remote Host Approval Withdrawn Unverified Surface",
+    "desc": "Inner instruction on the withdrawn-approval tool_result when the refusal was unverified: resend and have the user approve from the terminal or desktop prompt, unedited."
+  },
+  "4bb9f3d9e38d0c860f9dbbdd5d5327910ad3ba71": {
+    "facing": "model",
+    "id": "tool-result-remote-host-approval-withdrawn-retry-safe",
+    "name": "Tool Result: Remote Host Approval Withdrawn Retry Safe",
+    "desc": "Inner sentence of the withdrawn-approval tool_result stating it is safe to retry the call if it is still wanted."
+  },
+  "e5607702be8a9f6f1a0fdd907076a5710654e845": {
+    "facing": "model",
+    "id": "tool-result-remote-host-host-withdrawn",
+    "name": "Tool Result: Remote Host Withdrew From Session",
+    "desc": "Prefix of the host_gone/host_withdrawn tool_result when Claude Code on the machine withdrew (exited or stopped serving)."
+  },
+  "937a356065c6f48623dc3a473f71d62616165c35": {
+    "facing": "model",
+    "id": "tool-result-remote-host-gone-unsent",
+    "name": "Tool Result: Remote Host Gone Before Call",
+    "desc": "host_gone tool_result when the machine withdrew or restarted before the call reached it, so nothing ran and no result will arrive."
+  },
+  "c653e0bb3db95e36e2fd4a44d966fd83c5392127": {
+    "facing": "model",
+    "id": "tool-result-remote-host-gone-mid-call",
+    "name": "Tool Result: Remote Host Gone Mid Call",
+    "desc": "host_gone tool_result when the machine withdrew or restarted while the call was with it; no result will arrive and the model must check effects before repeating."
+  },
+  "6d73798a45a98029c66511249fea35882da3e751": {
+    "facing": "model",
+    "id": "system-reminder-tool-hosts-session-liveness-missed",
+    "name": "Tool Hosts Notice: Session Host Missed Liveness",
+    "desc": "Per-host tool_hosts_notice bullet when a session-channel machine did not answer a liveness check; the next call naming it checks again."
+  },
+  "3b99a4dc6eb93134ea7597d68cdd64daf1590d29": {
+    "facing": "model",
+    "id": "system-reminder-tool-hosts-host-reannounced",
+    "name": "Tool Hosts Notice: Host Re-announced By New Client",
+    "desc": "tool_hosts_notice bullet when a machine is now served by a different attached client than before, with the re-announce UTC time."
+  },
+  "61b2214ecf42e9a22af49925a1b2eeed237288b8": { "facing": "internal" },
+  "b278f2f55f399e5c6ade73c204571cb6392302e3": {
+    "facing": "model",
+    "id": "tool-result-remote-host-offline-liveness-clause",
+    "name": "Tool Result: Remote Host Offline Liveness Clause",
+    "desc": "Detail interpolated into the session-unreachable tool_result when a session-channel host is offline because it did not answer a liveness check."
+  },
+  "1a520afcc9c91b8c8895197cda49faf5acf727b3": { "facing": "internal" },
+  "fca13802b493300374f5b35f37f63c9d2b96019c": { "facing": "internal" },
+  "970ccd90a429d481abf91ebcd00a0139e00736ea": { "facing": "internal" },
+  "3950efe3dd001b7ab157b38e8c8611f630b13260": { "facing": "internal" },
+  "68f3a37b8c4df5f034faf3ccbc41fe6be4ed63b1": { "facing": "internal" },
+  "a4521d9279b84e4232261bcabb0283e5f1f17037": { "facing": "internal" },
+  "030d15f0080cdf9a96e38fdac6ff88a9cca813d3": {
+    "facing": "model",
+    "id": "system-reminder-dir-sync-user-branch-followed",
+    "name": "System Reminder: Dir Sync User Branch Followed",
+    "desc": "Tells the cloud agent the checkout followed the user's branch (or detached HEAD), including any previous tip kept under a ref."
+  },
+  "0089d68d3d91a4702d0e30b2e78d5be87ff81847": {
+    "facing": "model",
+    "id": "system-reminder-dir-sync-from-stays-put",
+    "name": "System Reminder: Dir Sync From-Branch Stays Put",
+    "desc": "Inner phrase of the user-branch-followed reminder naming the previous branch that stays where it was."
+  },
+  "7a98481f2bf40dce47022e0ee168f4674ab90cd1": {
+    "facing": "model",
+    "id": "system-reminder-dir-sync-agent-commits-carried-along",
+    "name": "System Reminder: Dir Sync Agent Commits Carried Along",
+    "desc": "Inner clause of the user-branch-followed reminder when kept agent commits were carried along so HEAD or the followed branch now points at the agent's tip."
+  },
+  "a5b6e99c8566e086b86445b218fe89e771a5432a": {
+    "facing": "model",
+    "id": "system-reminder-dir-sync-checkout-back-on-user-branch",
+    "name": "System Reminder: Dir Sync Checkout Back On User Branch",
+    "desc": "Agent-moved arm of the user-branch-followed reminder: this checkout is back on the user's HEAD or branch, which it follows at every turn."
+  },
+  "a912d3c0e1a9070daaeef15a1492cd522d97c83a": {
+    "facing": "model",
+    "id": "system-reminder-dir-sync-had-switched-to-from",
+    "name": "System Reminder: Dir Sync Had Switched To From-Branch",
+    "desc": "Inner phrase of the agent-moved arm: the checkout had switched to the from-branch, which stays where it was."
+  },
+  "c9b61122ec463324ac3d256010969cdecdf06c8b": {
+    "facing": "model",
+    "id": "system-reminder-dir-sync-user-switched-checkout-followed",
+    "name": "System Reminder: Dir Sync User Switched Checkout Followed",
+    "desc": "User-moved arm of the user-branch-followed reminder: the user switched branch and this checkout followed."
+  },
+  "f58285252a29e6915e7c1a27a1fdf2582aa3afce": { "facing": "ui" },
+  "ffea83a8a6b2b81e1ffd7b303d431d09f9cdef9b": { "facing": "ui" },
+  "fc1a4f4df82ec332d5b642f82444802642b737e8": { "facing": "ui" },
+  "c6ed46b9b65b994fc5e301f9c1b7e132c6a4b1c2": { "facing": "ui" },
+  "bb48ef3efb6764402d3bbde5a0a0e204c47eac30": { "facing": "ui" },
+  "5b54155c731b3e6e4d6efb0276f85eea25b11f82": { "facing": "ui" },
+  "b37d9a55c1e4967f9d5f57ce77babc638681c119": { "facing": "internal" },
+  "570cf0d92f1db5ebff9edada2e4796966ac51466": {
+    "facing": "model",
+    "id": "tool-result-remote-tool-unverified-refusal-reason-unbound",
+    "name": "Tool Result: Remote-tool unverified refusal reason - session not bound to that machine",
+    "desc": "Reason clause for an unverified-sender remote-tool refusal: this session is not bound to the target machine."
+  },
+  "6e13efd90dfb8bc363c3c0038b794a7d77a9797e": {
+    "facing": "model",
+    "id": "tool-result-remote-tool-unverified-refusal-reason-unsupported-protocol",
+    "name": "Tool Result: Remote-tool unverified refusal reason - protocol version not accepted",
+    "desc": "Reason clause for an unverified-sender remote-tool refusal: the call's protocol version was rejected."
+  },
+  "3070b67c47d61a65e4dc094eb122be6154f71acc": {
+    "facing": "model",
+    "id": "tool-result-remote-tool-unverified-refusal-reason-invalid-request",
+    "name": "Tool Result: Remote-tool unverified refusal reason - call not acceptable as sent",
+    "desc": "Reason clause for an unverified-sender remote-tool refusal: the request itself was malformed or unacceptable."
+  },
+  "873e81f415e208a88510c703b2f88b646d88674c": {
+    "facing": "model",
+    "id": "tool-result-remote-tool-unverified-refusal-reason-not-served",
+    "name": "Tool Result: Remote-tool unverified refusal reason - tool not served to this session",
+    "desc": "Reason clause for an unverified-sender remote-tool refusal: the target machine does not expose this tool to the session."
+  },
+  "497c847b27f4d019d7e0105b16954bd383c8f4ea": {
+    "facing": "model",
+    "id": "tool-result-remote-tool-unverified-refusal-reason-no-session",
+    "name": "Tool Result: Remote-tool unverified refusal reason - session could not be identified",
+    "desc": "Reason clause for an unverified-sender remote-tool refusal: the target could not attribute the call to a session."
+  },
+  "8f60cd831602a59f533b23b4aabe685ee3dbc6a5": {
+    "facing": "model",
+    "id": "tool-result-remote-tool-unverified-refusal-reason-session-mismatch",
+    "name": "Tool Result: Remote-tool unverified refusal reason - machine bound to a different session",
+    "desc": "Reason clause for an unverified-sender remote-tool refusal: the target is connected for another session."
+  },
+  "a20abe04e6fc044434b0b8fabea6961df63729fc": {
+    "facing": "model",
+    "id": "tool-result-remote-tool-unverified-refusal-reason-too-many-in-flight",
+    "name": "Tool Result: Remote-tool unverified refusal reason - concurrency limit reached",
+    "desc": "Reason clause for an unverified-sender remote-tool refusal: the target is already at its in-flight call limit."
+  },
+  "e935f62afe8f557d044d39aa05f39f445a506e50": {
+    "facing": "model",
+    "id": "tool-result-remote-tool-unverified-refusal-reason-refused-field",
+    "name": "Tool Result: Remote-tool unverified refusal reason - input field not accepted",
+    "desc": "Reason clause for an unverified-sender remote-tool refusal: one input field is rejected by the target machine."
+  },
+  "acc398e150cba3d79c1ab98fafbfcff2e15ea078": {
+    "facing": "model",
+    "id": "tool-result-remote-tool-unverified-refusal-reason-sandbox-unavailable",
+    "name": "Tool Result: Remote-tool unverified refusal reason - sandbox off or not confining",
+    "desc": "Reason clause for an unverified-sender remote-tool refusal: the target serves no tools while its sandbox is off or partial."
+  },
+  "0a0f746fba4080c7f7b71008c1cc23da187d5d4e": {
+    "facing": "model",
+    "id": "tool-result-remote-tool-unverified-refusal-reason-unknown-call",
+    "name": "Tool Result: Remote-tool unverified refusal reason - no record of the call",
+    "desc": "Reason clause for an unverified-sender remote-tool refusal: the target has no record of the referenced call."
   }
 }
