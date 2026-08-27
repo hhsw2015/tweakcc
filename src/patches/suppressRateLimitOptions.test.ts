@@ -108,3 +108,26 @@ describe('writeSuppressRateLimitOptions', () => {
     errSpy.mockRestore();
   });
 });
+
+// CC 2.1.247 shipped `onOpenRateLimitOptions:m?.openRateLimitOptions` — an
+// optional-chained member, not a bare identifier. Reading only `[$\w]+` left
+// `?.openRateLimitOptions` dangling after the arrow, which Bun refuses to parse.
+describe('writeSuppressRateLimitOptions — member-expression prop value', () => {
+  it('replaces the whole optional-chained value, not just its leading identifier', () => {
+    const input =
+      'var a=1;wo=r(jg,{message:b,canAnimate:ze,onOpenRateLimitOptions:m?.openRateLimitOptions,onRateLimitAutoQueueContinue:m?.armRateLimit});';
+    const out = writeSuppressRateLimitOptions(input);
+    expect(out).not.toBeNull();
+    expect(out).toContain('onOpenRateLimitOptions:()=>{}');
+    expect(out).not.toContain('()=>{}?.openRateLimitOptions');
+    expect(out).toContain('onRateLimitAutoQueueContinue:m?.armRateLimit');
+  });
+
+  it('still replaces a bare identifier value', () => {
+    const input =
+      'var a=1;o(Ol,{param:Je,onOpenRateLimitOptions:Xp,verbose:et});';
+    const out = writeSuppressRateLimitOptions(input);
+    expect(out).toContain('onOpenRateLimitOptions:()=>{}');
+    expect(out).toContain('verbose:et');
+  });
+});

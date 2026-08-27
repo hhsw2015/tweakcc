@@ -2,6 +2,57 @@
 
 import { showDiff } from './index';
 
+// CC 2.1.247 changed one call site's prop value from a bare identifier to an
+// optional-chained member (`onOpenRateLimitOptions:m?.openRateLimitOptions`).
+// Reading only `[$\w]+` rewrote the `m` and left the `?.openRateLimitOptions`
+// dangling, emitting `()=>{}?.openRateLimitOptions` — a syntax error that Bun
+// refuses, which would brick Claude Code on --apply. The patch is config-gated
+// so a real apply never ran it; only `pnpm test:pristine` saw it. Read the WHOLE
+// value expression instead: scan to the first `,` or `}` at nesting depth 0,
+// skipping strings, templates and nested brackets.
+const readValueEnd = (file: string, valueStart: number): number | null => {
+  let depth = 0;
+  let i = valueStart;
+  while (i < file.length) {
+    const ch = file[i];
+    if (ch === '"' || ch === "'" || ch === '`') {
+      const quote = ch;
+      i += 1;
+      while (i < file.length) {
+        if (file[i] === '\\') {
+          i += 2;
+          continue;
+        }
+        if (file[i] === quote) break;
+        i += 1;
+      }
+      if (i >= file.length) return null;
+      i += 1;
+      continue;
+    }
+    if (ch === '(' || ch === '[' || ch === '{') {
+      depth += 1;
+      i += 1;
+      continue;
+    }
+    if (ch === ')' || ch === ']') {
+      if (depth === 0) return null;
+      depth -= 1;
+      i += 1;
+      continue;
+    }
+    if (ch === '}') {
+      if (depth === 0) return i;
+      depth -= 1;
+      i += 1;
+      continue;
+    }
+    if (ch === ',' && depth === 0) return i;
+    i += 1;
+  }
+  return null;
+};
+
 const isHelperPropCall = (file: string, propIndex: number): boolean => {
   const lastOpen = file.lastIndexOf('{', propIndex);
   if (lastOpen === -1) return false;
@@ -48,13 +99,13 @@ export const writeSuppressRateLimitOptions = (
         from = valueStart;
         continue;
       }
-      const ident = /^[$\w]+/.exec(newFile.slice(valueStart));
-      if (!ident) {
+      const valueEnd = readValueEnd(newFile, valueStart);
+      if (valueEnd === null || valueEnd <= valueStart) {
         from = valueStart;
         continue;
       }
-      sites.push({ start: valueStart, end: valueStart + ident[0].length });
-      from = valueStart + ident[0].length;
+      sites.push({ start: valueStart, end: valueEnd });
+      from = valueEnd;
     }
     for (const site of sites.reverse()) {
       const newCode = '()=>{}';

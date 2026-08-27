@@ -562,6 +562,21 @@ describe('findToolChangeComponentScope', () => {
     expect(findToolChangeComponentScope(src)).toBe(src.indexOf('Wai('));
   });
 
+  it('accepts the CC >=2.1.247 useCallback-arrow shape and returns a statement boundary', () => {
+    // The handler became an arrow assigned inside a comma-declarator chain, so
+    // its own start is NOT a statement boundary — splicing there would emit
+    // `...]),const currentToolset=...;HM=B(...)`. The index must land after the
+    // `;` that terminates the whole chain.
+    const src =
+      'let d=1,q=B((ee)=>{r(ee)},[d,q]),HM=B((E)=>{U("tengu_ext_at_mentioned",{}),Sa(eEe(E,d))},[d,Sa]);ZAe(h,HM);';
+    const at = findToolChangeComponentScope(src);
+    expect(at).toBe(src.indexOf('ZAe(h,HM);'));
+    // Splicing a declaration there must keep the file parseable.
+    const spliced =
+      src.slice(0, at!) + 'const currentToolset=z();' + src.slice(at!);
+    expect(() => new Function(spliced)).not.toThrow();
+  });
+
   it('returns null when the at-mention handler is absent', () => {
     const err = silenceErr();
     expect(findToolChangeComponentScope('var a=1;')).toBeNull();

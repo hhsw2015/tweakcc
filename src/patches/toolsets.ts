@@ -1973,6 +1973,26 @@ export const writeSlashCommandDefinition = (
 export const findToolChangeComponentScope = (
   fileContents: string
 ): number | null => {
+  // Method 1 (CC >= 2.1.247): the handler became an arrow passed to useCallback
+  // and assigned inside a comma-declarator chain, so there is no longer a
+  // statement boundary at the match:
+  //   ...,[d,G,Q,Y,j,Ko]),HM=B((E)=>{U("tengu_ext_at_mentioned",{}),Sa(...)},[d,Sa]);
+  // Splicing a `const` at match.index would land mid-chain and emit
+  // `...]),const currentToolset=...;HM=B(...)`. Return the index just AFTER the
+  // statement's terminating `;` instead — the declaration is only read later, by
+  // callbacks, so declaring it after the chain is equivalent and always valid.
+  const arrowPattern =
+    /[$\w]+=[$\w]+\(\([$\w]+\)=>\{[$\w]+\("tengu_ext_at_mentioned",\{\}\)[;,]/;
+  const arrowMatch = fileContents.match(arrowPattern);
+  if (arrowMatch && arrowMatch.index !== undefined) {
+    const end = findStatementEnd(fileContents, arrowMatch.index);
+    if (end !== null) return end;
+  }
+
+  // Method 2 (CC <= 2.1.246): `X(Y,function(Z){W("tengu_ext_at_mentioned",{});`
+  // was its own expression statement, so its start is already a safe boundary.
+  // CC >= 2.1.219 folded the next statement into a sequence expression, hence
+  // the `[;,]` terminator.
   const pattern =
     /[\w$]+\([\w$]+,function\([\w$]+\)\{[\w$]+\("tengu_ext_at_mentioned",\{\}\)[;,]/;
   const match = fileContents.match(pattern);
@@ -1985,6 +2005,44 @@ export const findToolChangeComponentScope = (
   }
 
   return match.index;
+};
+
+/**
+ * Index just past the `;` that terminates the statement starting at `from`.
+ * Skips strings, templates and nested brackets so a `;` inside any of them
+ * cannot be mistaken for the terminator. Returns null if none is found.
+ */
+export const findStatementEnd = (
+  fileContents: string,
+  from: number
+): number | null => {
+  let depth = 0;
+  let i = from;
+  while (i < fileContents.length) {
+    const ch = fileContents[i];
+    if (ch === '"' || ch === "'" || ch === '`') {
+      const quote = ch;
+      i += 1;
+      while (i < fileContents.length) {
+        if (fileContents[i] === '\\') {
+          i += 2;
+          continue;
+        }
+        if (fileContents[i] === quote) break;
+        i += 1;
+      }
+      if (i >= fileContents.length) return null;
+      i += 1;
+      continue;
+    }
+    if (ch === '(' || ch === '[' || ch === '{') depth += 1;
+    else if (ch === ')' || ch === ']' || ch === '}') {
+      if (depth === 0) return null;
+      depth -= 1;
+    } else if (ch === ';' && depth === 0) return i + 1;
+    i += 1;
+  }
+  return null;
 };
 
 /**
