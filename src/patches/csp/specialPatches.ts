@@ -140,19 +140,22 @@ export const writeHmNormalizeDot = (file: string): string => {
 // 2.1.209+ 改了 return shape: 从 `return "错误消息"` 变成
 // `return {code:"...",reason:"错误消息"}`. 两种 shape 都覆盖.
 export const writeUnlockSdkUrlHost = (file: string): string | null => {
+  // 2.1.251+ swapped the param/url-var names ((e){let t → (t){let e}), so the
+  // param (\2) and URL var (\3) are captured and back-referenced rather than
+  // hard-coded as e/t.
   const patternLegacy =
-    /function ([\w$]{1,8})\(e\)\{let t;try\{t=new URL\(e\)\}catch\{return`could not parse \$\{[\w$]{1,8}\(e\)\} as a URL`\}if\([\w$]{1,8}\.has\(t\.hostname\)\)\{if\(t\.protocol!=="wss:"&&t\.protocol!=="https:"\)return`scheme \$\{[\w$]{1,8}\(t\.protocol\)\} is not permitted for host \$\{[\w$]{1,8}\(t\.hostname\)\}; only wss:\/\/ and https:\/\/ are accepted`;return null\}return`host \$\{[\w$]{1,8}\(t\.hostname\)\} is not an approved Anthropic endpoint`\}/g;
+    /function ([\w$]{1,8})\(([\w$]{1,8})\)\{let ([\w$]{1,8});try\{\3=new URL\(\2\)\}catch\{return`could not parse \$\{[\w$]{1,8}\(\2\)\} as a URL`\}if\([\w$]{1,8}\.has\(\3\.hostname\)\)\{if\(\3\.protocol!=="wss:"&&\3\.protocol!=="https:"\)return`scheme \$\{[\w$]{1,8}\(\3\.protocol\)\} is not permitted for host \$\{[\w$]{1,8}\(\3\.hostname\)\}; only wss:\/\/ and https:\/\/ are accepted`;return null\}return`host \$\{[\w$]{1,8}\(\3\.hostname\)\} is not an approved Anthropic endpoint`\}/g;
   const legacy = applyRegexReplace(file, {
     pattern: patternLegacy,
-    build: m => ({ body: `function ${m[1]}(e){return null`, tail: '}' }),
+    build: m => ({ body: `function ${m[1]}(){return null`, tail: '}' }),
   });
   if (legacy !== null) return legacy;
 
   const patternObj =
-    /function ([\w$]{1,8})\(e\)\{let t;try\{t=new URL\(e\)\}catch\{return\{code:"unparseable",reason:`could not parse \$\{[\w$]{1,8}\(e\)\} as a URL`\}\}if\([\w$]{1,8}\.has\(t\.hostname\)\)\{if\(t\.protocol!=="wss:"&&t\.protocol!=="https:"\)return\{code:"bad_scheme",reason:`scheme \$\{[\w$]{1,8}\(t\.protocol\)\} is not permitted for host \$\{[\w$]{1,8}\(t\.hostname\)\}; only wss:\/\/ and https:\/\/ are accepted`\};return null\}return\{code:"not_allowlisted",reason:`host \$\{[\w$]{1,8}\(t\.hostname\)\} is not an approved Anthropic endpoint`\}\}/g;
+    /function ([\w$]{1,8})\(([\w$]{1,8})\)\{let ([\w$]{1,8});try\{\3=new URL\(\2\)\}catch\{return\{code:"unparseable",reason:`could not parse \$\{[\w$]{1,8}\(\2\)\} as a URL`\}\}if\([\w$]{1,8}\.has\(\3\.hostname\)\)\{if\(\3\.protocol!=="wss:"&&\3\.protocol!=="https:"\)return\{code:"bad_scheme",reason:`scheme \$\{[\w$]{1,8}\(\3\.protocol\)\} is not permitted for host \$\{[\w$]{1,8}\(\3\.hostname\)\}; only wss:\/\/ and https:\/\/ are accepted`\};return null\}return\{code:"not_allowlisted",reason:`host \$\{[\w$]{1,8}\(\3\.hostname\)\} is not an approved Anthropic endpoint`\}\}/g;
   return applyRegexReplace(file, {
     pattern: patternObj,
-    build: m => ({ body: `function ${m[1]}(e){return null`, tail: '}' }),
+    build: m => ({ body: `function ${m[1]}(){return null`, tail: '}' }),
   });
 };
 
@@ -181,6 +184,20 @@ export const writeUnlockDisableRc = (file: string): string | null => {
 // 所有 `[\w$]{1,4}\(process\.env\.XXX\)` 位置都参数化. build 里 truthy 检查用
 // 内嵌 `!!` 而不是依赖某个 minified helper 名, 保证跨版本稳定.
 export const writeForce1hCache = (file: string): string | null => {
+  // 2.1.251+: the boolean cache-eligibility fn was rewritten to return a
+  // `{ttl:"5m"|"1h",reason}` object, and the FORCE/ENABLE_PROMPT_CACHING env
+  // checks were removed from it. The decision tail
+  //   if(!o||u)return{ttl:"5m",reason:"default"};let _=X();if(_===null)_=I("tengu_prompt_cache_1h_config",{allowlist:[...Y]}).allowlist??[],Z(_);return W(e,_)?{ttl:"1h",reason:"subscriber"}:{ttl:"5m",reason:"default"}
+  // is forced to always pick 1h. The `aIt` explicit-override early-return above
+  // this point is preserved (untouched).
+  const patternTtl =
+    /if\(![\w$]{1,4}\|\|[\w$]{1,4}\)return\{ttl:"5m",reason:"default"\};let ([\w$]{1,4})=[\w$]{1,8}\(\);if\(\1===null\)\1=[\w$]{1,4}\("tengu_prompt_cache_1h_config",\{allowlist:\[[^\]]{0,200}\]\}\)\.allowlist\?\?\[\],[\w$]{1,8}\(\1\);return [\w$]{1,4}\([\w$]{1,4},\1\)\?\{ttl:"1h",reason:"subscriber"\}:\{ttl:"5m",reason:"default"\}/g;
+  const ttlResult = applyRegexReplace(file, {
+    pattern: patternTtl,
+    build: () => ({ body: `return{ttl:"1h",reason:"subscriber"}`, tail: '' }),
+  });
+  if (ttlResult !== null) return ttlResult;
+
   const pattern =
     /function ([\w$]{1,8})\(e\)\{if\([\w$]{1,4}\(process\.env\.FORCE_PROMPT_CACHING_5M\)\)return!1;if\([\w$]{1,4}\(process\.env\.ENABLE_PROMPT_CACHING_1H\)\|\|[\w$]{1,4}\(\)==="bedrock"&&[\w$]{1,4}\(process\.env\.ENABLE_PROMPT_CACHING_1H_BEDROCK\)\)return!0;if\(![\w$]{1,8}\(\)\|\|[\w$]{1,8}(?:\(\))?\.isUsingOverage\)return!1;let t=[\w$]{1,8}\(\);if\(t===null\)t=[\w$]{1,4}\("tengu_prompt_cache_1h_config",\{allowlist:\[[^\]]{1,300}\]\}\)\.allowlist\?\?\[\],[\w$]{1,8}\(t\);return e!==void 0&&t\.some\(\([\w$]{1,3}\)=>[\w$]{1,3}\.endsWith\("\*"\)\?e\.startsWith\([\w$]{1,3}\.slice\(0,-1\)\):e===[\w$]{1,3}\)\}/g;
   return applyRegexReplace(file, {
@@ -265,10 +282,13 @@ export const writeDisableTelemetry = (file: string): string | null => {
   // `X(n, {...})`. 两种 shape 都吃.
   // 2.1.238+: state 来源从裸 ident `let r=Z;` 换成方法链 `let r=j1o().state;`,
   // 故 RHS 加可选 `(?:\(\))?(?:\.[\w$]{1,8})?` 兜住 Z / Z() / Z().state.
+  // 2.1.251+: param names swapped (e,t)→(t,e) with matching eventName/metadata
+  // order, so the two params are captured (\2,\3) and back-referenced positionally
+  // instead of hard-coded as e/t.
   const gPattern =
-    /function ([\w$]{1,4})\(e,t\)\{let ([\w$]{1,4})=[\w$]{1,4}(?:\(\))?(?:\.[\w$]{1,8})?;if\(\2\.sink===null\)\{(?:\2\.eventQueue\.push\(\{eventName:e,metadata:t,async:!1\}\)|[\w$]{1,4}\(\2,\{eventName:e,metadata:t,async:!1\}\));return\}\2\.sink\.logEvent\(e,t\)\}/g;
+    /function ([\w$]{1,4})\(([\w$]{1,4}),([\w$]{1,4})\)\{let ([\w$]{1,4})=[\w$]{1,4}(?:\(\))?(?:\.[\w$]{1,8})?;if\(\4\.sink===null\)\{(?:\4\.eventQueue\.push\(\{eventName:\2,metadata:\3,async:!1\}\)|[\w$]{1,4}\(\4,\{eventName:\2,metadata:\3,async:!1\}\));return\}\4\.sink\.logEvent\(\2,\3\)\}/g;
   const iPattern =
-    /async function ([\w$]{1,4})\(e,t\)\{let ([\w$]{1,4})=[\w$]{1,4}(?:\(\))?(?:\.[\w$]{1,8})?;if\(\2\.sink===null\)\{(?:\2\.eventQueue\.push\(\{eventName:e,metadata:t,async:!0\}\)|[\w$]{1,4}\(\2,\{eventName:e,metadata:t,async:!0\}\));return\}await \2\.sink\.logEventAsync\(e,t\)\}/g;
+    /async function ([\w$]{1,4})\(([\w$]{1,4}),([\w$]{1,4})\)\{let ([\w$]{1,4})=[\w$]{1,4}(?:\(\))?(?:\.[\w$]{1,8})?;if\(\4\.sink===null\)\{(?:\4\.eventQueue\.push\(\{eventName:\2,metadata:\3,async:!0\}\)|[\w$]{1,4}\(\4,\{eventName:\2,metadata:\3,async:!0\}\));return\}await \4\.sink\.logEventAsync\(\2,\3\)\}/g;
   const ptoPattern =
     /function ([\w$]{1,4})\(e\)\{if\(![\w$]{1,4}\(\)\)return;if\(!([\w$]{1,4})\|\|[\w$]{1,4}\("firstParty"\)\)return;let ([\w$]{1,4})=[\w$]{1,4}\(\),\{accountUuid:([\w$]{1,4}),organizationUuid:([\w$]{1,4})\}=[\w$]{1,4}\(!0\),([\w$]{1,4})=\{event_type:"GrowthbookExperimentEvent",event_id:[\w$]{1,4}\.randomUUID\(\),experiment_id:e\.experimentId,variation_id:e\.variationId,\.\.\.\3&&\{device_id:\3\},\.\.\.\4&&\{account_uuid:\4\},\.\.\.\5&&\{organization_uuid:\5\},\.\.\.e\.userAttributes&&\{session_id:e\.userAttributes\.sessionId,user_attributes:[\w$]{1,4}\(\{appVersion:e\.userAttributes\.appVersion\}\)\},\.\.\.e\.experimentMetadata&&\{experiment_metadata:[\w$]{1,4}\(e\.experimentMetadata\)\},environment:[\w$]{1,4}\(\)\},([\w$]{1,4})=new Date;\2\.emit\(\{timestamp:\7,observedTimestamp:\7,body:"growthbook_experiment",attributes:\6\}\)\}/g;
 

@@ -65,35 +65,133 @@ const findAndReplace = (
   return newContent;
 };
 
-const findCaseBody = (
-  content: string,
-  caseName: string,
-  anchorEnglish: string
-): { headerIdx: number; bodyStart: number; bodyEnd: number } | null => {
-  const caseHeader = `case"${caseName}":{`;
-  const occurrences: number[] = [];
-  let scan = 0;
-  while (true) {
-    const idx = content.indexOf(caseHeader, scan);
-    if (idx < 0) break;
-    occurrences.push(idx);
-    scan = idx + caseHeader.length;
-  }
-  if (occurrences.length === 0) return null;
-  const headerIdx = occurrences.find(idx =>
-    content.slice(idx, idx + 2048).includes(anchorEnglish)
+// A reminder-registry entry matched by its KEY and its code SHAPE, never by the
+// English prose inside it. Anthropic rewords these bodies freely — CC 2.1.234
+// alone rewrote `date_change` and `edited_text_file` and routed every filename
+// through a new escaper (`Oie(e.filename)`), which broke six prose-anchored
+// regexes at once even though the surrounding code was unchanged. The key
+// (`selected_lines_in_ide:` etc.) is unique in the bundle, so it identifies the
+// site on its own; the prose only ever existed in these patterns to locate the
+// placeholder expressions, and `slotExpr` recovers those from the matched
+// template instead.
+const simpleEntryPattern = (key: string): RegExp =>
+  new RegExp(
+    `${key}:\\(([$\\w]+)\\)=>([$\\w]+)\\(\\[([$\\w]+)\\(\\{content:\`((?:[^\`\\\\]|\\\\.)*)\`,isMeta:!0\\}\\)\\]\\)`
   );
-  if (headerIdx === undefined) return null;
-  const bodyStart = headerIdx + caseHeader.length;
 
-  // Walk to matching `}` accounting for nested {} balance and JS string contexts.
-  let depth = 1;
-  let i = bodyStart;
+// The full expression a `${…}` slot holds for `<param>.<prop>`, including any
+// wrapper calls around it. 2.1.233 emitted `${e.filename}`; 2.1.234 emits
+// `${Oie(e.filename)}`. Returning the whole inner expression keeps the override
+// bound to whatever CC actually interpolates, so a future wrapper needs no
+// further change here.
+const slotExpr = (
+  template: string,
+  param: string,
+  prop: string
+): string | null => {
+  const m = template.match(
+    new RegExp(`\\$\\{((?:[$\\w]+\\()*${param}\\.${prop}\\)*)\\}`)
+  );
+  return m ? m[1] : null;
+};
+
+// A placeholder the override body may contain, and how to recover the
+// expression it must be rewritten to from the pristine template.
+interface ReminderSlot {
+  // The `${…}` text as it appears in a .md body after substitutePlaceholders.
+  placeholder: string;
+  // Recovers the replacement expression from the pristine template.
+  resolve: (template: string, param: string) => string | null;
+}
+
+const propSlot = (placeholder: string, prop: string): ReminderSlot => ({
+  placeholder,
+  resolve: (template, param) => slotExpr(template, param, prop),
+});
+
+// A tool name interpolated from module scope rather than from the handler's
+// parameter. Anthropic writes this two ways and moves between them without
+// touching anything else: `${oO.name}` reads it off the tool object, `${Cs}`
+// is a bare binding holding the name directly. CC 2.1.239 switched
+// compact_file_reference from the first form to the second, which resolved to
+// null and returned the whole patch null — a break that `--apply` cannot show,
+// because the reminder only runs when its `.md` exists locally.
+// Accept either, newest shape first, and identify the bare form the way the
+// pdf_reference entry already does: it is the only `${…}` that does not
+// reference the handler parameter.
+const toolNameSlot = (placeholder: string): ReminderSlot => ({
+  placeholder,
+  resolve: (template, param) =>
+    template.match(/\$\{([$\w]+\.name)\}/)?.[1] ??
+    template
+      .match(/\$\{([$\w]+)\}/g)
+      ?.map(x => x.slice(2, -1))
+      .find(x => x !== param) ??
+    null,
+});
+
+const applySimpleEntry = (
+  content: string,
+  key: string,
+  slots: ReminderSlot[],
+  body: string,
+  isSuppressed: boolean
+): string | null => {
+  const patchName = key.replace(/_/g, '-');
+  const match = content.match(simpleEntryPattern(key));
+  if (!match || match.index === undefined) {
+    if (new RegExp(`${key}:\\([$\\w]+\\)=>\\[\\]`).test(content))
+      return content;
+    console.error(`patch: reminder ${patchName}: failed to find anchor`);
+    return null;
+  }
+  const [, hParam, wrapFn, metaFn, template] = match;
+  let replacement: string;
+  if (isSuppressed) {
+    replacement = `${key}:(${hParam})=>[]`;
+  } else {
+    let built = body;
+    for (const slot of slots) {
+      if (!built.includes(slot.placeholder)) continue;
+      const expr = slot.resolve(template, hParam);
+      if (expr === null) {
+        // Emitting the body anyway would splice a live `${H.filename}` into
+        // cli.js — a ReferenceError at reminder time that no apply-side gate
+        // sees. Fail the patch instead.
+        console.error(
+          `patch: reminder ${patchName}: no pristine expression for ${slot.placeholder}`
+        );
+        return null;
+      }
+      built = built.split(slot.placeholder).join(`\${${expr}}`);
+    }
+    replacement = `${key}:(${hParam})=>${wrapFn}([${metaFn}({content:\`${built}\`,isMeta:!0})])`;
+  }
+  const newContent =
+    content.slice(0, match.index) +
+    replacement +
+    content.slice(match.index + match[0].length);
+  showDiff(
+    content,
+    newContent,
+    replacement,
+    match.index,
+    match.index + replacement.length
+  );
+  return newContent;
+};
+
+// Index of the `}` matching the `{` at `openIdx`, or -1. Brace-balanced and
+// aware of the three JS string contexts plus `${…}` inside a template literal,
+// so a `{` in `T(\`… ${gFn} …\`,{level:"error"})` cannot end the walk early.
+const matchingBrace = (content: string, openIdx: number): number => {
+  if (content[openIdx] !== '{') return -1;
+  let depth = 0;
   let inTpl = false;
   let inSingle = false;
   let inDouble = false;
   let inTplExpr = 0;
-  while (i < content.length && depth > 0) {
+  for (let i = openIdx; i < content.length; i++) {
     const c = content[i];
     const prev = content[i - 1];
     if (inSingle) {
@@ -121,13 +219,35 @@ const findCaseBody = (
       depth++;
     } else if (c === '}') {
       depth--;
-      if (depth === 0) {
-        return { headerIdx, bodyStart, bodyEnd: i };
-      }
+      if (depth === 0) return i;
     }
-    i++;
   }
-  return null;
+  return -1;
+};
+
+const findCaseBody = (
+  content: string,
+  caseName: string,
+  anchorEnglish: string
+): { headerIdx: number; bodyStart: number; bodyEnd: number } | null => {
+  const caseHeader = `case"${caseName}":{`;
+  const occurrences: number[] = [];
+  let scan = 0;
+  while (true) {
+    const idx = content.indexOf(caseHeader, scan);
+    if (idx < 0) break;
+    occurrences.push(idx);
+    scan = idx + caseHeader.length;
+  }
+  if (occurrences.length === 0) return null;
+  const headerIdx = occurrences.find(idx =>
+    content.slice(idx, idx + 2048).includes(anchorEnglish)
+  );
+  if (headerIdx === undefined) return null;
+  const bodyStart = headerIdx + caseHeader.length;
+  const bodyEnd = matchingBrace(content, bodyStart - 1);
+  if (bodyEnd === -1) return null;
+  return { headerIdx, bodyStart, bodyEnd };
 };
 
 // Pull the array-wrapper / message-constructor minified identifiers from an
@@ -377,48 +497,94 @@ const OUTPUT_STYLE_INJECTION: ReminderInjection = {
       '${H.turnReminder??"Remember to follow the specific guidelines for this style."}',
   },
   defaultBody: `{{style_name}} output style is active. {{turn_reminder}}`,
+  // Anchored on the registry key plus the arrow's code shape, never on the
+  // guards that precede the return. CC 2.1.238 replaced the guard wholesale —
+  // `let t=Oke[e.style];if(!t)return[];` became a type/emptiness check, a
+  // 256-char cap and a control-char sanitizer (`pze(e.style)`) — which broke a
+  // regex that spelled the old guard out, even though the site, the key, the
+  // wrapper and the message builder were all unchanged. The guards are none of
+  // this patch's business: it owns the CONTENT template only. So find the arrow
+  // by key, keep whatever precedes the return verbatim, and recover both slot
+  // expressions from the pristine template the same way `slotExpr` does — that
+  // way the next guard rewrite (or a new wrapper around the style name) needs
+  // no change here at all.
   apply(content, body, isSuppressed) {
-    // Unified across CC versions. <=2.1.237 gated on a map lookup
-    // (`let s=Map[e.style];if(!s)return[];`) with the style name as `${s.name}`;
-    // 2.1.238 replaced that with type/length guards and `${pze(e.style)}`. Both
-    // reduce to: `output_style:(e)=>{<guards>return W([I({content:`<styleExpr>
-    // output style is active. ${e.turnReminder??"…"}`,isMeta:!0})])}`. Capture the
-    // guard blob and the style-name expression so the rebuild preserves whatever
-    // shape CC ships.
-    const pattern =
-      /output_style:\(([$\w]+)\)=>\{([\s\S]*?)return ([$\w]+)\(\[([$\w]+)\(\{content:`([^`]*?) output style is active\. \$\{\1\.turnReminder\?\?"[^"]*"\}`,isMeta:!0\}\)\]\)\}/;
-    const match = content.match(pattern);
-    if (!match || match.index === undefined) {
-      if (/output_style:\([$\w]+\)=>\{return \[\]/.test(content)) {
-        return content;
-      }
+    const head = content.match(/output_style:\(([$\w]+)\)=>/);
+    if (!head || head.index === undefined) {
       console.error(
         'patch: reminder output-style-banner: failed to find output_style arrow'
       );
       return null;
     }
-    const [fullMatch, hParam, guards, o5Name, j6Name, styleNameExpr] = match;
-    const bodyForThisBuild = body
-      .replace(/\$\{_\.name\}/g, styleNameExpr)
-      .replace(/\$\{H\.turnReminder/g, `\${${hParam}.turnReminder`);
+    const hParam = head[1];
+    const afterArrow = head.index + head[0].length;
+    // Already suppressed (by us, or by a build that emits nothing) — idempotent.
+    if (/^(\[\]|\{\s*return \[\];?\s*\})/.test(content.slice(afterArrow))) {
+      return content;
+    }
+    if (content[afterArrow] !== '{') {
+      console.error(
+        'patch: reminder output-style-banner: output_style arrow is not a block body'
+      );
+      return null;
+    }
+    const bodyEnd = matchingBrace(content, afterArrow);
+    if (bodyEnd === -1) {
+      console.error(
+        'patch: reminder output-style-banner: unbalanced output_style arrow body'
+      );
+      return null;
+    }
+    const arrowBody = content.slice(afterArrow + 1, bodyEnd);
+    const ret = arrowBody.match(
+      /return ([$\w]+)\(\[([$\w]+)\(\{content:`((?:[^`\\]|\\.)*)`,isMeta:!0\}\)\]\)$/
+    );
+    if (!ret || ret.index === undefined) {
+      console.error(
+        'patch: reminder output-style-banner: failed to find the reminder return expression'
+      );
+      return null;
+    }
+    const [, wrapFn, metaFn, template] = ret;
+    const guards = arrowBody.slice(0, ret.index);
     let replacement: string;
     if (isSuppressed) {
-      replacement = `output_style:(${hParam})=>{return [];}`;
+      replacement = `output_style:(${hParam})=>[]`;
     } else {
+      // `${_.name}` is whatever expression pristine interpolates immediately
+      // before " output style is active." — `${t.name}` up to 2.1.237,
+      // `${pze(e.style)}` from 2.1.238.
+      const nameExpr = template.match(
+        /\$\{((?:[^{}]|\{[^{}]*\})*)\} output style is active\./
+      );
+      const reminderExpr = template.match(
+        /\$\{((?:[^{}]|\{[^{}]*\})*turnReminder(?:[^{}]|\{[^{}]*\})*)\}/
+      );
+      if (!nameExpr || !reminderExpr) {
+        console.error(
+          'patch: reminder output-style-banner: no pristine expression for style_name/turn_reminder'
+        );
+        return null;
+      }
+      const built = body
+        .split('${_.name}')
+        .join(`\${${nameExpr[1]}}`)
+        .replace(
+          /\$\{H\.turnReminder(?:[^{}]|\{[^{}]*\})*\}/g,
+          `\${${reminderExpr[1]}}`
+        );
       replacement =
         `output_style:(${hParam})=>{${guards}` +
-        `return ${o5Name}([${j6Name}({content:\`${bodyForThisBuild}\`,isMeta:!0})])}`;
+        `return ${wrapFn}([${metaFn}({content:\`${built}\`,isMeta:!0})])}`;
     }
     const newContent =
-      content.slice(0, match.index) +
-      replacement +
-      content.slice(match.index + fullMatch.length);
+      content.slice(0, head.index) + replacement + content.slice(bodyEnd + 1);
     showDiff(
       content,
       newContent,
       replacement,
-      match.index,
-      match.index + fullMatch.length
+      head.index,
+      head.index + replacement.length
     );
     return newContent;
   },
@@ -481,26 +647,17 @@ const DATE_CHANGE_INJECTION: ReminderInjection = {
   placeholders: {
     new_date: '${H.newDate}',
   },
+  // CC 2.1.234 reworded this ("DO NOT mention this to the user explicitly
+  // because they are already aware." -> the clock line below).
   defaultBody:
-    "The date has changed. Today's date is now {{new_date}}. No need to announce the new date — the user's own clock shows it.",
+    "The date has changed. Today's date is now {{new_date}}. No need to announce the new date \u2014 the user's own clock shows it.",
   apply(content, body, isSuppressed) {
-    // Content-agnostic on the tail sentence (2.1.238 reworded it): anchor on the
-    // stable "The date has changed. Today's date is now ${newDate}." prefix and
-    // let `[^`]*` absorb whatever advice follows, so future rewordings don't break.
-    return findAndReplace(
+    return applySimpleEntry(
       content,
-      /date_change:\(([$\w]+)\)=>([$\w]+)\(\[([$\w]+)\(\{content:`The date has changed\. Today's date is now \$\{\1\.newDate\}\.[^`]*`,isMeta:!0\}\)\]\)/,
-      m => {
-        const [, hParam, o5Name, j6Name] = m;
-        if (isSuppressed) return `date_change:(${hParam})=>[]`;
-        const bodyForBuild = body.replace(
-          /\$\{H\.newDate\}/g,
-          `\${${hParam}.newDate}`
-        );
-        return `date_change:(${hParam})=>${o5Name}([${j6Name}({content:\`${bodyForBuild}\`,isMeta:!0})])`;
-      },
-      'date-change',
-      c => /date_change:\([$\w]+\)=>\[\]/.test(c)
+      'date_change',
+      [propSlot('${H.newDate}', 'newDate')],
+      body,
+      isSuppressed
     );
   },
 };
@@ -726,22 +883,17 @@ const COMPACT_FILE_REF_INJECTION: ReminderInjection = {
   defaultBody:
     'Note: {{filename}} was read before the last conversation was summarized, but the contents are too large to include. Use {{read_tool_name}} tool if you need to access it.',
   apply(content, body, isSuppressed) {
-    return findAndReplace(
+    return applySimpleEntry(
       content,
-      // 2.1.238 wraps the filename slot in a path helper: `${e.filename}` →
-      // `${Kae(e.filename)}`. Capture the whole slot expression (matches both the
-      // bare and wrapped forms) so the rebuild preserves whatever CC uses.
-      /compact_file_reference:\(([$\w]+)\)=>([$\w]+)\(\[([$\w]+)\(\{content:`Note: \$\{((?:[$\w]+\()?\1\.filename\)?)\} was read before the last conversation was summarized, but the contents are too large to include\. Use \$\{([$\w]+)\.name\} tool if you need to access it\.`,isMeta:!0\}\)\]\)/,
-      m => {
-        const [, hParam, o5Name, j6Name, filenameExpr, readToolVar] = m;
-        if (isSuppressed) return `compact_file_reference:(${hParam})=>[]`;
-        const bodyForBuild = body
-          .replace(/\$\{H\.filename\}/g, `\${${filenameExpr}}`)
-          .replace(/\$\{oO\.name\}/g, `\${${readToolVar}.name}`);
-        return `compact_file_reference:(${hParam})=>${o5Name}([${j6Name}({content:\`${bodyForBuild}\`,isMeta:!0})])`;
-      },
-      'compact-file-reference',
-      c => /compact_file_reference:\([$\w]+\)=>\[\]/.test(c)
+      'compact_file_reference',
+      [
+        propSlot('${H.filename}', 'filename'),
+        // The Read tool's name comes from a module-level binding, not from the
+        // handler's parameter, so it needs its own matcher.
+        toolNameSlot('${oO.name}'),
+      ],
+      body,
+      isSuppressed
     );
   },
 };
@@ -760,26 +912,20 @@ const PDF_REF_INJECTION: ReminderInjection = {
   defaultBody:
     'PDF file: {{filename}} ({{page_count}} pages, {{file_size}}). This PDF is too large to read all at once. You MUST use the {{read_tool}} tool with the pages parameter to read specific page ranges (e.g., pages: "1-5"). Do NOT call {{read_tool}} without the pages parameter or it will fail. Start by reading the first few pages to understand the structure, then read more as needed. Maximum 20 pages per request.',
   apply(content, body, isSuppressed) {
-    return findAndReplace(
+    return applySimpleEntry(
       content,
-      // 2.1.238 wraps filename: `${e.filename}` → `${Kae(e.filename)}`; capture
-      // the whole slot expression (matches bare or wrapped).
-      /pdf_reference:\(([$\w]+)\)=>([$\w]+)\(\[([$\w]+)\(\{content:`PDF file: \$\{((?:[$\w]+\()?\1\.filename\)?)\} \(\$\{\1\.pageCount\} pages, \$\{([$\w]+)\(\1\.fileSize\)\}\)\. This PDF is too large to read all at once\. You MUST use the \$\{([$\w]+)\} tool with the pages parameter[\s\S]*?Maximum 20 pages per request\.`,isMeta:!0\}\)\]\)/,
-      m => {
-        const [, hParam, o5Name, j6Name, filenameExpr, l7Var, readToolVar] = m;
-        if (isSuppressed) return `pdf_reference:(${hParam})=>[]`;
-        const bodyForBuild = body
-          .replace(/\$\{H\.filename\}/g, `\${${filenameExpr}}`)
-          .replace(/\$\{H\.pageCount\}/g, `\${${hParam}.pageCount}`)
-          .replace(
-            /\$\{l7\(H\.fileSize\)\}/g,
-            `\${${l7Var}(${hParam}.fileSize)}`
-          )
-          .replace(/\$\{uq\}/g, `\${${readToolVar}}`);
-        return `pdf_reference:(${hParam})=>${o5Name}([${j6Name}({content:\`${bodyForBuild}\`,isMeta:!0})])`;
-      },
-      'pdf-reference',
-      c => /pdf_reference:\([$\w]+\)=>\[\]/.test(c)
+      'pdf_reference',
+      [
+        propSlot('${H.filename}', 'filename'),
+        propSlot('${H.pageCount}', 'pageCount'),
+        propSlot('${l7(H.fileSize)}', 'fileSize'),
+        // The Read tool name is a bare module-level identifier here (`${Qs}`),
+        // distinguished from the two byte-size/page slots by not referencing
+        // the handler parameter at all.
+        toolNameSlot('${uq}'),
+      ],
+      body,
+      isSuppressed
     );
   },
 };
@@ -795,7 +941,15 @@ const EDITED_TEXT_FILE_INJECTION: ReminderInjection = {
   // file-modified-externally only matches a stock install because this
   // registry's defaultBody happens to mirror the pristine branch text — once a
   // user customizes edited-text-file.md, its anchor vanishes too.
+  // CC 2.1.234 rewrote this reminder and renamed both ids this entry consumed:
+  // file-modification-detected-budget-exceeded -> edited-file-diff-omitted-snippet-budget
+  // file-modified-externally                   -> edited-file-changed-since-read
+  // A stale shadow list is not inert — the named-prompt pass then iterates ids
+  // whose cli.js region this patch has already spliced, and `syncPrompt` keeps
+  // recreating their .md in every set.
   shadows: [
+    'system-reminder-edited-file-changed-since-read',
+    'system-reminder-edited-file-diff-omitted-snippet-budget',
     'system-reminder-file-modification-detected-budget-exceeded',
     'system-reminder-file-modified-externally',
   ],
@@ -803,37 +957,72 @@ const EDITED_TEXT_FILE_INJECTION: ReminderInjection = {
     filename: '${H.filename}',
     snippet: '${H.snippet}',
   },
+  // CC 2.1.234 rewrote this entirely and hoisted the shared opening sentence
+  // into a local const; this mirrors the non-empty-snippet branch, which is the
+  // one a single-template override collapses to.
   defaultBody:
-    "Note: {{filename}} changed on disk since you last read it. That's usually deliberate, so take it as the current state rather than reverting it; if the change looks wrong, say so rather than undoing it yourself — otherwise no need to call it out. Here are the relevant changes (shown with line numbers):\n{{snippet}}",
+    "Note: {{filename}} changed on disk since you last read it. That's usually deliberate, so take it as the current state rather than reverting it; if the change looks wrong, say so rather than undoing it yourself \u2014 otherwise no need to call it out. Here are the relevant changes (shown with line numbers):\n{{snippet}}",
   apply(content, body, isSuppressed) {
-    const build = (hParam: string, o5Name: string, j6Name: string): string => {
-      if (isSuppressed) return `edited_text_file:(${hParam})=>[]`;
-      const bodyForBuild = body
-        .replace(/\$\{H\.filename\}/g, `\${${hParam}.filename}`)
-        .replace(/\$\{H\.snippet\}/g, `\${${hParam}.snippet}`);
-      return `edited_text_file:(${hParam})=>${o5Name}([${j6Name}({content:\`${bodyForBuild}\`,isMeta:!0})])`;
-    };
-    // 2.1.238: handler became a block body that hoists the shared prefix into a
-    // local `let t=`…`` then branches on `e.snippet===""`:
-    //   edited_text_file:(e)=>{let t=`…`;return W([I({content:e.snippet===""?`${t}…`:`${t}…`,isMeta:!0})])}
-    // Content-agnostic on every template literal (rebuild collapses the ternary
-    // into the single override body, matching this registry's design).
-    const blockShape =
-      /edited_text_file:\(([$\w]+)\)=>\{let [$\w]+=`[^`]*`;return ([$\w]+)\(\[([$\w]+)\(\{content:\1\.snippet===""\?`[^`]*`:`[^`]*`,isMeta:!0\}\)\]\)\}/;
-    if (blockShape.test(content)) {
-      return findAndReplace(
+    // Method 1 (2.1.234+): the shared opening sentence is hoisted into a local
+    // const and both ternary branches interpolate it, and the filename runs
+    // through the reminder escaper. Anchored on the key plus the code shape, so
+    // the (freely reworded) prose in either branch does not break it.
+    const hoisted =
+      /edited_text_file:\(([$\w]+)\)=>\{let ([$\w]+)=`((?:[^`\\]|\\.)*)`;return ([$\w]+)\(\[([$\w]+)\(\{content:\1\.snippet===""\?`(?:[^`\\]|\\.)*`:`(?:[^`\\]|\\.)*`,isMeta:!0\}\)\]\)\}/;
+    const hoistedMatch = content.match(hoisted);
+    if (hoistedMatch && hoistedMatch.index !== undefined) {
+      const [, hParam, , prefixTpl, o5Name, j6Name] = hoistedMatch;
+      let replacement: string;
+      if (isSuppressed) {
+        replacement = `edited_text_file:(${hParam})=>[]`;
+      } else {
+        // The filename slot lives in the hoisted prefix, the snippet slot in
+        // the second branch; resolve each against the whole matched region.
+        const region = hoistedMatch[0];
+        const fileExpr = slotExpr(prefixTpl, hParam, 'filename');
+        const snippetExpr = slotExpr(region, hParam, 'snippet');
+        if (
+          (body.includes('${H.filename}') && fileExpr === null) ||
+          (body.includes('${H.snippet}') && snippetExpr === null)
+        ) {
+          console.error(
+            'patch: reminder edited-text-file: no pristine expression for a placeholder'
+          );
+          return null;
+        }
+        const bodyForBuild = body
+          .split('${H.filename}')
+          .join(`\${${fileExpr}}`)
+          .split('${H.snippet}')
+          .join(`\${${snippetExpr}}`);
+        replacement = `edited_text_file:(${hParam})=>${o5Name}([${j6Name}({content:\`${bodyForBuild}\`,isMeta:!0})])`;
+      }
+      const newContent =
+        content.slice(0, hoistedMatch.index) +
+        replacement +
+        content.slice(hoistedMatch.index + hoistedMatch[0].length);
+      showDiff(
         content,
-        blockShape,
-        m => build(m[1], m[2], m[3]),
-        'edited-text-file',
-        c => /edited_text_file:\([$\w]+\)=>\[\]/.test(c)
+        newContent,
+        replacement,
+        hoistedMatch.index,
+        hoistedMatch.index + replacement.length
       );
+      return newContent;
     }
-    // <=2.1.237: direct arrow with inline `e.snippet===""?…:…` ternary.
+    // Method 2 (<=2.1.233): both branches spelled out inline, no hoisted const.
+    // cli.js literal has a real newline before ${H.snippet}.
     return findAndReplace(
       content,
-      /edited_text_file:\(([$\w]+)\)=>([$\w]+)\(\[([$\w]+)\(\{content:\1\.snippet===""\?`[^`]*`:`[^`]*`,isMeta:!0\}\)\]\)/,
-      m => build(m[1], m[2], m[3]),
+      /edited_text_file:\(([$\w]+)\)=>([$\w]+)\(\[([$\w]+)\(\{content:\1\.snippet===""\?`Note: \$\{\1\.filename\} was modified, either by the user or by a linter\. This change was intentional, so make sure to take it into account as you proceed \(ie\. don't revert it unless the user asks you to\)\. Don't tell the user this, since they are already aware\. The diff was omitted because other modified files in this turn already exceeded the snippet budget; use the Read tool if you need the current content\.`:`Note: \$\{\1\.filename\} was modified, either by the user or by a linter\. This change was intentional, so make sure to take it into account as you proceed \(ie\. don't revert it unless the user asks you to\)\. Don't tell the user this, since they are already aware\. Here are the relevant changes \(shown with line numbers\):\n\$\{\1\.snippet\}`,isMeta:!0\}\)\]\)/,
+      m => {
+        const [, hParam, o5Name, j6Name] = m;
+        if (isSuppressed) return `edited_text_file:(${hParam})=>[]`;
+        const bodyForBuild = body
+          .replace(/\$\{H\.filename\}/g, `\${${hParam}.filename}`)
+          .replace(/\$\{H\.snippet\}/g, `\${${hParam}.snippet}`);
+        return `edited_text_file:(${hParam})=>${o5Name}([${j6Name}({content:\`${bodyForBuild}\`,isMeta:!0})])`;
+      },
       'edited-text-file',
       c => /edited_text_file:\([$\w]+\)=>\[\]/.test(c)
     );
@@ -854,36 +1043,27 @@ const SELECTED_LINES_INJECTION: ReminderInjection = {
   defaultBody:
     'The user selected the lines {{line_start}} to {{line_end}} from {{filename}}:\n{{selected_text}}\n\nThis may or may not be related to the current task.',
   apply(content, body, isSuppressed) {
-    // Method 1 (2.1.186+): the `{let q=…substring(0,2000)…truncate…}` wrapper was
-    // removed; the handler is now a direct arrow and the selected-text slot is
-    // inlined as a function call (`${k6l(e.content)}`) rather than a local var.
-    // Capture that whole content expression and map the override's `${q}`
-    // (selected_text) placeholder onto it.
-    // 2.1.238 also wraps the filename slot: `${e.filename}` → `${Kae(e.filename)}`.
-    // Capture the whole filename expression (bare or wrapped) alongside the
-    // selected-text content expression.
-    const newShape =
-      /selected_lines_in_ide:\(([$\w]+)\)=>([$\w]+)\(\[([$\w]+)\(\{content:`The user selected the lines \$\{\1\.lineStart\} to \$\{\1\.lineEnd\} from \$\{((?:[$\w]+\()?\1\.filename\)?)\}:\n\$\{([^`]*?)\}\n\nThis may or may not be related to the current task\.`,isMeta:!0\}\)\]\)/;
-    if (newShape.test(content)) {
-      return findAndReplace(
+    // Method 1 (2.1.186+): direct arrow, the selected-text slot inlined as a
+    // call (`${dpm(e.content)}`) rather than a local var, and from 2.1.234 the
+    // filename slot wrapped in the reminder escaper. Matched on the registry
+    // key and code shape only, so a reworded body does not break it.
+    if (simpleEntryPattern('selected_lines_in_ide').test(content)) {
+      return applySimpleEntry(
         content,
-        newShape,
-        m => {
-          const [, hParam, o5Name, j6Name, filenameExpr, contentExpr] = m;
-          if (isSuppressed) return `selected_lines_in_ide:(${hParam})=>[]`;
-          const bodyForBuild = body
-            .replace(/\$\{H\.lineStart\}/g, `\${${hParam}.lineStart}`)
-            .replace(/\$\{H\.lineEnd\}/g, `\${${hParam}.lineEnd}`)
-            .replace(/\$\{H\.filename\}/g, `\${${filenameExpr}}`)
-            .replace(/\$\{q\}/g, `\${${contentExpr}}`);
-          return `selected_lines_in_ide:(${hParam})=>${o5Name}([${j6Name}({content:\`${bodyForBuild}\`,isMeta:!0})])`;
-        },
-        'selected-lines-in-ide',
-        c => /selected_lines_in_ide:\([$\w]+\)=>\[\]/.test(c)
+        'selected_lines_in_ide',
+        [
+          propSlot('${H.lineStart}', 'lineStart'),
+          propSlot('${H.lineEnd}', 'lineEnd'),
+          propSlot('${H.filename}', 'filename'),
+          propSlot('${q}', 'content'),
+        ],
+        body,
+        isSuppressed
       );
     }
-    // Method 2 (<=2.1.185): older shape that truncated content >2000 chars into a
-    // local `q` before emitting. Kept as a fallback for installs on prior builds.
+    // Method 2 (<=2.1.185): older shape that truncated content >2000 chars into
+    // a local `q` before emitting. Kept as a fallback for installs on prior
+    // builds; that shape predates both rewordings, so it stays prose-anchored.
     return findAndReplace(
       content,
       /selected_lines_in_ide:\(([$\w]+)\)=>\{let ([$\w]+)=\1\.content\.length>2000\?\1\.content\.substring\(0,2000\)\+`\n\.\.\. \(truncated\)`:\1\.content;return ([$\w]+)\(\[([$\w]+)\(\{content:`The user selected the lines \$\{\1\.lineStart\} to \$\{\1\.lineEnd\} from \$\{\1\.filename\}:\n\$\{\2\}\n\nThis may or may not be related to the current task\.`,isMeta:!0\}\)\]\)\}/,
@@ -914,21 +1094,12 @@ const OPENED_FILE_INJECTION: ReminderInjection = {
   defaultBody:
     'The user opened the file {{filename}} in the IDE. This may or may not be related to the current task.',
   apply(content, body, isSuppressed) {
-    // 2.1.238 wraps the filename slot: `${e.filename}` → `${Kae(e.filename)}`.
-    return findAndReplace(
+    return applySimpleEntry(
       content,
-      /opened_file_in_ide:\(([$\w]+)\)=>([$\w]+)\(\[([$\w]+)\(\{content:`The user opened the file \$\{((?:[$\w]+\()?\1\.filename\)?)\} in the IDE\. This may or may not be related to the current task\.`,isMeta:!0\}\)\]\)/,
-      m => {
-        const [, hParam, o5Name, j6Name, filenameExpr] = m;
-        if (isSuppressed) return `opened_file_in_ide:(${hParam})=>[]`;
-        const bodyForBuild = body.replace(
-          /\$\{H\.filename\}/g,
-          `\${${filenameExpr}}`
-        );
-        return `opened_file_in_ide:(${hParam})=>${o5Name}([${j6Name}({content:\`${bodyForBuild}\`,isMeta:!0})])`;
-      },
-      'opened-file-in-ide',
-      c => /opened_file_in_ide:\([$\w]+\)=>\[\]/.test(c)
+      'opened_file_in_ide',
+      [propSlot('${H.filename}', 'filename')],
+      body,
+      isSuppressed
     );
   },
 };
@@ -1102,6 +1273,9 @@ const MEMORY_UPDATE_INJECTION: ReminderInjection = {
   name: 'Memory-update reminder',
   description:
     'Fires after dream / consolidation writes new memory files. Conditional. Empty .md body = silent updates.',
+  // The stale-copy sentence is part of this reminder's body, so this patch
+  // splices the region the named prompt would otherwise anchor on.
+  shadows: ['system-reminder-memory-update-loaded-copy-stale'],
   placeholders: {
     source: '${YT3[H.source]}',
     summary: '${H.summary}',
@@ -1463,12 +1637,17 @@ const MCP_PER_SERVER_ROUTER_INJECTION: ReminderInjection = {
     'This file is a marker that enables per-MCP-server overrides. Edit per-server content in mcp-<server-name>.md alongside this file. Leave this file with content (any content) to enable routing; empty it to disable.',
   apply(content, _body, isSuppressed) {
     if (isSuppressed) return content;
-    // 2.1.238 appended a second map write to the loop body:
-    //   ...l.set(f.name,`## ${f.name}\n${f.instructions}`),c.set(f.name,f.instructions);
-    // Capture the optional `,c.set(f.name,f.instructions)` and re-emit it inside
-    // the rebuilt loop so the second map keeps being populated.
+    // The loop body is a comma expression whose length is Anthropic's business,
+    // not ours: CC 2.1.238 appended a second `c.set(f.name,f.instructions)` to
+    // stash the raw instructions as a change-detection baseline (it feeds
+    // `addedServerInstructions`, compared as `g!==h` to decide whether to
+    // re-announce a server whose instructions moved). A pattern that ended at
+    // the first `.set(...)` broke on that alone. Match the RUN of trailing sets
+    // instead, and re-emit each one with `<param>.instructions` rewritten to the
+    // overridden text — otherwise the baseline tracks pristine while the model
+    // is shown our override, and every session re-announces the server.
     const pattern =
-      /for\(let ([$\w]+) of ([$\w]+)\)if\(\1\.instructions\)([$\w]+)\.set\(\1\.name,`## \$\{\1\.name\}\n\$\{\1\.instructions\}`\)(?:,([$\w]+)\.set\(\1\.name,\1\.instructions\))?;/;
+      /for\(let ([$\w]+) of ([$\w]+)\)if\(\1\.instructions\)([$\w]+)\.set\(\1\.name,`## \$\{\1\.name\}\n\$\{\1\.instructions\}`\)((?:,[$\w]+\.set\((?:[^()]|\([^()]*\))*\))*);/;
     const match = content.match(pattern);
     if (!match || match.index === undefined) {
       if (content.includes('__tweakccMcpOverride')) return content;
@@ -1477,7 +1656,16 @@ const MCP_PER_SERVER_ROUTER_INJECTION: ReminderInjection = {
       );
       return null;
     }
-    const [fullMatch, jVar, zVar, mapVar, secondMapVar] = match;
+    const [fullMatch, jVar, zVar, mapVar, extraSets] = match;
+    // `,a.set(x,y),b.set(z)` -> `;a.set(x,y);b.set(z)`, with the pristine
+    // instructions expression swapped for the resolved override. Split on the
+    // `.set(` calls themselves, never on commas — `set(f.name,f.instructions)`
+    // has one of its own.
+    const extraRebound = [
+      ...(extraSets || '').matchAll(/[$\w]+\.set\((?:[^()]|\([^()]*\))*\)/g),
+    ]
+      .map(m => ';' + m[0].split(`${jVar}.instructions`).join('_c'))
+      .join('');
     const replacement =
       `function __tweakccMcpOverride(_n,_d){try{` +
       `let _f=require('fs'),_p=require('os').homedir()+'/.tweakcc/system-reminders/mcp-'+_n+'.md';` +
@@ -1490,10 +1678,7 @@ const MCP_PER_SERVER_ROUTER_INJECTION: ReminderInjection = {
       `}catch{return _d}}` +
       `for(let ${jVar} of ${zVar}){` +
       `let _c=__tweakccMcpOverride(${jVar}.name,${jVar}.instructions);` +
-      `if(_c)${mapVar}.set(${jVar}.name,\`## \${${jVar}.name}\n\${_c}\`)` +
-      (secondMapVar
-        ? `;${secondMapVar}.set(${jVar}.name,${jVar}.instructions)`
-        : '') +
+      `if(_c){${mapVar}.set(${jVar}.name,\`## \${${jVar}.name}\n\${_c}\`)${extraRebound}}` +
       `}`;
     const newContent =
       content.slice(0, match.index) +

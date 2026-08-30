@@ -6,7 +6,7 @@
 
 [![npm](https://img.shields.io/npm/v/tweakcc-fixed?color=cb3837&label=npm&logo=npm&style=flat-square)](https://www.npmjs.com/package/tweakcc-fixed)
 [![downloads](https://img.shields.io/npm/dt/tweakcc-fixed?color=cb3837&style=flat-square)](https://www.npmjs.com/package/tweakcc-fixed)
-[![Claude Code](https://img.shields.io/badge/Claude%20Code-2.0.98%20%E2%86%92%202.1.221-d97757?style=flat-square)](https://github.com/anthropics/claude-code)
+[![Claude Code](https://img.shields.io/badge/Claude%20Code-2.0.98%20%E2%86%92%202.1.247-d97757?style=flat-square)](https://github.com/anthropics/claude-code)
 [![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](#credit--license)
 
 **[Install](#install) · [Customize](#what-you-can-customize) · [The fork](#what-this-fork-adds) · [How it works](#how-it-works)**
@@ -53,13 +53,13 @@ It works the same on npm and native (Bun-compiled) installs, every change is a t
 
 tweakcc-fixed is a strict superset of the original: everything above still applies, on the same latest Claude Code target. What it adds is reach.
 
-The biggest difference is coverage. Its extractor pulls over four times the prompt surface upstream does — every model-facing string at any length: tool results, system reminders, utility-agent prompts, slash-command descriptions, and the short fragments the base skips. Every candidate string is classified by its emission site (model-facing vs UI vs internal) with verdicts cached content-addressed, so coverage is complete by construction, not by heuristic. That is what makes serious prompt editing possible in the first place.
+The biggest difference is coverage. Its extractor pulls over eight times the prompt surface upstream does — every model-facing string at any length: tool results, system reminders, utility-agent prompts, slash-command descriptions, and the short fragments the base skips. Every candidate string is classified by its emission site (model-facing vs UI vs internal) with verdicts cached content-addressed, so coverage is complete by construction, not by heuristic. That is what makes serious prompt editing possible in the first place.
 
 |                              | tweakcc-fixed | upstream  |
 | ---------------------------- | :-----------: | :-------: |
-| Prompt sites (CC 2.1.221)    |   **3,347**   |    624    |
-| Unique prompt IDs            |   **3,118**   |    624    |
-| Patches                      |    **58**     |    45     |
+| Prompt sites (CC 2.1.247)    |   **6,077**   |    732    |
+| Unique prompt IDs            |   **5,745**   |    732    |
+| Patches                      |    **61**     |    45     |
 | Overrides on native installs |    **yes**    | gated off |
 
 That reach shows up in a few mechanisms the base doesn't have. The `<system-reminder>` injections that fire per turn — and never surface as named prompts — become editable: blank one out to drop it, or rewrite it. Each connected MCP server's instruction block can be dropped or rewritten the same way. And where upstream gates system-prompt overrides off for native installs, this fork applies them. It pairs with [lobotomized-claude-code](https://github.com/skrabe/lobotomized-claude-code), a set of per-model override packs tuned against exactly this extraction.
@@ -79,9 +79,9 @@ Each patch is tagged with how it behaves on `--apply`: **`[default on]`** applie
 
 **Memory & context**
 
-- `dream-mode` **`[default on]`** — `/dream` plus automatic memory consolidation
+- `dream-mode` **`[opt-in]`** — `/dream` plus automatic memory consolidation
 - `lean-memory-types` **`[opt-in]`** — a trimmed memory-type taxonomy
-- `claudemd-context-once-per-conversation` **`[default on]`** — inject CLAUDE.md and context once per conversation, not every turn (rewrites how CLAUDE.md reaches the model)
+- `claudemd-context-once-per-conversation` **`[opt-in]`** — inject CLAUDE.md and context once per conversation, not every turn (rewrites how CLAUDE.md reaches the model)
 
 **Reasoning**
 

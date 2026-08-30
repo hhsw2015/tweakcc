@@ -41,9 +41,22 @@ const TS: Toolset[] = [
 ];
 
 describe('getAppStateSelectorAndUseState', () => {
+  it('finds the selector + setState fns in the CC >=2.1.246 ESM store', () => {
+    const mod =
+      'function o(){let t=r(p);if(!t)throw ReferenceError("useAppState/useSetAppState cannot be called outside of an <AppStateProvider />");return t}' +
+      'function v(t){let e=o(),n=()=>{let i=e.getState();return t(i)};return s(e.subscribe,n,n)}' +
+      'function y(){return o().setState}';
+    expect(getAppStateSelectorAndUseState(mod)).toEqual({
+      appStateUseSelectorFn: 'v',
+      appStateSetState: 'y',
+      selectorIndex: expect.any(Number),
+      setStateIndex: expect.any(Number),
+    });
+  });
+
   it('finds the selector + setState fns in the CC >=2.1.83 shape', () => {
     const info = getAppStateSelectorAndUseState(APP_STATE);
-    expect(info).toEqual({
+    expect(info).toMatchObject({
       appStateUseSelectorFn: 'D8',
       appStateSetState: 'iA',
     });
@@ -54,7 +67,7 @@ describe('getAppStateSelectorAndUseState', () => {
     const old =
       'function D8(A){let q=`Your selector in something`;return q}' +
       'function iA(){return ST().setState}';
-    expect(getAppStateSelectorAndUseState(old)).toEqual({
+    expect(getAppStateSelectorAndUseState(old)).toMatchObject({
       appStateUseSelectorFn: 'D8',
       appStateSetState: 'iA',
     });
@@ -244,9 +257,62 @@ describe('writePrintToolsFilter', () => {
     );
   });
 
+  it('still binds when the declaration is far above its use site', () => {
+    // CC 2.1.235 put 2,672 chars of MCP prewait code between `let Hm=ko(Hv),`
+    // and `tools:Hm,refreshTools:()=>ko(l())`, which broke a 2500-char window.
+    const filler = `if(a){${'/*x*/'.repeat(1200)}}`;
+    const out = writePrintToolsFilter(
+      'let $tv=$cf($sv);' + filler + body,
+      TS,
+      'all'
+    )!;
+    expect(out).toContain('let $tv=$cf($sv);const __tpts=');
+    expect(out).toContain('$tv=__tptf($tv,$sv);');
+    expect(out).toContain(
+      'refreshTools:()=>{let s=$gs();return __tptf($cf(s),s)}'
+    );
+  });
+
+  // CC 2.1.238 split the print path: the arrows are hoisted into named consts,
+  // `tools:` and `refreshTools:` take the SAME thunk on the lazy branch, and the
+  // eager array the non-SDK branch submits moved to its own declaration. Both
+  // sites must be filtered, and both splices must be pure EXPRESSIONS — each one
+  // is a declarator inside a `let` list, so a `const` statement in front of
+  // either closes the list mid-declarator and yields JS Bun cannot parse.
+  const split238 =
+    'let $bu={a:1},$th=()=>$cf($gs()),$mc=()=>$mk($gs()),$cs={session:$e,refreshTools:$th,refreshMcpClients:$mc,verbose:1};' +
+    'let $fm=$mk($sv);let $tv=$cf($sv),$a5=2;' +
+    'Q??=ICy({...$cs,tools:$th,mcpClients:$mc,appendSystemPrompt:1});' +
+    'ACy({...$cs,tools:$tv,mcpClients:$fm,appendSystemPrompt:1});';
+
+  it('filters both sites of the CC 2.1.238 split print path', () => {
+    const out = writePrintToolsFilter(split238, TS, 'all')!;
+    expect(out).not.toBeNull();
+    // the shared thunk (covers tools: on the lazy branch AND refreshTools:)
+    expect(out).toContain('$th=()=>{let s=$gs();return ((t,s)=>{const p=');
+    // the eager array the non-SDK branch submits
+    expect(out).toContain('$tv=((t,s)=>{const p=');
+    expect(out).toContain('})($cf($sv),$sv)');
+    // no statement was spliced into a declarator list
+    expect(out).not.toContain('const __tpts=');
+  });
+
+  it('emits parseable JS for the CC 2.1.238 split print path', () => {
+    const out = writePrintToolsFilter(split238, TS, 'all')!;
+    expect(
+      () => new Function(out.replace(/Q\?\?=/, 'globalThis.Q??='))
+    ).not.toThrow();
+  });
+
   it('returns null when the print tools init is absent', () => {
     const err = silenceErr();
     expect(writePrintToolsFilter('x=1', TS, 'all')).toBeNull();
+    err.mockRestore();
+  });
+
+  it('returns null when the use site is present but never declared', () => {
+    const err = silenceErr();
+    expect(writePrintToolsFilter(body, TS, 'all')).toBeNull();
     err.mockRestore();
   });
 });
@@ -494,6 +560,21 @@ describe('findToolChangeComponentScope', () => {
     const src =
       'a=1;Wai(I,function(Wt){M("tengu_ext_at_mentioned",{}),eQ(Gai(Wt))});';
     expect(findToolChangeComponentScope(src)).toBe(src.indexOf('Wai('));
+  });
+
+  it('accepts the CC >=2.1.247 useCallback-arrow shape and returns a statement boundary', () => {
+    // The handler became an arrow assigned inside a comma-declarator chain, so
+    // its own start is NOT a statement boundary — splicing there would emit
+    // `...]),const currentToolset=...;HM=B(...)`. The index must land after the
+    // `;` that terminates the whole chain.
+    const src =
+      'let d=1,q=B((ee)=>{r(ee)},[d,q]),HM=B((E)=>{U("tengu_ext_at_mentioned",{}),Sa(eEe(E,d))},[d,Sa]);ZAe(h,HM);';
+    const at = findToolChangeComponentScope(src);
+    expect(at).toBe(src.indexOf('ZAe(h,HM);'));
+    // Splicing a declaration there must keep the file parseable.
+    const spliced =
+      src.slice(0, at!) + 'const currentToolset=z();' + src.slice(at!);
+    expect(() => new Function(spliced)).not.toThrow();
   });
 
   it('returns null when the at-mention handler is absent', () => {

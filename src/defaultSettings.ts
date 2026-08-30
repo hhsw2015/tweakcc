@@ -750,6 +750,8 @@ export const DEFAULT_SETTINGS: Settings = {
     enableChannelsMode: false,         // 特殊 feature
     maxEffortDefault: true,            // ✚ Opus 默认 max effort
     autonomousOperationAllModels: true,// ✚ 全 model 走 Fable 自主 prompt
+    adhdOutputStyle: false,            // skrabe 新增 key
+    outputStyleTurnReminder: false,    // skrabe 新增 key
     autoModeClassifierModel: 'haiku',  // ✚ auto-mode 分类器走 haiku (避 opus 拥堵)
     suppressDeferredTools: false,      // ✗ DANGEROUS, 跳
     claudemdContextOncePerConversation: true,
@@ -761,6 +763,14 @@ export const DEFAULT_SETTINGS: Settings = {
     plan: null,
     explore: null,
     generalPurpose: null,
+  },
+  fablePlan: {
+    enabled: false,
+    planModel: 'fable',
+    planEffort: 'xhigh',
+    execModel: 'opus',
+    execEffort: 'medium',
+    offerClearContextOnPlanAccept: true,
   },
   complexityRouter: {
     enabled: false,

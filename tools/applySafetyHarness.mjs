@@ -71,15 +71,38 @@ const BIND_WINDOW_BACK = 1500;
 // or a `let v=` just before its `${v}`). A slot bound in its own window is a plain
 // local in emitted code — it parses and never ReferenceErrors, so it is never
 // dangerous, in pristine OR patched.
+// Second-chance lookback. Minified module consts are emitted as one long
+// comma-declarator chain inside a `var X=T(()=>{…})` IIFE, so a use and its
+// declaration can sit tens of KB apart in the SAME statement. An override that
+// legitimately expands a neighbouring const in that chain pushes the declaration
+// past BIND_WINDOW_BACK, and the slot then reads as newly dangerous although the
+// name is still declared in scope and the file still parses — 2.1.232 flagged
+// `${xJh}`/`${RJh}` in all four sets exactly this way. So when the narrow window
+// misses, look much further back for a DECLARATION of that specific name. A name
+// declared nowhere within reach — the real leak this gate exists to find — still
+// flags, because this only ever searches for that one identifier.
+const DECL_WINDOW_BACK = 200_000;
+const declaredFurtherBack = (s, idx, v) => {
+  const from = Math.max(0, idx - DECL_WINDOW_BACK);
+  const window = s.slice(from, idx);
+  const esc = v.replace(/[$]/g, '\\$&');
+  return new RegExp(
+    `(?:\\b(?:let|const|var|function)\\s+|(?<!\\$)[([,{;]\\s*)${esc}\\s*(?:=[^=>]|[)\\]},:]|=>)`
+  ).test(window);
+};
+
 const dangerousSlots = (s) => {
   const out = new Map();
+  out.positions = new Map();
   for (const m of s.matchAll(/\$\{([A-Za-z$][\w$]{0,3})\}/g)) {
     const v = m[1];
     if (v === v.toUpperCase() && /[A-Z]/.test(v) && v.length > 2) continue; // ALLCAPS = override placeholder, checked elsewhere
     const idx = m.index;
     const window = s.slice(Math.max(0, idx - BIND_WINDOW_BACK), idx + 60);
     if (bindsInWindow(window, v)) continue; // bound local — safe
+    if (declaredFurtherBack(s, idx, v)) continue; // module const further up the same chain
     out.set(v, (out.get(v) || 0) + 1);
+    out.positions.set(v, [...(out.positions.get(v) || []), idx]);
   }
   return out;
 };
@@ -92,13 +115,34 @@ const dangerousSlots = (s) => {
 // DANGEROUS (unbound-in-window) slots per var: a var is introduced-unresolved only
 // where patched has MORE unbound `${v}` slots than pristine did. Net-counting keeps
 // this robust to the byte shifts minification/override edits cause everywhere.
+// Net-counting is still not enough on its own. An override splice upstream of an
+// UNTOUCHED site shifts that site's bytes, and a shift can push a legitimate
+// binding out of BIND_WINDOW_BACK — the site then reads as "newly dangerous"
+// though its emitted text is unchanged (2.1.224: `${w}` in the artifact-comments
+// header, whose `w=mr(e.threads,T)` sits 3,040 chars back). So a dangerous slot in
+// patched is only INTRODUCED when its surrounding text is text the patch actually
+// wrote: if the same context appears verbatim in the pristine, the patch did not
+// author it, whatever its offset became.
+const CONTEXT_BACK = 120;
+const CONTEXT_FWD = 120;
+const contextKeys = (s, positions) =>
+  positions.map((i) =>
+    s.slice(Math.max(0, i - CONTEXT_BACK), i + CONTEXT_FWD)
+  );
+
 export const introducedUnresolvedSlots = (orig, patched) => {
   const o = dangerousSlots(orig);
   const p = dangerousSlots(patched);
   const out = new Map();
   for (const [v, n] of p) {
     const delta = n - (o.get(v) || 0);
-    if (delta > 0) out.set(v, delta);
+    if (delta <= 0) continue;
+    // Keep only the slots whose own context is absent from the pristine.
+    const authored = contextKeys(patched, p.positions.get(v) || []).filter(
+      (ctx) => !orig.includes(ctx)
+    ).length;
+    const real = Math.min(delta, authored);
+    if (real > 0) out.set(v, real);
   }
   return out;
 };
@@ -134,7 +178,16 @@ export const introducedRawNonAscii = (pristine, patched) => {
 // A "cannot apply safely" warning means an override was NOT spliced — the
 // operator's content is missing from the binary. Counting it without gating on
 // it reported PASS for a half-applied set, so it is a failure like the rest.
+//
+// `applyOk` gates on the apply having actually RUN. Every other signal here is
+// derived from the patched file, and a crashed apply leaves that file identical
+// to pristine — which satisfies all of them trivially. That is a false PASS, and
+// it happened: a fable-5 override with an over-escaped template-literal delimiter
+// killed `applyIdentifierMapping` with `unbalanced ${...} interpolation`, nothing
+// was written, and the harness reported PASS for a set that applied NOTHING.
+// A run that could not complete must be as loud as one that completed wrong.
 export const harnessVerdict = ({
+  applyOk,
   cnf,
   cannotApply,
   introduced,
@@ -142,6 +195,7 @@ export const harnessVerdict = ({
   parses,
   wfScriptErrors,
 }) =>
+  applyOk !== false &&
   cnf === 0 &&
   cannotApply === 0 &&
   introduced.length === 0 &&
@@ -173,7 +227,15 @@ try {
       fs.cpSync(fs.realpathSync(src), path.join(tc, name), { recursive: true });
     }
   }
-  for (const f of ['config.json']) {
+  // systemPromptOriginalHashes.json is the baseline index syncPrompt reads to tell
+  // "user edited this override" from "pristine moved under it". Omitting it does not
+  // merely change the conflict REPORT — it changes what gets spliced, so the harness
+  // grades a binary a real apply never produces. On 2.1.227 that was the whole of the
+  // long-standing fable-5 `introduced ${n}: 1`: with the baseline the same set is
+  // clean, without it the apply emits a 28KB-different bundle carrying an `${n}` in
+  // override text. A ground-truth harness has to reproduce the real code path, and
+  // the driver's own sandboxedApply already copies both files for this reason.
+  for (const f of ['config.json', 'systemPromptOriginalHashes.json']) {
     const src = path.join(realTweakcc, f);
     if (fs.existsSync(src)) fs.copyFileSync(src, path.join(tc, f));
   }
@@ -189,6 +251,7 @@ try {
   );
 
   let log = '';
+  let applyExit = 0;
   try {
     log = execFileSync('node', [path.join(REPO, 'dist', 'index.mjs'), '--apply'], {
       env: { ...process.env, HOME: tmpHome, TWEAKCC_CC_INSTALLATION_PATH: cliCopy },
@@ -197,7 +260,12 @@ try {
     });
   } catch (e) {
     log = (e.stdout || '') + (e.stderr || '');
+    applyExit = e.status ?? 1;
   }
+  // Positive marker + exit code: absence of error lines is not evidence the
+  // apply ran. See the note on harnessVerdict.
+  const applyOk =
+    applyExit === 0 && /Customizations applied/.test(log);
 
   const patched = fs.readFileSync(cliCopy, 'utf8');
   const cnf = (log.match(/Could not find/g) || []).length;
@@ -327,13 +395,21 @@ try {
 
   console.log('=== apply-safety harness ===');
   console.log(`pristine:          ${PRISTINE}`);
+  console.log(`apply ran:         ${applyOk}${applyOk ? '' : `  (exit ${applyExit}${/unbalanced|Error/.test(log) ? ', ' + (log.match(/^.*(?:Error|unbalanced).*$/m) || [''])[0].slice(0, 120) : ''})`}`);
   console.log(`Could not find:    ${cnf}`);
+  // Naming them is the whole point when this runs as the cross-platform gate:
+  // a bare count tells you a one-platform prompt exists but not which one, and
+  // the bundle it failed against is a temp file that is gone by the time you
+  // think to look.
+  for (const line of log.split('\n').filter((l) => /Could not find/.test(l)))
+    console.log(`  ${line.trim()}`);
   console.log(`cannot apply safely (warns): ${cannotApply}`);
   console.log(`introduced minified \${var}: ${introduced.length}  ${introduced.slice(0, 12).join(' ')}`);
   console.log(`introduced raw non-ASCII: ${rawNonAscii.length}  ${rawNonAscii.slice(0, 12).join(' ')}`);
   console.log(`patched parses:    ${parses}  [${parseMode}]`);
   console.log(`workflow-script JS: ${wfScriptErrors.length === 0 ? 'ok' : wfScriptErrors.join(' | ')}`);
   const ok = harnessVerdict({
+    applyOk,
     cnf,
     cannotApply,
     introduced,

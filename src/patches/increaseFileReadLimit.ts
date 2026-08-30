@@ -7,24 +7,28 @@ import { LocationResult, showDiff } from './index';
  *
  * Approach: Find "=25000," and verify a known anchor appears nearby to ensure
  * we're targeting the correct value. Supports multiple anchors across CC versions:
- * - "defaultFileReadingLimits" (CC >=2.1.233)
  * - "<system-reminder>" (CC <2.1.83)
  * - "tengu_amber_wren" (CC >=2.1.83)
  */
 const getFileReadLimitLocation = (oldFile: string): LocationResult | null => {
-  // CC >=2.1.233 moved the limit next to `defaultFileReadingLimits` and away
-  // from the tengu_amber_wren / <system-reminder> anchors. The bundle now holds
-  // three `=25000,` sites (memory limit, loop limit, file-read limit); only the
-  // file-read one follows `defaultFileReadingLimits`. Lazy `{0,400}?` grabs the
-  // first `=25000,` after that anchor so a later unrelated site can't be chosen.
-  const fileReadingLimitsRegion = oldFile.match(
-    /defaultFileReadingLimits[\s\S]{0,400}?=25000,/
+  // Method 1 (CC >=2.1.232): the limit moved OUT of the gate's neighbourhood
+  // into its own `var psb=25000` further down, so every anchor-then-value and
+  // value-then-anchor window misses it. Bind through the identifier the gate
+  // actually falls back to instead of through proximity:
+  //   ...t.maxTokens>0?t.maxTokens:psb) ... var psb=25000,
+  const fallbackIdent = oldFile.match(
+    /tengu_amber_wren[\s\S]{0,800}?\bmaxTokens\s*:\s*([$\w]+)\s*\)/
   );
-  if (fileReadingLimitsRegion && fileReadingLimitsRegion.index !== undefined) {
-    // region ends with "=25000,"; "25000" occupies the 5 chars before the comma
-    const startIndex =
-      fileReadingLimitsRegion.index + fileReadingLimitsRegion[0].length - 6;
-    return { startIndex, endIndex: startIndex + 5 };
+  if (fallbackIdent) {
+    const ident = fallbackIdent[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // The declaration is `var psb=25000,fZs=128,` — the char before the
+    // identifier is a space after `var`, not punctuation, so exclude only
+    // identifier characters rather than listing separators.
+    const decl = oldFile.match(new RegExp(`[^$\\w]${ident}=25000[,;}]`));
+    if (decl && decl.index !== undefined) {
+      const startIndex = decl.index + decl[0].indexOf('25000');
+      return { startIndex, endIndex: startIndex + 5 };
+    }
   }
 
   const newConfigRegion = oldFile.match(

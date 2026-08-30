@@ -284,7 +284,7 @@ const ANCHOR_SIGNATURES: Record<number, (file: string) => number> = {
   // patch 22: unlock_sdk_url_host - b_c 函数完整.
   // 2.1.209+ 改 return shape 从 `return "..."` 到 `return {code:...,reason:"..."}`.
   22: f =>
-    /function [\w$]{1,8}\(e\)\{let t;try\{t=new URL\(e\)\}catch\{return(?:`could not parse|\{code:"unparseable",reason:`could not parse)/.test(
+    /function [\w$]{1,8}\(([\w$]{1,8})\)\{let ([\w$]{1,8});try\{\2=new URL\(\1\)\}catch\{return(?:`could not parse|\{code:"unparseable",reason:`could not parse)/.test(
       f
     )
       ? 1
@@ -306,9 +306,14 @@ const ANCHOR_SIGNATURES: Record<number, (file: string) => number> = {
       ? 1
       : 0,
 
-  // patch 25: force_1h_cache - gKe 函数完整 (bool-coerce helper 2.1.202 由 `it` 改 `ut`)
+  // patch 25: force_1h_cache. <=2.1.24x: bool-coerce fn reading process.env.
+  // 2.1.251+: rewritten to a `{ttl:"5m"|"1h"}` decider — anchor on the pristine
+  // subscriber/default ternary tail instead.
   25: f =>
     /function [\w$]{1,8}\(e\)\{if\([\w$]{1,4}\(process\.env\.FORCE_PROMPT_CACHING_5M\)\)return!1;if\([\w$]{1,4}\(process\.env\.ENABLE_PROMPT_CACHING_1H\)/.test(
+      f
+    ) ||
+    /"tengu_prompt_cache_1h_config"[\s\S]{0,120}\?\{ttl:"1h",reason:"subscriber"\}:\{ttl:"5m",reason:"default"\}/.test(
       f
     )
       ? 1
@@ -329,11 +334,12 @@ const ANCHOR_SIGNATURES: Record<number, (file: string) => number> = {
   // pristine → applicable. 全参数化 local var LHS.
   // 2.1.209+: eventQueue.push 抽成 helper `X(sink,...)`, 两种 shape 都识.
   // 2.1.238+: state 来源 `let r=Z;` → `let r=j1o().state;`, RHS 加可选方法链.
+  // 2.1.251+: 参数名互换 (e,t)→(t,e), 故参数 (\1,\2) 捕获后按位 backref.
   27: f =>
-    /function [\w$]{1,4}\(e,t\)\{let [\w$]{1,4}=[\w$]{1,4}(?:\(\))?(?:\.[\w$]{1,8})?;if\([\w$]{1,4}\.sink===null\)\{(?:[\w$]{1,4}\.eventQueue\.push|[\w$]{1,4}\([\w$]{1,4},)\{eventName:e,metadata:t,async:!1\}/.test(
+    /function [\w$]{1,4}\(([\w$]{1,4}),([\w$]{1,4})\)\{let [\w$]{1,4}=[\w$]{1,4}(?:\(\))?(?:\.[\w$]{1,8})?;if\([\w$]{1,4}\.sink===null\)\{(?:[\w$]{1,4}\.eventQueue\.push|[\w$]{1,4}\([\w$]{1,4},)\{eventName:\1,metadata:\2,async:!1\}/.test(
       f
     ) ||
-    /async function [\w$]{1,4}\(e,t\)\{let [\w$]{1,4}=[\w$]{1,4}(?:\(\))?(?:\.[\w$]{1,8})?;if\([\w$]{1,4}\.sink===null\)\{(?:[\w$]{1,4}\.eventQueue\.push|[\w$]{1,4}\([\w$]{1,4},)\{eventName:e,metadata:t,async:!0\}/.test(
+    /async function [\w$]{1,4}\(([\w$]{1,4}),([\w$]{1,4})\)\{let [\w$]{1,4}=[\w$]{1,4}(?:\(\))?(?:\.[\w$]{1,8})?;if\([\w$]{1,4}\.sink===null\)\{(?:[\w$]{1,4}\.eventQueue\.push|[\w$]{1,4}\([\w$]{1,4},)\{eventName:\1,metadata:\2,async:!0\}/.test(
       f
     ) ||
     /function [\w$]{1,4}\(e\)\{if\(![\w$]{1,4}\(\)\)return;if\(![\w$]{1,4}\|\|[\w$]{1,4}\("firstParty"\)\)return;let [\w$]{1,4}=[\w$]{1,4}\(\),\{accountUuid:[\w$]{1,4},organizationUuid:[\w$]{1,4}\}=[\w$]{1,4}\(!0\),[\w$]{1,4}=\{event_type:"GrowthbookExperimentEvent"/.test(
@@ -443,8 +449,11 @@ const PATCHED_SIGNATURES: Record<number, (file: string) => number> = {
   18: f => (/\/claude-[a-z]+-4\[\.-\][15678]\/\.test\(/.test(f) ? 1 : 0),
 
   // patch 22: b_c 中和 return null. 2.1.209 obj-return shape 更长, 放宽 pad 上限.
+  // 2.1.251+ build 去掉了参数 (function X(){...}), 故参数设为可选.
   22: f =>
-    /function [\w$]{1,8}\(e\)\{return null\/\*[\s\S]{0,800}?\*\/\}/.test(f)
+    /function [\w$]{1,8}\((?:[\w$]{1,8})?\)\{return null\/\*[\s\S]{0,800}?\*\/\}/.test(
+      f
+    )
       ? 1
       : 0,
 
@@ -460,11 +469,13 @@ const PATCHED_SIGNATURES: Record<number, (file: string) => number> = {
   24: f =>
     /function [\w$]{1,8}\(\)\{return!1\/\*[\s\S]{0,80}?\*\/\}/.test(f) ? 1 : 0,
 
-  // patch 25: gKe 中和 - 直接返 !process.env.FORCE_PROMPT_CACHING_5M
+  // patch 25: gKe 中和. <=2.1.24x: 直接返 !process.env.FORCE_PROMPT_CACHING_5M.
+  // 2.1.251+: ttl 决策尾被强制成 return{ttl:"1h",reason:"subscriber"}/* */.
   25: f =>
     /function [\w$]{1,8}\(e\)\{return!process\.env\.FORCE_PROMPT_CACHING_5M/.test(
       f
-    )
+    ) ||
+    /return\{ttl:"1h",reason:"subscriber"\}\/\*/.test(f)
       ? 1
       : 0,
 

@@ -8,6 +8,19 @@ superset of upstream. Pre-fork upstream history lives in Piebald's releases.
 
 ## [Unreleased]
 
+- **CC 2.1.251 支持: merge skrabe (2.1.246 code-split) + 修 context-limit & 3 个 CSP**
+  升级 2.1.238 → 2.1.251. 根因: CC 2.1.246 引入 Bun code-split bundles, 我方旧
+  extractor 只抓到 20KB 碎片导致所有 patch 失配. 解法: merge skrabe/main (173
+  commits, 含 `native: support Bun code-split bundles` + 为 2.1.246/247 re-anchor
+  的 base patches + reminders). 冲突解决: base patch/nativeInstallation 取 skrabe
+  (权威+含 code-split), installationBackup/startup 保我方 (versioned-pristine 架构),
+  defaultSettings union (保我方激进默认 + skrabe 新 key). 抽取修复后仅剩 2.1.248-251
+  增量漂移, 自行适配: (1) **context-limit** — 共享常量组解散成每模型
+  `context:{window:200000}`, 新增 Method 0 override 全部 8 个 window; (2) **csp #22
+  sdk-url** 参数/URL 变量名互换 `(e){let t`→`(t){let e`, 参数化; (3) **csp #25 1h
+  cache** 重写成 `{ttl:"5m"|"1h"}` decider, 强制决策尾恒返 1h; (4) **csp #27
+  telemetry** 参数 `(e,t)`→`(t,e)` 互换, 按位参数化. check.ts 同步 3 处签名. 另用
+  skrabe extractor 生成 `prompts-2.1.251.json` (6130 sites).
 - **CC 2.1.238: 修复 8 个 systemReminderOverrides anchor** — 2.1.238 重写了这些
   reminder 的文案/结构 (wrapper `ih/Vr`→`Zy/kn`, 文案改词, output_style 加
   type/length guards + `pze(e.style)`, edited_text_file 变 `{let t=...}`+snippet

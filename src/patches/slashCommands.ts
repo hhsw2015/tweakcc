@@ -58,54 +58,29 @@ const analyzeArrayFromOpenBracket = (
 };
 
 /**
- * CC 2.1.227+ builds the slash command list by memoizing a builder function
- * into `builtinCommandTable`:
- *   function Pti(){let e=gf();return e.builtinCommandTable??=uQb(),e.builtinCommandTable}
- *   function uQb(){return[sGu,V...,...gT4?[gT4]:[],...,C$p,...[]]}
- * The command definitions themselves moved into per-command lazy modules
- * (`var xnp=v(()=>{fmb={type:"local",name:"clear",...}})`), so the builder's
- * array holds bare identifier + spread references rather than inline objects —
- * the old "name/description within 12KB of the array" anchor no longer holds.
- * Anchor on `builtinCommandTable??=NAME()` instead, then size NAME's returned
- * array. Inserting an inline command object beside the bare refs is still valid:
- * CC iterates the array treating each element as a command object.
- */
-const findViaBuiltinCommandTable = (fileContents: string): number | null => {
-  const anchor = /builtinCommandTable\s*\?\?=\s*([$\w]+)\(\)/;
-  const anchorMatch = fileContents.match(anchor);
-  if (!anchorMatch) return null;
-
-  const builderName = anchorMatch[1];
-  const builderPattern = new RegExp(
-    `function ${builderName.replace(/\$/g, '\\$')}\\(\\)\\{return\\[`
-  );
-  const builderMatch = fileContents.match(builderPattern);
-  if (!builderMatch || builderMatch.index === undefined) return null;
-
-  const bracketIndex = builderMatch.index + builderMatch[0].length - 1;
-  const info = analyzeArrayFromOpenBracket(fileContents, bracketIndex);
-  return info ? info.closingBracket : null;
-};
-
-/**
  * Find the end position of the slash command array using stack machine.
  *
- * Tries the CC 2.1.227+ `builtinCommandTable` builder first, then falls back to
- * the pre-2.1.227 inline-array form: plain `=>[ID,ID,...]` with 30+ bare
- * identifiers (2.1.138+ mixes in spread operators for conditional commands,
- * e.g. `=L8(()=>[AUK,pL4,...gT4?[gT4]:[],...,W94(),...])`). The fallback
- * candidate must sit near command metadata (name/description) so unrelated
- * large arrow-return arrays are rejected.
+ * Supports the pre-2.1.138 form (plain `=>[ID,ID,...]` with 30+ bare
+ * identifiers), the 2.1.138+ form where the array uses spread operators for
+ * conditionally-included commands, e.g.:
+ *   =L8(()=>[AUK,pL4,DX4,y64,...gT4?[gT4]:[],Qj4,lI6,vL4,...,W94(),...])
+ * and the 2.1.227+ form, where the table moved out of an arrow into a named
+ * builder memoized on a cache field:
+ *   function Pti(){let e=gf();return e.builtinCommandTable??=uQb(),…}
+ *   function uQb(){return[sGu,Vfa,SFp,…]}
+ *
+ * The candidate must also sit in slash-command-specific code. The bundle keeps
+ * slash-command definitions near command metadata such as name/userFacingName,
+ * so this rejects unrelated large arrays — on 2.1.227 that guard is what
+ * separates the 130-item command table from three other 30+ item `return[`
+ * arrays elsewhere in the bundle.
  */
 export const findSlashCommandListEndPosition = (
   fileContents: string
 ): number | null => {
-  const viaTable = findViaBuiltinCommandTable(fileContents);
-  if (viaTable !== null) return viaTable;
-
-  // Walk every `=>[` candidate. The slash command array is the (only) array
-  // following an arrow-return that contains >= 30 top-level items.
-  const arrowPattern = /=>\s*\[/g;
+  // Walk every arrow-return or `return [` candidate. The slash command array is
+  // the (only) such array with >= 30 top-level items in command-metadata code.
+  const arrowPattern = /(?:=>|\breturn)\s*\[/g;
   let m: RegExpExecArray | null;
   let best: { closing: number; items: number } | null = null;
   while ((m = arrowPattern.exec(fileContents)) !== null) {

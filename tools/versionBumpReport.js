@@ -155,10 +155,19 @@ function runExtraction({ cliPath, oldJsonPath, newVersion }) {
   if (oldJsonPath && fs.existsSync(oldJsonPath)) {
     fs.copyFileSync(oldJsonPath, tempOutput);
   }
+  // The pipeline extracts with TWEAKCC_UPSTREAM_JSON set, so the extractor adopts
+  // upstream's identifierMap for every shared prompt whose identifiers array
+  // matches. Re-extracting WITHOUT it produces generated labels for those
+  // prompts and the comparison below then reports a difference this report
+  // created itself: on CC 2.1.237 that was 6 identifierMaps with 0 differing
+  // pieces and 0 differing ids, surfaced as `fresh extraction differs from
+  // committed prompts JSON` — a blocking issue with nothing behind it. Inherit
+  // the variable so the fresh extraction is built the same way the committed
+  // one was.
   const result = spawnSync(
     process.execPath,
     [path.join(__dirname, 'promptExtractor.js'), tempCli, tempOutput],
-    { encoding: 'utf8' }
+    { encoding: 'utf8', env: process.env }
   );
   if (result.status !== 0) {
     throw new Error(
@@ -305,9 +314,28 @@ function main() {
 
   const promptsDir =
     args['prompts-dir'] || path.join(repoRoot, 'data', 'prompts');
-  const cliPath =
-    args.cli || path.join(os.homedir(), '.tweakcc', 'native-claudejs-orig.js');
+  // The stale-backup rule deletes native-claudejs-orig.js before a bump's first
+  // apply, which leaves this whole report unable to run for exactly the half of
+  // the bump it is meant to gate. Fall back to the pipeline's own extraction,
+  // and let detectVersionFromCli below prove the fallback is the right build.
+  const defaultCli = path.join(
+    os.homedir(),
+    '.tweakcc',
+    'native-claudejs-orig.js'
+  );
   const versions = listPromptVersions(promptsDir);
+  const fallbackTarget = args.new || args._[1] || versions[versions.length - 1];
+  const tmpCli = fallbackTarget ? `/tmp/cli-${fallbackTarget}.js` : null;
+  const cliPath =
+    args.cli ||
+    (fs.existsSync(defaultCli)
+      ? defaultCli
+      : tmpCli && fs.existsSync(tmpCli)
+        ? tmpCli
+        : defaultCli);
+  if (!args.cli && cliPath === tmpCli) {
+    console.log(`(${defaultCli} absent — reading ${tmpCli})`);
+  }
 
   // Explicit target: --new flag or positional arg[1]. When absent the target is
   // inferred from the cli itself, so binary == target by construction (no check needed).

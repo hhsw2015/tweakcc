@@ -18,43 +18,39 @@ import { showDiff } from './index';
  * 4. Return the wrapper function body start index
  */
 /**
- * CC >=2.1.238 shape: the Clawd art moved into a module-level pose map keyed by
- * pose name, each pose an object of block-drawing row pieces, e.g.
- *   ntg={default:{r1L:" ▐",r1E:"▛███▛█",r1R:"",r2L:"▝▜",r2R:"█▀"},"look-left":{...},...}
- * The wrapper component reads `ntg[pose]` and also has a `"Apple_Terminal"`
- * branch:
- *   function uK(gfc){let P8e=Afc.c(26),...;let{pose:VtE}=GtE,yfc=...;if(wl()){return null}
- *     if(V.terminal==="Apple_Terminal"){...}let EEe=ntg[yfc],zdn;...return zdn}
- * Neutralize by inserting `return null;` at that wrapper's body start. Returns
- * the wrapper body-start index, or null if this shape is not present.
+ * Method 1 (CC >= 2.1.237): Clawd became a POSED mascot.
+ *
+ * The art is no longer one literal run. It is a pose table keyed by pose name,
+ * with each row split into left/edge/right segments:
+ *
+ *   U6h = {
+ *     default:     {r1L:" \u2590", r1E:"\u259B\u2588\u2588\u2588\u259B\u2588", r1R:"", r2L:"\u259D\u259C", r2R:"\u2588\u2580"},
+ *     "look-left": {...}, "look-right": {...}, "arms-up": {...}
+ *   }
+ *
+ * so the old art literal is simply not in the bundle any more (the 5th glyph
+ * went from `\u259C` to `\u259B`, and the raw `▛███▜` form is gone entirely).
+ * Tracing back from the art to a function no longer works either, because the
+ * table is a module-level `var` far from its renderer.
+ *
+ * Anchor on the table — the one shape only this feature has — and derive the
+ * wrapper as the function that INDEXES it by pose. That is the same wrapper the
+ * old code targeted: it returns `jsx(Enc,{pose})` on Apple_Terminal and the
+ * segmented art otherwise. The search window stops at the next `function ` so a
+ * preceding function cannot swallow the match (unbounded, `fnc` also matched).
  */
-const findClawdViaPoseMap = (oldFile: string): number | null => {
-  // Capture the pose-map var from its art-data assignment. The r1E row carries
-  // the block-drawing head; anchoring on r1L+r1E with a unicode escape run keeps
-  // this specific to the Clawd art and off unrelated `{default:{...}}` objects.
-  const poseMapMatch = oldFile.match(
-    /([$\w]+)=\{default:\{r1L:"[^"]*",r1E:"(?:\\u[0-9A-Fa-f]{4})+"/
-  );
-  if (!poseMapMatch) return null;
-  const poseMapVar = poseMapMatch[1];
-
-  // The wrapper reads `poseMapVar[` and carries the Apple_Terminal branch.
-  const funcPattern = /function ([$\w]+)\([^)]*\)\{/g;
-  let exec: RegExpExecArray | null;
-  while ((exec = funcPattern.exec(oldFile)) !== null) {
-    const bodyStart = exec.index + exec[0].length;
-    const body = oldFile.slice(bodyStart, bodyStart + 900);
-    if (
-      body.includes(`${poseMapVar}[`) &&
-      body.includes('"Apple_Terminal"') &&
-      // stop at the wrapper, not a nested fn defined before the pose-map read
-      body.indexOf(`${poseMapVar}[`) <
-        (body.indexOf('function ') === -1
-          ? Infinity
-          : body.indexOf('function '))
-    ) {
-      return bodyStart;
-    }
+const findPosedClawdWrapper = (oldFile: string): number | null => {
+  const table = oldFile.match(/\b([$\w]+)=\{default:\{r1L:/);
+  if (!table) return null;
+  const name = table[1];
+  const decl = /function ([$\w]+)\(([$\w]*)\)\{/g;
+  let m: RegExpExecArray | null;
+  while ((m = decl.exec(oldFile)) !== null) {
+    const bodyStart = m.index + m[0].length;
+    let body = oldFile.slice(bodyStart, bodyStart + 2000);
+    const next = body.indexOf('function ');
+    if (next !== -1) body = body.slice(0, next);
+    if (body.includes(`${name}[`) && body.includes('pose:')) return bodyStart;
   }
   return null;
 };
@@ -62,10 +58,9 @@ const findClawdViaPoseMap = (oldFile: string): number | null => {
 const findStartupClawdComponents = (oldFile: string): number[] => {
   const indices: number[] = [];
 
-  // CC >=2.1.238: pose-map-based art + wrapper reading it.
-  const poseMapBodyStart = findClawdViaPoseMap(oldFile);
-  if (poseMapBodyStart !== null) {
-    indices.push(poseMapBodyStart);
+  const posed = findPosedClawdWrapper(oldFile);
+  if (posed !== null) {
+    indices.push(posed);
     return indices;
   }
 

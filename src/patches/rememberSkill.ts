@@ -20,19 +20,31 @@ import { showDiff } from './index';
  * ```
  */
 
+// A candidate is only the real registration fn if a known bundled skill is
+// actually registered through it. CC 2.1.226 grew a second `let{files:X}=`
+// helper that the shape pattern matches FIRST, so taking the first match on
+// faith yielded the wrong identifier and every downstream anchor missed.
+const registersABundledSkill = (file: string, fn: string): boolean =>
+  new RegExp(`${fn}\\(\\{name:"(?:update-config|claude-in-chrome)"`).test(file);
+
 const findSkillRegistrationFn = (file: string): string | null => {
   const ident = '[A-Za-z_$][\\w$]*';
   const patterns = [
     new RegExp(
-      `function\\s+(${ident})\\((${ident})\\)\\{let\\{files:(${ident})\\}=\\2,`
+      `function\\s+(${ident})\\((${ident})\\)\\{let\\{files:(${ident})\\}=\\2,`,
+      'g'
     ), // CC 2.1.150 bundled-skill helper
-    /\{([A-Za-z_$][\w$]*)\(\{name:"claude-in-chrome"/,
+    /\{([A-Za-z_$][\w$]*)\(\{name:"claude-in-chrome"/g,
   ];
 
+  let fallback: string | null = null;
   for (const pattern of patterns) {
-    const match = file.match(pattern);
-    if (match) return match[1];
+    for (const match of file.matchAll(pattern)) {
+      if (registersABundledSkill(file, match[1])) return match[1];
+      fallback ??= match[1];
+    }
   }
+  if (fallback) return fallback;
 
   console.error(
     'patch: rememberSkill: failed to find skill registration function'
@@ -73,6 +85,20 @@ export const writeRememberSkill = (oldFile: string): string | null => {
 
   const bundledResult = writeBundledRememberSkill(oldFile, skillRegistrationFn);
   if (bundledResult) return bundledResult;
+
+  // The legacy injection point below is anchored on the skill's own body, which
+  // opens `# Remember Skill`. That literal has ZERO occurrences in 2.1.226 and
+  // 2.1.227 — Anthropic dropped the bundled Remember skill, so there is no
+  // shape left to re-anchor on. Hunting for a new regex is the wrong move
+  // (AGENTS.md "failed to find", case 2 — feature gone): no-op instead of
+  // failing the whole apply. Checked only after the bundled path so a build
+  // that still registers the skill takes that route.
+  if (!oldFile.includes('# Remember Skill')) {
+    console.log(
+      'patch: rememberSkill: the Remember skill is absent from this CC build — no-op'
+    );
+    return oldFile;
+  }
 
   // Find the injection point pattern
   const pattern =

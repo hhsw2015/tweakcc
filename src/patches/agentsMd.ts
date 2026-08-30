@@ -24,8 +24,8 @@ export const writeAgentsMd = (
     return file;
   }
 
-  // Try the switch-on-precomputed-result reader first (CC >=2.1.227)
-  const asyncV4 = writeAgentsMdAsyncSwitch(file, altNames);
+  // Try the storage-backend reader first (CC >=2.1.227)
+  const asyncV4 = writeAgentsMdAsyncBackend(file, altNames);
   if (asyncV4) return asyncV4;
 
   // Try the dir-flag null-check reader next (CC 2.1.210..2.1.226)
@@ -44,58 +44,48 @@ export const writeAgentsMd = (
   return writeAgentsMdSync(file, altNames);
 };
 
-// CC >=2.1.210: the async reader gained an isDirectory() probe. The reader now
-// takes a 4th callback arg that captures whether the path is a directory, and
-// the not-found (o===null) branch became a braced compound block that logs the
-// skip, records a metric, then returns {info:null,includePaths:[]}. Shape:
-//   async function _Kc(e,t,r){try{let n=Jt(),o=!1,
-//     i=await Zq(n,e,cKc,(s)=>{o=s.isDirectory()});
-//     if(i===null){if(C(`[CLAUDE.md] skipping ${e}: ...`),!pKc&&!o)pKc=!0,We(...);
-//       return{info:null,includePaths:[]}}
-//     return rrg(i,e,t,r)}catch(n){return org(n,e),{info:null,includePaths:[]}}}
-// The AGENTS.md reroute goes at the head of the `i===null` branch, before the
-// original skip-log/metric/return body (which we splice back verbatim).
-// CC >=2.1.227: the reader gained a precomputed-result fast path. It now takes
-// a 4th arg carrying a cache/read result and switches on its `kind`, falling
-// back to a fresh read only when that arg is absent:
+// CC >=2.1.227: the reader gained a 4th param carrying a storage backend, and
+// the local read moved into the `else` arm of a backend branch. Shape:
 //   async function XPs(e,t,r,n){try{let o,i=!1;
-//     if(n){let s=await vd_(n);switch(s.kind){case"absent":return{info:null,includePaths:[]};
-//       case"error":return oQu(s.code,e),{info:null,includePaths:[]};
-//       case"skipped":i=s.isDirectory,o=null;break;case"content":o=s.content;break}}
+//     if(n){let s=await vd_(n);switch(s.kind){case"absent":return{info:null,…};
+//       case"error":…;case"skipped":i=s.isDirectory,o=null;break;
+//       case"content":o=s.content;break}}
 //     else{let s=gr();o=await XY(s,e,vIo,(a)=>{i=a.isDirectory()})}
-//     if(o===null){...[CLAUDE.md] skipping...return{info:null,includePaths:[]}}
+//     if(o===null){…skipping…return{info:null,includePaths:[]}}
 //     return md_(o,e,t,r)}catch(o){return Td_(o,e),{info:null,includePaths:[]}}}
-// The whole if(n){switch}else{read} block is captured verbatim and spliced back;
-// only the signature gains `didReroute` and the `o===null` branch gets the alt
-// reroute. The reroute reads each alt name fresh by recursing with the 4th arg
-// cleared (void 0), so it takes the else-branch read for the alt path.
-const writeAgentsMdAsyncSwitch = (
+// The whole backend branch is captured and spliced back verbatim, so only the
+// `o===null` head is touched. The reroute recurses with the backend argument
+// dropped (void 0): the backend descriptor carries a per-file storage KEY, so
+// reusing it for an alternative filename would read the wrong object. Missing
+// files on the backend path return from `case"absent"` before reaching
+// `o===null`, so the local filesystem arm is the one this reroute serves.
+const writeAgentsMdAsyncBackend = (
   file: string,
   altNames: string[]
 ): string | null => {
   const funcPattern =
-    /async function ([$\w]+)\(([$\w]+),([$\w]+),([$\w]+),([$\w]+)\)\{try\{let ([$\w]+),([$\w]+)=!1;([\s\S]*?)if\(\6===null\)\{([\s\S]*?\[CLAUDE\.md\] skipping[\s\S]*?return\{info:null,includePaths:\[\]\})\}return ([$\w]+)\(\6,\2,\3,\4\)\}catch\(([$\w]+)\)\{return ([$\w]+)\(\11,\2\),\{info:null,includePaths:\[\]\}\}\}/;
+    /(async function ([$\w]+)\(([$\w]+),([$\w]+),([$\w]+),([$\w]+))\)\{try\{let ([$\w]+),([$\w]+)=!1;(if\(\6\)\{[\s\S]*?\}else\{[\s\S]*?\})if\(\7===null\)\{([\s\S]*?\[CLAUDE\.md\] skipping[\s\S]*?return\{info:null,includePaths:\[\]\})\}return ([$\w]+)\(\7,\3,\4,\5\)\}catch\(([$\w]+)\)\{return ([$\w]+)\(\12,\3\),\{info:null,includePaths:\[\]\}\}\}/;
 
   const m = file.match(funcPattern);
   if (!m || m.index === undefined) return null;
 
-  const funcName = m[1]; // XPs
-  const pathParam = m[2]; // e
-  const typeParam = m[3]; // t
-  const thirdParam = m[4]; // r
-  const precomputedParam = m[5]; // n
-  const contentVar = m[6]; // o
-  const dirFlag = m[7]; // i
-  const middle = m[8]; // if(n){switch...}else{read}
-  const nullBody = m[9]; // if(E(`[CLAUDE.md] skipping...`)...return{info:null,includePaths:[]}
-  const processor = m[10]; // md_
-  const catchVar = m[11]; // o (catch-scoped)
-  const errorHandler = m[12]; // Td_
+  const funcSig = m[1]; // async function XPs(e,t,r,n
+  const funcName = m[2]; // XPs
+  const pathParam = m[3]; // e
+  const typeParam = m[4]; // t
+  const thirdParam = m[5]; // r
+  const contentVar = m[7]; // o
+  const dirFlag = m[8]; // i
+  const backendBranch = m[9]; // if(n){…}else{…}
+  const nullBody = m[10]; // if(E(`[CLAUDE.md] skipping …`)…return{…}
+  const processor = m[11]; // md_
+  const catchVar = m[12]; // o (catch-scoped)
+  const errorHandler = m[13]; // Td_
 
   const altNamesJson = JSON.stringify(altNames);
 
   const replacement =
-    `async function ${funcName}(${pathParam},${typeParam},${thirdParam},${precomputedParam},didReroute){try{let ${contentVar},${dirFlag}=!1;${middle}` +
+    `${funcSig},didReroute){try{let ${contentVar},${dirFlag}=!1;${backendBranch}` +
     `if(${contentVar}===null){` +
     `if(!didReroute&&(${pathParam}.endsWith("/CLAUDE.md")||${pathParam}.endsWith("\\\\CLAUDE.md"))){` +
     `for(let alt of ${altNamesJson}){let altPath=${pathParam}.slice(0,-9)+alt;` +
@@ -113,6 +103,17 @@ const writeAgentsMdAsyncSwitch = (
   return newFile;
 };
 
+// CC >=2.1.210: the async reader gained an isDirectory() probe. The reader now
+// takes a 4th callback arg that captures whether the path is a directory, and
+// the not-found (o===null) branch became a braced compound block that logs the
+// skip, records a metric, then returns {info:null,includePaths:[]}. Shape:
+//   async function _Kc(e,t,r){try{let n=Jt(),o=!1,
+//     i=await Zq(n,e,cKc,(s)=>{o=s.isDirectory()});
+//     if(i===null){if(C(`[CLAUDE.md] skipping ${e}: ...`),!pKc&&!o)pKc=!0,We(...);
+//       return{info:null,includePaths:[]}}
+//     return rrg(i,e,t,r)}catch(n){return org(n,e),{info:null,includePaths:[]}}}
+// The AGENTS.md reroute goes at the head of the `i===null` branch, before the
+// original skip-log/metric/return body (which we splice back verbatim).
 const writeAgentsMdAsyncDirFlag = (
   file: string,
   altNames: string[]
@@ -173,115 +174,26 @@ const writeAgentsMdAsyncNullCheck = (
   file: string,
   altNames: string[]
 ): string | null => {
-  // Two shapes seen:
-  //   pre-2.1.209 (3-arg reader, immediate return in null branch):
-  //     async function F(e,t,n){try{let r=X(),o=await Y(r,e,LIMIT);
-  //       if(o===null)return C(`[CLAUDE.md] skipping ${e}: ...`),{info:null,includePaths:[]};
-  //       return P(o,e,t,n)}catch(r){return H(r,e),{info:null,includePaths:[]}}}
-  //   2.1.209+ (4-arg reader with directory-check callback, wrapped null-branch):
-  //     async function F(e,t,r){try{let n=X(),o=!1,i=await Y(n,e,LIMIT,(s)=>{o=s.isDirectory()});
-  //       if(i===null){if(C(`[CLAUDE.md] skipping ...`),!G&&!o)G=!0,Ve(...);return{info:null,includePaths:[]}}
-  //       return P(i,e,t,r)}catch(n){return H(n,e),{info:null,includePaths:[]}}}
-  // Two separate patterns keep backref numbering simple.
-  const legacyPattern =
+  const funcPattern =
     /(async function ([$\w]+)\(([$\w]+),([$\w]+),([$\w]+))\)\{try\{let ([$\w]+)=([$\w]+)\(\),([$\w]+)=await ([$\w]+)\(\6,\3,([$\w]+)\);if\(\8===null\)return (([$\w]+)\(`\[CLAUDE\.md\] skipping[^`]*`\),\{info:null,includePaths:\[\]\});return ([$\w]+)\(\8,\3,\4,\5\)\}catch\(([$\w]+)\)\{return (([$\w]+)\(\14,\3\),\{info:null,includePaths:\[\]\})\}\}/;
-  // 2.1.209+ shape. Backref indices:
-  //   \1 header, \2 fn name, \3 e, \4 t, \5 r, \6 n (let var), \7 Kt,
-  //   \8 o (isDir flag), \9 i (result), \10 Nq (reader), \11 f8i (limit),
-  //   \12 callback param, \13 zdg (next fn), \14 catch param, \15 err handler
-  const memoPattern =
-    /(async function ([$\w]+)\(([$\w]+),([$\w]+),([$\w]+))\)\{try\{let ([$\w]+)=([$\w]+)\(\),([$\w]+)=!1,([$\w]+)=await ([$\w]+)\(\6,\3,([$\w]+),\(([$\w]+)\)=>\{\8=\12\.isDirectory\(\)\}\);if\(\9===null\)\{[\s\S]{0,300}?return\{info:null,includePaths:\[\]\}\}return ([$\w]+)\(\9,\3,\4,\5\)\}catch\(([$\w]+)\)\{return ([$\w]+)\(\14,\3\),\{info:null,includePaths:\[\]\}\}\}/;
-  // 统一提取字段. 两个 shape 的 group 索引不同, 用一个包装函数把差异隐藏.
-  interface AsyncNullCheckMatch {
-    funcSig: string;
-    funcName: string;
-    pathParam: string;
-    typeParam: string;
-    thirdParam: string;
-    ctxVar: string;
-    ctxGetter: string;
-    contentVar: string;
-    reader: string;
-    limitVar: string;
-    skipReturn: string; // full null-branch body (return + expression)
-    processor: string;
-    catchVar: string;
-    catchReturn: string; // catch body (return + expression)
-    index: number;
-    length: number;
-  }
 
-  const extract = (): AsyncNullCheckMatch | null => {
-    const legacyMatch = file.match(legacyPattern);
-    if (legacyMatch && legacyMatch.index !== undefined) {
-      return {
-        funcSig: legacyMatch[1],
-        funcName: legacyMatch[2],
-        pathParam: legacyMatch[3],
-        typeParam: legacyMatch[4],
-        thirdParam: legacyMatch[5],
-        ctxVar: legacyMatch[6],
-        ctxGetter: legacyMatch[7],
-        contentVar: legacyMatch[8],
-        reader: legacyMatch[9],
-        limitVar: legacyMatch[10],
-        skipReturn: legacyMatch[11],
-        processor: legacyMatch[13],
-        catchVar: legacyMatch[14],
-        catchReturn: legacyMatch[15],
-        index: legacyMatch.index,
-        length: legacyMatch[0].length,
-      };
-    }
-    const memoMatch = file.match(memoPattern);
-    if (memoMatch && memoMatch.index !== undefined) {
-      // 2.1.209 group indices:
-      //   1 funcSig, 2 funcName, 3 e, 4 t, 5 r, 6 n(ctxVar),
-      //   7 Kt(ctxGetter), 8 o(isDir), 9 i(contentVar),
-      //   10 Nq(reader), 11 f8i(limitVar), 12 callback param,
-      //   13 zdg(processor), 14 catch var, 15 err handler fn
-      // null-branch has extra sad-path logic — replicate a no-op sad path.
-      return {
-        funcSig: memoMatch[1],
-        funcName: memoMatch[2],
-        pathParam: memoMatch[3],
-        typeParam: memoMatch[4],
-        thirdParam: memoMatch[5],
-        ctxVar: memoMatch[6],
-        ctxGetter: memoMatch[7],
-        contentVar: memoMatch[9],
-        reader: memoMatch[10],
-        limitVar: memoMatch[11],
-        skipReturn: `{info:null,includePaths:[]}`,
-        processor: memoMatch[13],
-        catchVar: memoMatch[14],
-        catchReturn: `${memoMatch[15]}(${memoMatch[14]},${memoMatch[3]}),{info:null,includePaths:[]}`,
-        index: memoMatch.index,
-        length: memoMatch[0].length,
-      };
-    }
-    return null;
-  };
+  const m = file.match(funcPattern);
+  if (!m || m.index === undefined) return null;
 
-  const parsed = extract();
-  if (!parsed) return null;
-
-  const {
-    funcSig,
-    funcName,
-    pathParam,
-    typeParam,
-    thirdParam,
-    ctxVar,
-    ctxGetter,
-    contentVar,
-    reader,
-    limitVar,
-    skipReturn,
-    processor,
-    catchVar,
-    catchReturn,
-  } = parsed;
+  const funcSig = m[1]; // async function NAME(P1,P2,P3
+  const funcName = m[2]; // Uca
+  const pathParam = m[3]; // e
+  const typeParam = m[4]; // t
+  const thirdParam = m[5]; // n
+  const ctxVar = m[6]; // r
+  const ctxGetter = m[7]; // Vt
+  const contentVar = m[8]; // o
+  const reader = m[9]; // qN
+  const limitVar = m[10]; // Gao
+  const skipReturn = m[11]; // C(`[CLAUDE.md] skipping ...`),{info:null,includePaths:[]}
+  const processor = m[13]; // mpp
+  const catchVar = m[14]; // r (catch-scoped)
+  const catchReturn = m[15]; // hpp(r,e),{info:null,includePaths:[]}
 
   const altNamesJson = JSON.stringify(altNames);
 
@@ -295,8 +207,8 @@ const writeAgentsMdAsyncNullCheck = (
     `return ${skipReturn};}` +
     `return ${processor}(${contentVar},${pathParam},${typeParam},${thirdParam})}catch(${catchVar}){return ${catchReturn}}}`;
 
-  const startIndex = parsed.index;
-  const endIndex = startIndex + parsed.length;
+  const startIndex = m.index;
+  const endIndex = startIndex + m[0].length;
   const newFile =
     file.slice(0, startIndex) + replacement + file.slice(endIndex);
 

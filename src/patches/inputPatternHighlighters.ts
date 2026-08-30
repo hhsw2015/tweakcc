@@ -1,6 +1,6 @@
 import { stringifyRegex } from '@/utils';
 import { InputPatternHighlighter } from '../types';
-import { findChalkVar, showDiff } from './index';
+import { findChalkVar, findChalkVarInModule, showDiff } from './index';
 
 // ======================================================================
 
@@ -35,6 +35,60 @@ const buildChalkChain = (
 
 // ======================================================================
 
+const rewriteJsxHighlightRenderer = (
+  oldFile: string,
+  jsxMatch: RegExpMatchArray,
+  dottedJsx: boolean
+): string | null => {
+  if (jsxMatch.index === undefined) return null;
+  const [, jsxVar, textComp, props, segVar, innerComp, keyVar] = jsxMatch;
+  const propVars = [...props.matchAll(/[$\w]+:([$\w]+)\.highlight\?\./g)].map(
+    m => m[1]
+  );
+  if (propVars.some(v => v !== segVar)) {
+    console.error(
+      'patch: inputPatternHighlighters: highlight prop run mixes segment variables'
+    );
+    return null;
+  }
+
+  const call = dottedJsx ? `${jsxVar}.jsx` : jsxVar;
+  const styleFn =
+    `(${segVar}.highlight?.style??` +
+    `(typeof ${segVar}.highlight?.color==="function"?` +
+    `${segVar}.highlight.color:void 0))`;
+  const off = (prop: string): string =>
+    `,${prop}:${styleFn}?void 0:${segVar}.highlight?.${prop}`;
+
+  const replacement =
+    `return ${call}(${textComp},{` +
+    `${off('color').slice(1)}` +
+    off('backgroundColor') +
+    `,dimColor:${segVar}.highlight?.dimColor` +
+    off('inverse') +
+    off('bold') +
+    off('italic') +
+    off('underline') +
+    off('strikethrough') +
+    `,children:${call}(${innerComp},{children:${styleFn}?` +
+    `${styleFn}(${segVar}.text):${segVar}.text})},${keyVar})`;
+
+  const newFile =
+    oldFile.slice(0, jsxMatch.index) +
+    replacement +
+    oldFile.slice(jsxMatch.index + jsxMatch[0].length);
+
+  showDiff(
+    oldFile,
+    newFile,
+    replacement,
+    jsxMatch.index,
+    jsxMatch.index + jsxMatch[0].length
+  );
+
+  return newFile;
+};
+
 const writeCustomHighlighterImpl = (oldFile: string): string | null => {
   // Idempotency: the augmented renderer (any method) is the only place that
   // emits this exact guard, so a second pass is a no-op instead of a failure.
@@ -45,6 +99,18 @@ const writeCustomHighlighterImpl = (oldFile: string): string | null => {
     return oldFile;
   }
 
+  // Method 0 — CC >= 2.1.246: jsx/jsxs are imported bindings, so the renderer
+  // is a bare call (`return c(u,{color:C.highlight?.color,...,children:c(E,
+  // {children:C.text})},Pt)`) rather than `JSX.jsx(TEXT,{...})`. Same prop-run
+  // matching as Method 1 so a newly inserted highlight field does not break us.
+  const importedJsxRegex =
+    /return ([$\w]+)\(([$\w]+),\{((?:[$\w]+:([$\w]+)\.highlight\?\.[$\w]+,)+)children:\1\(([$\w]+),\{children:\4\.text\}\)\},([$\w]+)\)/;
+
+  const importedJsxMatch = oldFile.match(importedJsxRegex);
+  if (importedJsxMatch && importedJsxMatch.index !== undefined) {
+    return rewriteJsxHighlightRenderer(oldFile, importedJsxMatch, false);
+  }
+
   // Method 1 — CC >=2.1.186 (jsx runtime). React.createElement was replaced by
   // jsx()/jsxs() with children passed inline as a `children:` prop and the key
   // moved to the third argument:
@@ -53,51 +119,19 @@ const writeCustomHighlighterImpl = (oldFile: string): string | null => {
   //     {children:SEG.text})},KEY)
   // The sibling shimmer branch is now gated on `highlight?.shimmerColor`
   // (which our pushed ranges never set), so no shimmer guard is needed here.
+  // The prop list is matched as a RUN of `name:SEG.highlight?.name,` pairs
+  // rather than as a fixed sequence: CC 2.1.234 inserted `underline:` between
+  // `inverse:` and `children:` and a sequence-pinned anchor stopped matching,
+  // which nothing surfaced because this patch is config-gated and `--apply`
+  // never runs it (skrabe/lobotomized-claude-code#25 is the same class on the
+  // reminder patches). The replacement emits its own complete prop list, so a
+  // prop Anthropic adds here is covered without a further change.
   const jsxRegex =
-    /return ([$\w]+)\.jsx\(([$\w]+),\{color:([$\w]+)\.highlight\?\.color,dimColor:\3\.highlight\?\.dimColor,inverse:\3\.highlight\?\.inverse,children:\1\.jsx\(([$\w]+),\{children:\3\.text\}\)\},([$\w]+)\)/;
+    /return ([$\w]+)\.jsx\(([$\w]+),\{((?:[$\w]+:([$\w]+)\.highlight\?\.[$\w]+,)+)children:\1\.jsx\(([$\w]+),\{children:\4\.text\}\)\},([$\w]+)\)/;
 
   const jsxMatch = oldFile.match(jsxRegex);
   if (jsxMatch && jsxMatch.index !== undefined) {
-    const [, jsxVar, textComp, segVar, innerComp, keyVar] = jsxMatch;
-
-    // A highlight carries either a chalk `style` fn (what this patch pushes) or
-    // — for legacy configs — a callable `color`. Either one renders the text
-    // itself, so the Ink colour props must be suppressed to avoid double
-    // styling and to keep a function from reaching `color=`.
-    const styleFn =
-      `(${segVar}.highlight?.style??` +
-      `(typeof ${segVar}.highlight?.color==="function"?` +
-      `${segVar}.highlight.color:void 0))`;
-    const off = (prop: string): string =>
-      `,${prop}:${styleFn}?void 0:${segVar}.highlight?.${prop}`;
-
-    const replacement =
-      `return ${jsxVar}.jsx(${textComp},{` +
-      `${off('color').slice(1)}` +
-      off('backgroundColor') +
-      `,dimColor:${segVar}.highlight?.dimColor` +
-      off('inverse') +
-      off('bold') +
-      off('italic') +
-      off('underline') +
-      off('strikethrough') +
-      `,children:${jsxVar}.jsx(${innerComp},{children:${styleFn}?` +
-      `${styleFn}(${segVar}.text):${segVar}.text})},${keyVar})`;
-
-    const newFile =
-      oldFile.slice(0, jsxMatch.index) +
-      replacement +
-      oldFile.slice(jsxMatch.index + jsxMatch[0].length);
-
-    showDiff(
-      oldFile,
-      newFile,
-      replacement,
-      jsxMatch.index,
-      jsxMatch.index + jsxMatch[0].length
-    );
-
-    return newFile;
+    return rewriteJsxHighlightRenderer(oldFile, jsxMatch, true);
   }
 
   // Method 2 — CC <2.1.83: if(N.highlight?.color)return createElement(T,{key:E},color:N.highlight.color,...)
@@ -230,10 +264,22 @@ const writeCustomHighlighterCreation = (
   // CC >=2.1.140: same shape, but unrelated useMemos earlier in the file
   // require the inner span to be length-bounded so the regex doesn't span
   // across functions and latch onto the wrong useMemo opening.
+  // Method 0 (CC >= 2.1.246): useMemo is an imported binding, so the ranges
+  // builder is `let Mc=z(()=>{let E=[];...if(be&&en&&!Gi)E.push({start:U,
+  // end:U+Pn.length,color:"warning",priority:20})` — no `.useMemo`.
+  const importedMemoRegex =
+    /((?:let |;|,)[$\w]+=[$\w]+\(\(\)=>\{let [$\w]+=\[\];[\s\S]{0,2000}?)(if\([$\w]+&&[$\w]+&&![$\w]+\)([$\w]+)\.push\(\{start:[$\w]+,end:[$\w]+\+[$\w]+\.length,color:"warning",priority:\d+\})/;
+
+  // Method 1 (CC <2.1.246): `,VAR=REACT.useMemo(()=>{let ARR=[];...` or
+  // `;let VAR=REACT.useMemo(()=>{let ARR=[];...`
   const regex =
     /((?:,|;let )[$\w]+=[$\w]+\.useMemo\(\(\)=>\{let [$\w]+=\[\];[\s\S]{0,2000}?)(if\([$\w]+&&[$\w]+&&![$\w]+\)([$\w]+)\.push\(\{start:[$\w]+,end:[$\w]+\+[$\w]+\.length,color:"warning",priority:\d+\})/;
 
-  const match = oldFile.match(regex);
+  const importedMemoMatch = oldFile.match(importedMemoRegex);
+  const match =
+    importedMemoMatch && importedMemoMatch.index !== undefined
+      ? importedMemoMatch
+      : oldFile.match(regex);
   if (!match || match.index === undefined) {
     console.error(
       'patch: inputPatternHighlighters: failed to find useMemo/push pattern'
@@ -243,15 +289,18 @@ const writeCustomHighlighterCreation = (
 
   const rangesVar = match[3];
 
-  const reactMemoPattern = /[^$\w]([$\w]+(?:\.default)?)\.useMemo\(/;
-  const reactMemoMatch = match[1].match(reactMemoPattern);
-  if (!reactMemoMatch) {
-    console.error(
-      'patch: inputPatternHighlighters: failed to extract React var from useMemo'
+  // Chalk as named in THIS module. The bundle-wide winner is a different
+  // module's local on a code-split build, so splicing it here throws the first
+  // time a highlighter matches. When the module has no chalk, drop the `style`
+  // closure: every option this config exposes is also carried by the plain
+  // color/backgroundColor/bold/italic/underline/inverse/dimColor/strikethrough
+  // props, which is the branch the renderer already falls back to.
+  const localChalkVar = findChalkVarInModule(oldFile, match.index);
+  if (!localChalkVar) {
+    console.log(
+      'patch: inputPatternHighlighters: no chalk binding in the target module — using declarative styling props'
     );
-    return null;
   }
-  const _reactVarFromMemo = reactMemoMatch[1]; // eslint-disable-line @typescript-eslint/no-unused-vars
 
   const searchStart = Math.max(0, match.index - 15000);
   const searchWindow = oldFile.slice(searchStart, match.index);
@@ -277,7 +326,9 @@ const writeCustomHighlighterCreation = (
   let genCode = '';
   for (let i = 0; i < highlighters.length; i++) {
     const highlighter = highlighters[i];
-    const chalkChain = buildChalkChain(chalkVar, highlighter);
+    const chalkChain = localChalkVar
+      ? buildChalkChain(localChalkVar, highlighter)
+      : null;
     const formatStr = highlighter.format ?? '{MATCH}';
     JSON.stringify(formatStr).replace(/\{MATCH\}/g, '"+x+"'); // preserve legacy side-effect-free transform shape for diff stability
 
@@ -334,7 +385,7 @@ const writeCustomHighlighterCreation = (
     }
     const regexStr = stringifyRegex(regex);
 
-    genCode += `if(typeof ${inputVar}==="string"){for(let m of ${inputVar}.matchAll(${regexStr})){${rangesVar}.push({start:m.index,end:m.index+m[0].length,color:${colorValue}${bgColorValue ? `,backgroundColor:${bgColorValue}` : ''}${isBold ? ',bold:!0' : ''}${isItalic ? ',italic:!0' : ''}${isUnderline ? ',underline:!0' : ''}${isInverse ? ',inverse:!0' : ''}${isDim ? ',dimColor:!0' : ''}${isStrikethrough ? ',strikethrough:!0' : ''},style:(x)=>${chalkChain}(x),priority:100})}}`;
+    genCode += `if(typeof ${inputVar}==="string"){for(let m of ${inputVar}.matchAll(${regexStr})){${rangesVar}.push({start:m.index,end:m.index+m[0].length,color:${colorValue}${bgColorValue ? `,backgroundColor:${bgColorValue}` : ''}${isBold ? ',bold:!0' : ''}${isItalic ? ',italic:!0' : ''}${isUnderline ? ',underline:!0' : ''}${isInverse ? ',inverse:!0' : ''}${isDim ? ',dimColor:!0' : ''}${isStrikethrough ? ',strikethrough:!0' : ''}${chalkChain ? `,style:(x)=>${chalkChain}(x)` : ''},priority:100})}}`;
   }
 
   if (!genCode) {
@@ -360,7 +411,7 @@ const writeCustomHighlighterCreation = (
       Math.max(0, forLoopIdx - 2000),
       forLoopIdx
     );
-    const memoMatches = [...searchBack.matchAll(/useMemo\(\(\)=>\{/g)];
+    const memoMatches = [...searchBack.matchAll(/[$\w]+\(\(\)=>\{/g)];
     if (memoMatches.length > 0) {
       const memoOffset =
         Math.max(0, forLoopIdx - 2000) +

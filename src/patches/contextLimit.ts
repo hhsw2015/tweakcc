@@ -3,6 +3,19 @@
 const OVERRIDE = '(+process.env.CLAUDE_CODE_CONTEXT_LIMIT||200000)';
 
 export const writeContextLimit = (oldFile: string): string | null => {
+  // Method 0 — CC >= ~2.1.248: the shared `var X=200000,Y=200000,...` constant
+  // group was dissolved into per-model catalog objects, each carrying its own
+  // `context:{window:200000,supports_1m_...}`. Override every model's window so
+  // the effective context limit follows CLAUDE_CODE_CONTEXT_LIMIT. Env-unset →
+  // 200000 → identical to stock CC. supports_1m_* flags are preserved.
+  const patternWindow = /context:\{window:200000/g;
+  if (patternWindow.test(oldFile)) {
+    return oldFile.replace(
+      /context:\{window:200000/g,
+      `context:{window:${OVERRIDE}`
+    );
+  }
+
   // CC >= ~2.1.18x split the single 200000 context-limit constant into TWO
   // adjacent ones: `var fkt=200000,KQ=200000,Akt=20000,MWu=32000,NWu=128000;`.
   //   - the 2nd (`KQ`) is the context window — used as `configured: KQ,

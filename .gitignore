@@ -59,3 +59,4 @@ debug.log
 /AGENTS.md
 findings.md
 src/patches/fixtures/*/pristine.bin
+.workflow-journal/
