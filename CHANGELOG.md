@@ -8,6 +8,9 @@ superset of upstream. Pre-fork upstream history lives in Piebald's releases.
 
 ## [Unreleased]
 
+- **CC 2.1.252 支持** — 升级 2.1.251 → 2.1.252. 零 patch 漂移 (code-split 抽取
+  与全部 anchor 均沿用), 仅用 skrabe extractor 生成 `prompts-2.1.252.json`
+  (6131 sites). 可应用 0 / 已 patch 32 / 失效 0 / 上游已移除 5.
 - **CC 2.1.251 支持: merge skrabe (2.1.246 code-split) + 修 context-limit & 3 个 CSP**
   升级 2.1.238 → 2.1.251. 根因: CC 2.1.246 引入 Bun code-split bundles, 我方旧
   extractor 只抓到 20KB 碎片导致所有 patch 失配. 解法: merge skrabe/main (173
