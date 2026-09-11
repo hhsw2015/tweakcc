@@ -364,8 +364,10 @@ export const writeAgentTeamsAlwaysOn = (file: string): string | null => {
 // Shape: 命令定义里 `isEnabled:()=>!1` 或 `isEnabled:()=>helper()` 都改成 `isEnabled:()=>!0`.
 // anchor 用 `name:"ultraplan"` + `argumentHint:"<prompt>"` 双向锚定.
 export const writeUltraplanEnable = (file: string): string | null => {
+  // 2.1.268+ 在 argumentHint 和 isEnabled 之间插了 `availability:["claude-ai"],`
+  // (以及 get description(){...}), 故两处都用惰性通配兜住中间新增字段.
   const pattern =
-    /(name:"ultraplan",[\s\S]{1,500}?argumentHint:"<prompt>",isEnabled:\(\)=>)(?:!1|[\w$]{1,4}\(\))/g;
+    /(name:"ultraplan",[\s\S]{1,500}?argumentHint:"<prompt>",[\s\S]{0,120}?isEnabled:\(\)=>)(?:!1|[\w$]{1,4}\(\))/g;
   // 特殊: 长度可能不同 (原 `!1` 2字符, 或 `X()` 3+字符, 新 `!0` 2字符).
   // 用 applyRegexReplace 需要等长, 手工做.
   const matches = [...file.matchAll(pattern)];

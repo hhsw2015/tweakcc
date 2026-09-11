@@ -8,6 +8,20 @@ superset of upstream. Pre-fork upstream history lives in Piebald's releases.
 
 ## [Unreleased]
 
+- **CC 2.1.268 支持: 修复 8 个失配 patch (6 fatal base + ultraplan + claudemd-context)**
+  升级 2.1.252 → 2.1.268 (跳 16 版). code-split 抽取沿用 (orig.js 33MB 完整),
+  但 8 处 anchor 漂移. 修复: (1) **clear-screen** redrawPattern stdout-map 源
+  `Y.get`→`xs().get` (加可选 `()`); (2) **strip-empty-system-reminders** wrapper
+  加了 startsWith/endsWith pass-through guard + helper-wrapped body `${Okt(oYt(e))}`
+  + `${G}` 后缀; (3) **model-customizations** push 的 label 变表达式 + description
+  变三元; (4) **increase-file-read-limit** `tengu_amber_wren` 整个删除, 上限移到
+  `var X=25000,Y=N;class Z extends Error{tokenCount;maxTokens` 声明, 加 Method 0;
+  (5) **auto-accept-plan-mode** 新 `onChange:(X)=>void FUNC(X)` 变体; (6)
+  **autonomous-operation-all-models** fable/mythos 门拆成 `startsWith("claude-fable-")`
+  前缀谓词; (7) **csp #31 ultraplan** argumentHint 与 isEnabled 间插了 availability
+  字段; (8) **claudemd-context reminder** `<system-reminder>` 文案提成 const
+  `aYt`/`Jur`, content 变 `aYt+map(...)+Jur` 拼接. 另用 skrabe extractor 生成
+  `prompts-2.1.268.json`. 可应用 0 / 已 patch 32 / 失效 0 / 上游已移除 5.
 - **CC 2.1.252 支持** — 升级 2.1.251 → 2.1.252. 零 patch 漂移 (code-split 抽取
   与全部 anchor 均沿用), 仅用 skrabe extractor 生成 `prompts-2.1.252.json`
   (6131 sites). 可应用 0 / 已 patch 32 / 失效 0 / 上游已移除 5.

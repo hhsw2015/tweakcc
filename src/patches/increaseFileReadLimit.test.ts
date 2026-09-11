@@ -31,6 +31,24 @@ describe('writeIncreaseFileReadLimit', () => {
     expect(out).toContain('tengu_amber_wren');
   });
 
+  it('raises 25000 via the Error-class declaration (CC >=2.1.268)', () => {
+    // tengu_amber_wren is gone; the limit seeds the "File content exceeds N
+    // tokens" error default: var LSo=25000,kot=128;class Nme extends Error{...}
+    const fixture =
+      'shapeClass}var LSo=25000,kot=128;class Nme extends Error{tokenCount;maxTokens;constructor(e,n){}}';
+    const out = writeIncreaseFileReadLimit(fixture);
+    expect(out).not.toBeNull();
+    expect(out).toContain('var LSo=1000000,kot=128;class Nme extends Error');
+    expect(out).not.toContain('LSo=25000');
+  });
+
+  it('leaves an unrelated =25000,=128 pair alone without the Error class', () => {
+    // memory/other limits share the =25000,=N shape but lack the Error subclass
+    expect(
+      writeIncreaseFileReadLimit('var XB=25000,J7t=4;doStuff()')
+    ).toBeNull();
+  });
+
   it('raises 25000 via the <system-reminder> anchor (CC <2.1.83)', () => {
     const out = writeIncreaseFileReadLimit(FIXTURE_SYSTEM_REMINDER);
     expect(out).not.toBeNull();

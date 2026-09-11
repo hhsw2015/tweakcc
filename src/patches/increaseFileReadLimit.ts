@@ -11,6 +11,23 @@ import { LocationResult, showDiff } from './index';
  * - "tengu_amber_wren" (CC >=2.1.83)
  */
 const getFileReadLimitLocation = (oldFile: string): LocationResult | null => {
+  // Method 0 (CC >=2.1.268): the `tengu_amber_wren` gate is gone entirely, so
+  // every proximity/fallback anchor below misses. The limit now lives in the
+  // declaration that seeds the "File content exceeds N tokens" error's default:
+  //   var LSo=25000,kot=128;class Nme extends Error{tokenCount;maxTokens;...}
+  // and is consumed as `maxTokens:FSo()??LSo`. Anchor on the declaration
+  // immediately followed by that Error subclass (25000 + an `extends Error`
+  // whose first fields are tokenCount;maxTokens) — distinctive enough that no
+  // unrelated `=25000` site collides.
+  const errClassDecl = oldFile.match(
+    /[$\w]+=25000,[$\w]+=\d+;class [$\w]+ extends Error\{tokenCount;maxTokens/
+  );
+  if (errClassDecl && errClassDecl.index !== undefined) {
+    const rel = errClassDecl[0].indexOf('25000');
+    const startIndex = errClassDecl.index + rel;
+    return { startIndex, endIndex: startIndex + 5 };
+  }
+
   // Method 1 (CC >=2.1.232): the limit moved OUT of the gate's neighbourhood
   // into its own `var psb=25000` further down, so every anchor-then-value and
   // value-then-anchor window misses it. Bind through the identifier the gate

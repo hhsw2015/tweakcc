@@ -10,8 +10,12 @@ export const writeClearScreen = (oldFile: string): string | null => {
     return oldFile;
   }
 
+  // CC >=2.1.268: the stdout-map source changed from a bare identifier
+  // (`Y.get(process.stdout)`) to a call (`xs().get(process.stdout)`), so allow an
+  // optional `()` on the captured accessor. The empty `forceRedraw()` + immediate
+  // `}` keeps this anchored on the simple redraw fn, not the arg-taking variants.
   const redrawPattern =
-    /([,;{}])(function [$\w]+\(\)\{)([$\w]+)\.get\(process\.stdout\)\?\.forceRedraw\(\)\}/;
+    /([,;{}])(function [$\w]+\(\)\{)([$\w]+(?:\(\))?)\.get\(process\.stdout\)\?\.forceRedraw\(\)\}/;
   const redrawMatch = oldFile.match(redrawPattern);
   if (!redrawMatch || redrawMatch.index === undefined) {
     debug('patch: clearScreen: failed to find forceRedraw function');

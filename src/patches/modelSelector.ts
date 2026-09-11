@@ -32,8 +32,13 @@ const findCustomModelListInsertionPoint = (
   // punctuation (`;`, ` `, `{`, `,`, …). The sibling opus[1m] helper push wraps its
   // arg as `.push(gda(s)??{value:...})`, so requiring `.push({value:` right after
   // the paren keeps this matching only the real model-list assembly site.
+  // CC 2.1.268 restructured the push: `label` became an expression (`me??V`
+  // instead of a bare ident) and `description` became a ternary
+  // `me===void 0?"Custom model":`Custom model (${V})`` instead of the bare
+  // "Custom model" string. `label` is matched as a comma-free expression and
+  // `description` accepts both the legacy string and the new ternary.
   const pushPattern =
-    /(?<![$\w])([$\w]+)\.push\(\{value:[$\w]+,label:[$\w]+,description:"Custom model"\}\)/;
+    /(?<![$\w])([$\w]+)\.push\(\{value:[$\w]+,label:[^,]{1,60},description:(?:"Custom model"|[$\w]+===void 0\?"Custom model":`Custom model \(\$\{[$\w]+\}\)`)\}\)/;
   const pushMatch = fileContents.match(pushPattern);
   if (!pushMatch || pushMatch.index === undefined) {
     console.error(

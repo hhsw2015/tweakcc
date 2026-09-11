@@ -316,7 +316,16 @@ const CLAUDEMD_INJECTION: ReminderInjection = {
   apply(content, body, isSuppressed) {
     const pattern =
       /function ([$\w]+)\(([$\w]+),([$\w]+)\)\{if\(Object\.entries\(\3\)\.length===0\)return \2;return\[([$\w]+)\(\{content:`<system-reminder>\n[\s\S]*?\n<\/system-reminder>\n`,isMeta:!0\}\),\.\.\.\2\]\}/;
-    const match = content.match(pattern);
+    // 2.1.268+: the <system-reminder> prefix/suffix moved into module-level
+    // string consts and the content became a concatenation
+    //   content:PREFIX+Object.entries(n).map(([r,o])=>`# ${r}\n${o}`).join(`\n`)+SUFFIX
+    // The function-body shape (guard + return[I({content:...}),...e]) is otherwise
+    // unchanged, so anchor on that and rebuild the content as a single template
+    // literal from the override body (whose {{context_blocks}} placeholder already
+    // expands to the same Object.entries(...).map(...).join(...) expression).
+    const pattern268 =
+      /function ([$\w]+)\(([$\w]+),([$\w]+)\)\{if\(Object\.entries\(\3\)\.length===0\)return \2;return\[([$\w]+)\(\{content:[$\w]+\+Object\.entries\(\3\)\.map\(\(\[[$\w]+,[$\w]+\]\)=>`# \$\{[$\w]+\}\n\$\{[$\w]+\}`\)\.join\(`\n`\)\+[$\w]+,isMeta:!0\}\),\.\.\.\2\]\}/;
+    const match = content.match(pattern) ?? content.match(pattern268);
     if (!match || match.index === undefined) {
       if (/function [$\w]+\([$\w]+,[$\w]+\)\{return [$\w]+;\}/.test(content)) {
         return content;

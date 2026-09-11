@@ -179,6 +179,13 @@ export const writeAutoAcceptPlanMode = (oldFile: string): string | null => {
     /onChange:\([$\w]+\)=>void ([$\w]+)\.current\([$\w]+\),onCancel/
   );
 
+  // CC >=2.1.268: onChange:(X)=>void FUNC(X),onCancel — `void` + a plain
+  // function reference (no `.current`). Distinct from refOnChange (which has
+  // `.current`) and legacyOnChange (which has no `void`).
+  const voidPlainOnChange = afterReady.match(
+    /onChange:\([$\w]+\)=>void ([$\w]+)\([$\w]+\),onCancel/
+  );
+
   let acceptFuncName: string;
 
   if (legacyOnChange) {
@@ -189,6 +196,8 @@ export const writeAutoAcceptPlanMode = (oldFile: string): string | null => {
     // The ref pattern uses REF.current which holds the actual handler
     // We need to call REF.current("yes-accept-edits") or find the actual function
     acceptFuncName = `${refOnChange[1]}.current`;
+  } else if (voidPlainOnChange) {
+    acceptFuncName = voidPlainOnChange[1];
   } else {
     console.error('patch: autoAcceptPlanMode: failed to find onChange handler');
     return null;

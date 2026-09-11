@@ -367,8 +367,9 @@ const ANCHOR_SIGNATURES: Record<number, (file: string) => number> = {
       : 0,
 
   // patch 31: Ultraplan — pristine command def with `isEnabled:()=>!1` or `isEnabled:()=>fn()`.
+  // 2.1.268+ 在 argumentHint 与 isEnabled 间插了 availability 等字段, 惰性兜住.
   31: f =>
-    /name:"ultraplan",[\s\S]{1,500}?argumentHint:"<prompt>",isEnabled:\(\)=>(?:!1|[\w$]{1,4}\(\))/.test(
+    /name:"ultraplan",[\s\S]{1,500}?argumentHint:"<prompt>",[\s\S]{0,120}?isEnabled:\(\)=>(?:!1|[\w$]{1,4}\(\))/.test(
       f
     )
       ? 1
@@ -520,7 +521,7 @@ const PATCHED_SIGNATURES: Record<number, (file: string) => number> = {
 
   // patch 31: Ultraplan patched → `isEnabled:()=>!0` (在 name:"ultraplan" 附近)
   31: f =>
-    /name:"ultraplan",[\s\S]{1,500}?argumentHint:"<prompt>",isEnabled:\(\)=>!0/.test(
+    /name:"ultraplan",[\s\S]{1,500}?argumentHint:"<prompt>",[\s\S]{0,120}?isEnabled:\(\)=>!0/.test(
       f
     )
       ? 1

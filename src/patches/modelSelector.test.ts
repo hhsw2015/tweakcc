@@ -118,4 +118,20 @@ describe('writeModelCustomizations', () => {
     expect(writeModelCustomizations(noDecl)).toBeNull();
     errSpy.mockRestore();
   });
+
+  // CC 2.1.268: `label` became an expression (`me??V`) and `description` a
+  // ternary `me===void 0?"Custom model":`Custom model (${V})`` instead of the
+  // bare "Custom model" string.
+  it('handles the CC 2.1.268 expression-label + ternary-description push', () => {
+    const fixture =
+      'q=1;function $Hk(B,Q){let aZ=B.foo,nQ=[{value:"claude-x",label:"X",description:"Built in"}];' +
+      'for(let V of Q){let me=B.name(V);' +
+      'nQ.push({value:V,label:me??V,description:me===void 0?"Custom model":`Custom model (${V})`});continue}return nQ}z=2;';
+    const out = writeModelCustomizations(fixture);
+    expect(out).not.toBeNull();
+    for (const model of CUSTOM_MODELS) {
+      expect(out).toContain(`nQ.push(${JSON.stringify(model)});`);
+    }
+    expect(out).toContain('"value":"claude-opus-4-6"');
+  });
 });

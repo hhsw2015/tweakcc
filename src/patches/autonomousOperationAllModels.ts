@@ -37,6 +37,34 @@ export const writeAutonomousOperationAllModels = (
   //   function Bte(e){if(tU(e,"fable_5_mitigations")||e==="claude-mythos-5")return!0;return!1}
   const pattern195 =
     /function\s+([$\w]+)\s*\(\s*([$\w]+)\s*\)\s*\{\s*if\s*\(\s*[$\w]+\s*\(\s*\2\s*,\s*"fable_5_mitigations"\s*\)\s*\|\|\s*\2\s*===\s*"claude-mythos-5"\s*\)\s*return\s*!0\s*;\s*return\s*!1\s*\}/;
+
+  // CC 2.1.268 shape: the single fable/mythos family gate was split into
+  // prefix predicates — `function H0e(e){return e.startsWith("claude-fable-")}`
+  // (fable family) plus a sibling mythos one. Flipping the fable-family
+  // predicate to `return!0` makes every model register as fable family, which
+  // is what "treat my model as fable/mythos" means (the two families share the
+  // autonomous-operation prompt / comms / loop behaviour). Anchored on the
+  // stable `startsWith("claude-fable-")` body.
+  const pattern268 =
+    /function\s+([$\w]+)\s*\(\s*([$\w]+)\s*\)\s*\{\s*return\s+\2\.startsWith\("claude-fable-"\)\s*\}/;
+  const match268 = oldFile.match(pattern268);
+  if (match268 && match268.index !== undefined) {
+    const [fullMatch268, fnName, argName] = match268;
+    const replacement268 = `function ${fnName}(${argName}){return!0}`;
+    const newFile268 =
+      oldFile.slice(0, match268.index) +
+      replacement268 +
+      oldFile.slice(match268.index + fullMatch268.length);
+    showDiff(
+      oldFile,
+      newFile268,
+      replacement268,
+      match268.index,
+      match268.index + fullMatch268.length
+    );
+    return newFile268;
+  }
+
   const match = oldFile.match(pattern) || oldFile.match(pattern195);
 
   if (!match || match.index === undefined) {

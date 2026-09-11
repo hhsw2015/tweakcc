@@ -17,4 +17,17 @@ describe('writeAutoAcceptPlanMode', () => {
       'h("yes-accept-edits-keep-context");return null;return R.default.createElement'
     );
   });
+
+  it('handles the CC >=2.1.268 onChange:(X)=>void FUNC(X) shape', () => {
+    const filler = 'x'.repeat(700);
+    const input =
+      'function A(){let Ar=(v)=>v;' +
+      `return R.default.createElement(Box,{children:"${filler}"},` +
+      'R.default.createElement(Card,{color:"planMode",title:"Ready to code?",onChange:(vr)=>void Ar(vr),onCancel:z}));}';
+
+    const result = writeAutoAcceptPlanMode(input);
+
+    expect(result).not.toBeNull();
+    expect(result).toContain('Ar("yes-accept-edits-keep-context");return null;');
+  });
 });

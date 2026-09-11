@@ -56,4 +56,23 @@ describe('autonomousOperationAllModels (treat model as fable/mythos)', () => {
   it('no-ops (does not error) when the model ids are absent entirely', () => {
     expect(writeAutonomousOperationAllModels('const x=1;')).toBe('const x=1;');
   });
+
+  // CC 2.1.268: the single fable/mythos gate split into prefix predicates; the
+  // fable-family one (`return e.startsWith("claude-fable-")`) is flipped to !0.
+  it('flips the 2.1.268 fable-family startsWith predicate to true', () => {
+    const file =
+      'a();function H0e(e){return e.startsWith("claude-fable-")}function xmr(e){return e.startsWith("claude-mythos-")}';
+    const result = writeAutonomousOperationAllModels(file);
+    expect(result).toBe(
+      'a();function H0e(e){return!0}function xmr(e){return e.startsWith("claude-mythos-")}'
+    );
+  });
+
+  it('tolerates minifier-renamed identifiers in the 2.1.268 shape', () => {
+    const file =
+      'function $A9(W){return W.startsWith("claude-fable-")}';
+    expect(writeAutonomousOperationAllModels(file)).toBe(
+      'function $A9(W){return!0}'
+    );
+  });
 });

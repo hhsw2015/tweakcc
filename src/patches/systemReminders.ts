@@ -88,18 +88,44 @@ export const writeClaudemdContextOncePerConversation = (
 export const writeStripEmptySystemReminders = (
   oldFile: string
 ): string | null => {
+  // Idempotency: the injected empty-check `==="(no content)")return"(no content)"`
+  // is unique to the patched wrapper (both old and new shapes).
+  if (
+    /function [$\w]+\([$\w]+\)\{if\(![$\w]+\|\|![$\w]+\.trim\(\)\|\|[$\w]+==="\(no content\)"\)return"\(no content\)";/.test(
+      oldFile
+    )
+  ) {
+    return oldFile;
+  }
+
+  // CC >=2.1.26x: the wrapper gained an early `startsWith(PREFIX)&&endsWith(SUFFIX)`
+  // pass-through guard, the body is helper-wrapped `${OUTER(INNER(e))}`, and the
+  // closing tag became a `${SUFFIX}` const:
+  //   function l0n(e){if(e.startsWith(Re)&&e.endsWith(G))return e;return`<system-reminder>\n${Okt(oYt(e))}${G}`}
+  const patternNew =
+    /function ([$\w]+)\(([$\w]+)\)\{if\(\2\.startsWith\(([$\w]+)\)&&\2\.endsWith\(([$\w]+)\)\)return \2;return`<system-reminder>\n\$\{([$\w]+)\(([$\w]+)\(\2\)\)\}\$\{\4\}`\}/;
+  const matchNew = oldFile.match(patternNew);
+  if (matchNew && matchNew.index !== undefined) {
+    const [full, fn, arg, prefix, suffix, outer, inner] = matchNew;
+    const replacement =
+      `function ${fn}(${arg}){` +
+      `if(!${arg}||!${arg}.trim()||${arg}==="(no content)")return"(no content)";` +
+      `if(${arg}.startsWith(${prefix})&&${arg}.endsWith(${suffix}))return ${arg};` +
+      `return\`<system-reminder>\n\${${outer}(${inner}(${arg}))}\${${suffix}}\`}`;
+    const startIndex = matchNew.index;
+    const endIndex = startIndex + full.length;
+    const newFile =
+      oldFile.slice(0, startIndex) + replacement + oldFile.slice(endIndex);
+    showDiff(oldFile, newFile, replacement, startIndex, endIndex);
+    return newFile;
+  }
+
+  // Vanilla shape (older CC): function LW(H){return`<system-reminder>\n${H}\n</system-reminder>`}
   const pattern =
     /function ([$\w]+)\(([$\w]+)\)\{return`<system-reminder>\n\$\{\2\}\n<\/system-reminder>`\}/;
   const match = oldFile.match(pattern);
 
   if (!match || match.index === undefined) {
-    if (
-      /function [$\w]+\(([$\w]+)\)\{if\(!\1\|\|!\1\.trim\(\)\|\|\1==="\(no content\)"\)return"\(no content\)";return`<system-reminder>/.test(
-        oldFile
-      )
-    ) {
-      return oldFile;
-    }
     console.error(
       'patch: strip-empty-system-reminders: failed to find LW(H) wrapper'
     );

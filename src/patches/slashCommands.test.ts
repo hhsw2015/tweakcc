@@ -7,10 +7,14 @@ import {
 describe('findSlashCommandListEndPosition', () => {
   // CC >=2.1.227: slash commands moved into per-command lazy modules and the
   // registry is a memoized builder — `builtinCommandTable??=NAME()` — whose
-  // array holds bare identifier + spread references, not inline objects.
+  // array (`return[...]`) holds bare identifier + spread references. The finder
+  // requires >=30 top-level items with command metadata (name/description)
+  // within the proximity window, so the fixture carries both.
+  const builderIds = Array.from({ length: 30 }, (_, i) => `c${i}`).join(',');
   const builderShape =
+    'let meta={name:"clear",description:"Clear the screen"};' +
     'function Pti(){let e=gf();return e.builtinCommandTable??=uQb(),e.builtinCommandTable}' +
-    'function uQb(){return[sGu,Vaa,hQs,...gT4?[gT4]:[],PLp,Z6o,Cea,...[]]}' +
+    `function uQb(){return[${builderIds},...gT4?[gT4]:[],Z6o,Cea,...[]]}` +
     'function next(){}';
 
   it('finds the builtinCommandTable builder array end (CC >=2.1.227)', () => {

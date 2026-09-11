@@ -56,6 +56,24 @@ describe('systemReminders kill-switches', () => {
     it('returns null when LW shape not found', () => {
       expect(writeStripEmptySystemReminders('unrelated')).toBeNull();
     });
+
+    // CC >=2.1.26x: wrapper gained a startsWith/endsWith pass-through guard,
+    // helper-wrapped body ${Okt(oYt(e))}, and a ${G} suffix const.
+    const MOCK_L0N =
+      'function l0n(e){if(e.startsWith(Re)&&e.endsWith(G))return e;return`<system-reminder>\n${Okt(oYt(e))}${G}`}var Ne="x"';
+
+    it('handles the 2.1.26x guarded/helper-wrapped shape, preserving guard + helpers', () => {
+      const result = writeStripEmptySystemReminders(MOCK_L0N);
+      expect(result).not.toBeNull();
+      expect(result).toContain(
+        'function l0n(e){if(!e||!e.trim()||e==="(no content)")return"(no content)";if(e.startsWith(Re)&&e.endsWith(G))return e;return`<system-reminder>\n${Okt(oYt(e))}${G}`}'
+      );
+    });
+
+    it('2.1.26x shape is idempotent', () => {
+      const once = writeStripEmptySystemReminders(MOCK_L0N)!;
+      expect(writeStripEmptySystemReminders(once)).toBe(once);
+    });
   });
 
   describe('writeSuppressDeferredTools', () => {
