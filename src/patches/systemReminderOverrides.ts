@@ -921,21 +921,58 @@ const PDF_REF_INJECTION: ReminderInjection = {
   defaultBody:
     'PDF file: {{filename}} ({{page_count}} pages, {{file_size}}). This PDF is too large to read all at once. You MUST use the {{read_tool}} tool with the pages parameter to read specific page ranges (e.g., pages: "1-5"). Do NOT call {{read_tool}} without the pages parameter or it will fail. Start by reading the first few pages to understand the structure, then read more as needed. Maximum 20 pages per request.',
   apply(content, body, isSuppressed) {
-    return applySimpleEntry(
-      content,
-      'pdf_reference',
-      [
-        propSlot('${H.filename}', 'filename'),
-        propSlot('${H.pageCount}', 'pageCount'),
-        propSlot('${l7(H.fileSize)}', 'fileSize'),
-        // The Read tool name is a bare module-level identifier here (`${Qs}`),
-        // distinguished from the two byte-size/page slots by not referencing
-        // the handler parameter at all.
-        toolNameSlot('${uq}'),
-      ],
-      body,
-      isSuppressed
-    );
+    const slots = [
+      propSlot('${H.filename}', 'filename'),
+      propSlot('${H.pageCount}', 'pageCount'),
+      propSlot('${l7(H.fileSize)}', 'fileSize'),
+      // The Read tool name is a bare module-level identifier here (`${Qs}`),
+      // distinguished from the two byte-size/page slots by not referencing
+      // the handler parameter at all.
+      toolNameSlot('${uq}'),
+    ];
+    // 2.1.278+: content is no longer a single template literal but a
+    //   content:(e.pageCount===null?`…`:`…`)+"…suffix",isMeta:!0
+    // ternary+concat expression, which simpleEntryPattern can't match. Capture
+    // the whole content-expression (the slot exprs — yu(e.filename), e.pageCount,
+    // $t(e.fileSize), nt — all live inside it) and collapse it to the override's
+    // single body, exactly as the older single-template shape does.
+    const ternary =
+      /pdf_reference:\(([$\w]+)\)=>([$\w]+)\(\[([$\w]+)\(\{content:(\([\s\S]*?\)\+"[\s\S]*?"),isMeta:!0\}\)\]\)/;
+    const tMatch = content.match(ternary);
+    if (tMatch && tMatch.index !== undefined) {
+      const [, hParam, wrapFn, metaFn, template] = tMatch;
+      let replacement: string;
+      if (isSuppressed) {
+        replacement = `pdf_reference:(${hParam})=>[]`;
+      } else {
+        let built = body;
+        for (const slot of slots) {
+          if (!built.includes(slot.placeholder)) continue;
+          const expr = slot.resolve(template, hParam);
+          if (expr === null) {
+            console.error(
+              `patch: reminder pdf-reference: no pristine expression for ${slot.placeholder}`
+            );
+            return null;
+          }
+          built = built.split(slot.placeholder).join(`\${${expr}}`);
+        }
+        replacement = `pdf_reference:(${hParam})=>${wrapFn}([${metaFn}({content:\`${built}\`,isMeta:!0})])`;
+      }
+      const newContent =
+        content.slice(0, tMatch.index) +
+        replacement +
+        content.slice(tMatch.index + tMatch[0].length);
+      showDiff(
+        content,
+        newContent,
+        replacement,
+        tMatch.index,
+        tMatch.index + replacement.length
+      );
+      return newContent;
+    }
+    return applySimpleEntry(content, 'pdf_reference', slots, body, isSuppressed);
   },
 };
 

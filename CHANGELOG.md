@@ -8,6 +8,20 @@ superset of upstream. Pre-fork upstream history lives in Piebald's releases.
 
 ## [Unreleased]
 
+- **CC 2.1.278 支持: 修复 csp #23 remote-gate 重构 + pdf-reference reminder 三元化**
+  升级 2.1.268 → 2.1.278. 2 处 anchor 漂移 (仅 #23 fatal-in-check, pdf 非致命):
+  (1) **csp #23 Remote Control primary gate** — 旧 gate 内联 socket 前置
+  `function Yen(){if(!Zen())return!1;return!!X.ANTHROPIC_UNIX_SOCKET||W()}` 消失,
+  socket 检查提成 helper `HZe`, gate 重构成
+  `function nA(){if(l())return!0;if(dL())return!1;return!ER()&&O7e()}`, 其中
+  `O7e()=kU()&&c()&&P("tengu_ccr_bridge",!1)` 把 RC 藏在 rollout flag 后. 新增
+  patternNA 回退, 中和成 `return!dL()` (除 org-disable 外恒可用, 丢 rollout flag +
+  already-remote 前置); 唯一命中 nA (Vrr 无 `if(X())return!1`, qrr 为 async).
+  (2) **pdf-reference reminder** — content 从单模板字面量变成三元+拼接表达式
+  `content:(e.pageCount===null?\`…\`:\`…\`)+"…suffix"`, simpleEntryPattern 无法匹配.
+  新增 Method 捕获整个 content 表达式 (slot 表达式 yu(e.filename)/e.pageCount/
+  $t(e.fileSize)/nt 全在其中), 塌缩成 override 单 body. 另用 skrabe extractor 生成
+  `prompts-2.1.278.json` (6886 sites). 可应用 0 / 已 patch 32 / 失效 0 / 上游已移除 5.
 - **CC 2.1.268 支持: 修复 8 个失配 patch (6 fatal base + ultraplan + claudemd-context)**
   升级 2.1.252 → 2.1.268 (跳 16 版). code-split 抽取沿用 (orig.js 33MB 完整),
   但 8 处 anchor 漂移. 修复: (1) **clear-screen** redrawPattern stdout-map 源

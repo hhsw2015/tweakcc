@@ -290,9 +290,12 @@ const ANCHOR_SIGNATURES: Record<number, (file: string) => number> = {
       ? 1
       : 0,
 
-  // patch 23: unlock_remote_gate - Yen 函数
+  // patch 23: unlock_remote_gate - Yen (<=2.1.27x) / nA (2.1.278+)
   23: f =>
     /function [\w$]{1,8}\(\)\{if\(![\w$]{1,8}\(\)\)return!1;return!![\w$.]{1,20}ANTHROPIC_UNIX_SOCKET/.test(
+      f
+    ) ||
+    /function [\w$]{1,8}\(\)\{if\([\w$]{1,8}\(\)\)return!0;if\([\w$]{1,8}\(\)\)return!1;return![\w$]{1,8}\(\)&&[\w$]{1,8}\(\)\}/.test(
       f
     )
       ? 1
@@ -458,9 +461,9 @@ const PATCHED_SIGNATURES: Record<number, (file: string) => number> = {
       ? 1
       : 0,
 
-  // patch 23: Yen 中和 return kc()
+  // patch 23: Yen 中和 return kc() (<=2.1.27x) / nA 中和 return!dL() (2.1.278+)
   23: f =>
-    /function [\w$]{1,8}\(\)\{return [\w$]{1,8}\(\)\/\*[\s\S]{0,80}?\*\/\}/.test(
+    /function [\w$]{1,8}\(\)\{return!?[\w$]{1,8}\(\)\/\*[\s\S]{0,80}?\*\/\}/.test(
       f
     )
       ? 1

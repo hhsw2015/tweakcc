@@ -159,13 +159,30 @@ export const writeUnlockSdkUrlHost = (file: string): string | null => {
   });
 };
 
-// ---------- patch #23: unlock_remote_gate (Yen) ----------
+// ---------- patch #23: unlock_remote_gate (Yen / nA) ----------
 export const writeUnlockRemoteGate = (file: string): string | null => {
+  // <=2.1.27x: primary gate inlined the socket precondition:
+  //   function Yen(){if(!Zen())return!1;return!!X.ANTHROPIC_UNIX_SOCKET||W()}
+  // patched → `return Zen()` (drop socket requirement).
   const pattern =
     /function ([\w$]{1,8})\(\)\{if\(!([\w$]{1,8})\(\)\)return!1;return!![\w$.]{1,20}ANTHROPIC_UNIX_SOCKET\|\|[\w$]{1,8}\(\)\}/g;
-  return applyRegexReplace(file, {
+  const legacy = applyRegexReplace(file, {
     pattern,
     build: m => ({ body: `function ${m[1]}(){return ${m[2]}()`, tail: '}' }),
+  });
+  if (legacy !== null) return legacy;
+
+  // 2.1.278+: gate restructured to
+  //   function nA(){if(l())return!0;if(dL())return!1;return!ER()&&O7e()}
+  // where O7e()=kU()&&c()&&P("tengu_ccr_bridge",!1) hides RC behind a rollout
+  // flag. Neutralize to `return!dL()` — available unless org-disabled (dL, the
+  // #24 disableRemoteControl check), dropping the rollout flag + already-remote
+  // precondition. Uniquely matches nA (Vrr has no `if(X())return!1`; qrr is async).
+  const patternNA =
+    /function ([\w$]{1,8})\(\)\{if\([\w$]{1,8}\(\)\)return!0;if\(([\w$]{1,8})\(\)\)return!1;return![\w$]{1,8}\(\)&&[\w$]{1,8}\(\)\}/g;
+  return applyRegexReplace(file, {
+    pattern: patternNA,
+    build: m => ({ body: `function ${m[1]}(){return!${m[2]}()`, tail: '}' }),
   });
 };
 
