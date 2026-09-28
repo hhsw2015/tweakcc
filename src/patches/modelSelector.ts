@@ -37,8 +37,11 @@ const findCustomModelListInsertionPoint = (
   // `me===void 0?"Custom model":`Custom model (${V})`` instead of the bare
   // "Custom model" string. `label` is matched as a comma-free expression and
   // `description` accepts both the legacy string and the new ternary.
+  // CC 2.1.283 appended a `sessionTail:!0` field after `description`, so the
+  // object no longer closes right after description — accept an optional trailing
+  // `,sessionTail:!0` before `})`.
   const pushPattern =
-    /(?<![$\w])([$\w]+)\.push\(\{value:[$\w]+,label:[^,]{1,60},description:(?:"Custom model"|[$\w]+===void 0\?"Custom model":`Custom model \(\$\{[$\w]+\}\)`)\}\)/;
+    /(?<![$\w])([$\w]+)\.push\(\{value:[$\w]+,label:[^,]{1,60},description:(?:"Custom model"|[$\w]+===void 0\?"Custom model":`Custom model \(\$\{[$\w]+\}\)`)(?:,sessionTail:!0)?\}\)/;
   const pushMatch = fileContents.match(pushPattern);
   if (!pushMatch || pushMatch.index === undefined) {
     console.error(

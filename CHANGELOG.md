@@ -8,6 +8,15 @@ superset of upstream. Pre-fork upstream history lives in Piebald's releases.
 
 ## [Unreleased]
 
+- **CC 2.1.283 支持: 修复 model-customizations push (sessionTail 字段)**
+  升级 2.1.278 → 2.1.283 (跳 5 版). 1 处 fatal anchor 漂移:
+  **model-customizations** — 自定义模型 push 对象在 `description` 后新增
+  `sessionTail:!0` 字段, 对象不再紧跟 description 闭合, findCustomModelListInsertionPoint
+  的 pushPattern 尾部 `\}\)` 失配. 加可选 `(?:,sessionTail:!0)?`. 唯一命中
+  `s.push({value:F,label:W??F,description:W===void 0?"Custom model":\`Custom model (${F})\`,sessionTail:!0})`.
+  另: **worktree-mode** 自身优雅 no-op (CC 2.1.283 移除 `tengu_worktree_mode` gate,
+  EnterWorktree 已常开, 无需 patch). 用 skrabe extractor 生成 `prompts-2.1.283.json`
+  (7228 sites). 可应用 0 / 已 patch 32 / 失效 0 / 上游已移除 5.
 - **CC 2.1.278 支持: 修复 csp #23 remote-gate 重构 + pdf-reference reminder 三元化**
   升级 2.1.268 → 2.1.278. 2 处 anchor 漂移 (仅 #23 fatal-in-check, pdf 非致命):
   (1) **csp #23 Remote Control primary gate** — 旧 gate 内联 socket 前置
