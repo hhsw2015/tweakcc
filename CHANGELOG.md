@@ -8,6 +8,26 @@ superset of upstream. Pre-fork upstream history lives in Piebald's releases.
 
 ## [Unreleased]
 
+- **CC 2.1.293 支持: 修复 3 个 fatal base + 3 个 reminder + csp #25 (共 7 处漂移)**
+  升级 2.1.283 → 2.1.293 (跳 10 版). 3 个 fatal base patch (拒绝 repack):
+  (1) **fix-rewind-summary-header** — rewind 摘要消息不再有 `content:<helper>` 字面,
+  header helper 改成 spread 进对象 `{...T3(Ft,{…}),isCompactSummary:!0,…}`. 新增
+  Method 捕获 spread 调用, 用 IIFE 在 spread 后覆写 `content`
+  (`b==="up_to"` 方向感知), 共享 helper 不动. (2) **agents-md** — reader 新增第 5
+  个参数 `g` (direct-reader 回调) + 前置 `if(g){…}` 分支, 签名变 5 参; 新增
+  `writeAgentsMdAsyncBackendV5` 变体优先匹配. (3) **hide-startup-clawd** — pose 数据
+  拆成 3 张表, arm-row 表首键 `default`→`down`; 表锚点改成首键无关
+  `([$\w]+)=\{"?[$\w-]{1,12}"?:\{r1L:`, 新旧表皆匹配. 另 3 个 reminder:
+  (4) **user-sent-new-message** — 从 switch-case 移到独立函数
+  `function mAn(e){return`${Gqe}${e}\n\n<framing>`}`, 加 fn-form method; (5)
+  **pdf-reference** — 又重构成 block-arrow `(e)=>{if("readableWhole"…)…;return…}`
+  (3 分支), 用 matchingBrace 捕获整块塌缩成单 body; (6) **local-command-caveat** —
+  CC 2.1.293 整个移除了 `!` 命令输出 caveat 包装 (特征短语消失), 标记上游移除,
+  静默跳过. 另 csp **#25 1h cache** 决策尾从单三元重写成多 guard-return
+  (`if(!X(e,w))return{ttl:"5m"…};` + 新 mainThreadModel live-5m 分支), 新增
+  patternTtl293 强制整块返 1h (FORCE_PROMPT_CACHING_5M 逃生阀仍在 Len() 早返保留),
+  check.ts 同步锚点. worktree-mode 继续优雅 no-op. 用 skrabe extractor 生成
+  `prompts-2.1.293.json` (7728 sites). 可应用 0 / 已 patch 32 / 失效 0 / 上游已移除 5.
 - **CC 2.1.283 支持: 修复 model-customizations push (sessionTail 字段)**
   升级 2.1.278 → 2.1.283 (跳 5 版). 1 处 fatal anchor 漂移:
   **model-customizations** — 自定义模型 push 对象在 `description` 后新增

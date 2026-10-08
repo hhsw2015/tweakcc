@@ -40,7 +40,13 @@ import { showDiff } from './index';
  * preceding function cannot swallow the match (unbounded, `fnc` also matched).
  */
 const findPosedClawdWrapper = (oldFile: string): number | null => {
-  const table = oldFile.match(/\b([$\w]+)=\{default:\{r1L:/);
+  // CC 2.1.293 split the pose data into separate tables and changed the arm-row
+  // table's first key from `default` to `down` (e.g. He={down:{r1L:...). Anchor
+  // on the row-object shape ({<first-key>:{r1L:) rather than a fixed key name,
+  // so both the old (default) and new (down/"one-up") tables match. The wrapper
+  // is still derived as the function that indexes this table by pose (VSe in
+  // 2.1.293: {pose:c,...} ... He[m.arms]).
+  const table = oldFile.match(/([$\w]+)=\{"?[$\w-]{1,12}"?:\{r1L:/);
   if (!table) return null;
   const name = table[1];
   const decl = /function ([$\w]+)\(([$\w]*)\)\{/g;

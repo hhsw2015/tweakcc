@@ -318,6 +318,9 @@ const ANCHOR_SIGNATURES: Record<number, (file: string) => number> = {
     ) ||
     /"tengu_prompt_cache_1h_config"[\s\S]{0,120}\?\{ttl:"1h",reason:"subscriber"\}:\{ttl:"5m",reason:"default"\}/.test(
       f
+    ) ||
+    /if\(![\w$]{1,8}\([\w$]{1,4},[\w$]{1,4}\)\)return\{ttl:"5m",reason:"default"\};(?:if\([^;]{1,200}\)return\{ttl:"5m",reason:"[\w_]+"\};)?return\{ttl:"1h",reason:"subscriber"\}/.test(
+      f
     )
       ? 1
       : 0,

@@ -215,6 +215,21 @@ export const writeForce1hCache = (file: string): string | null => {
   });
   if (ttlResult !== null) return ttlResult;
 
+  // 2.1.293+: the decider's tail was rewritten from a single subscriber/default
+  // ternary into a chain of guard-returns — the allowlist check became
+  // `if(!X(e,w))return{ttl:"5m",reason:"default"}` and a new mainThreadModel
+  // live-5m branch (`if(s!==void 0&&…"tengu_tidy_frost"…)return{ttl:"5m",reason:
+  // "live_5m_cache"}`) was inserted before `return{ttl:"1h",reason:"subscriber"}`.
+  // Force the whole post-`!g||h` block to always pick 1h. FORCE_PROMPT_CACHING_5M
+  // still wins — it short-circuits earlier in Len() before this block runs.
+  const patternTtl293 =
+    /if\(![\w$]{1,4}\|\|[\w$]{1,4}\)return\{ttl:"5m",reason:"default"\};let ([\w$]{1,4})=[\w$]{1,8}\(\);if\(\1===null\)\1=[\w$]{1,4}\("tengu_prompt_cache_1h_config",\{allowlist:\[[^\]]{0,200}\]\}\)\.allowlist\?\?\[\],[\w$]{1,8}\(\1\);if\(![\w$]{1,8}\([\w$]{1,4},\1\)\)return\{ttl:"5m",reason:"default"\};(?:if\([^;]{1,200}\)return\{ttl:"5m",reason:"[\w_]+"\};)?return\{ttl:"1h",reason:"subscriber"\}/g;
+  const ttl293Result = applyRegexReplace(file, {
+    pattern: patternTtl293,
+    build: () => ({ body: `return{ttl:"1h",reason:"subscriber"}`, tail: '' }),
+  });
+  if (ttl293Result !== null) return ttl293Result;
+
   const pattern =
     /function ([\w$]{1,8})\(e\)\{if\([\w$]{1,4}\(process\.env\.FORCE_PROMPT_CACHING_5M\)\)return!1;if\([\w$]{1,4}\(process\.env\.ENABLE_PROMPT_CACHING_1H\)\|\|[\w$]{1,4}\(\)==="bedrock"&&[\w$]{1,4}\(process\.env\.ENABLE_PROMPT_CACHING_1H_BEDROCK\)\)return!0;if\(![\w$]{1,8}\(\)\|\|[\w$]{1,8}(?:\(\))?\.isUsingOverage\)return!1;let t=[\w$]{1,8}\(\);if\(t===null\)t=[\w$]{1,4}\("tengu_prompt_cache_1h_config",\{allowlist:\[[^\]]{1,300}\]\}\)\.allowlist\?\?\[\],[\w$]{1,8}\(t\);return e!==void 0&&t\.some\(\([\w$]{1,3}\)=>[\w$]{1,3}\.endsWith\("\*"\)\?e\.startsWith\([\w$]{1,3}\.slice\(0,-1\)\):e===[\w$]{1,3}\)\}/g;
   return applyRegexReplace(file, {

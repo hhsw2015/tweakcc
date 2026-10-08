@@ -33,6 +33,49 @@ const UP_TO_HEADER =
   'This session was rewound at your request, not a context overflow. The summary below covers the earlier portion up to your selected point; the recent messages are kept intact.';
 
 export const writeFixRewindSummaryHeader = (file: string): string | null => {
+  // Already applied in this CC build? (every method leaves a
+  // `.replace(/This session is being continued` marker) — no-op.
+  if (file.includes('.replace(/This session is being continued')) {
+    debug(
+      'patch: fixRewindSummaryHeader: already applied in this CC build — no-op'
+    );
+    return file;
+  }
+
+  // Method 0 (CC 2.1.29x+): the header helper is no longer assigned to a
+  // `content:` key — it is SPREAD into the message object:
+  //   {...T3(Ft,{…}),isCompactSummary:!0,...X.length>0?{summarizeMetadata:{…,direction:b}}:{…}}
+  // There is no literal content string to wrap in place, so override `content`
+  // AFTER the spread via an IIFE that calls the helper and rewrites its content
+  // string. Only this rewind site is touched; the shared header helper (used by
+  // auto/manual compaction) is left intact.
+  const spreadPattern =
+    /\{\.\.\.([$\w]+\([$\w]+,\{[^{}]*\}\)),isCompactSummary:!0,(\.\.\.[$\w]+\.length>0\?\{summarizeMetadata:\{messagesSummarized:[$\w]+\.length,userContext:[$\w]+,direction:([$\w]+)\}\}:\{isVisibleInTranscriptOnly:!0\})\}/;
+  const spreadMatch = file.match(spreadPattern);
+  if (spreadMatch && spreadMatch.index !== undefined) {
+    if (!file.includes(HEADER_PHRASE)) {
+      console.error(
+        'patch: fixRewindSummaryHeader: rewind call site found but the compaction header phrase changed — needs re-anchoring'
+      );
+      return null;
+    }
+    const [, helperCall, metaTail, dirVar] = spreadMatch;
+    const replacement =
+      `{...(()=>{let __h=${helperCall};return typeof __h.content==="string"?{...__h,content:__h.content.replace(/This session is being continued from a previous conversation that ran out of context\\.[^\\n]*/,${dirVar}==="up_to"?${JSON.stringify(UP_TO_HEADER)}:${JSON.stringify(FROM_HEADER)})}:__h})(),isCompactSummary:!0,${metaTail}}`;
+    const newFile =
+      file.slice(0, spreadMatch.index) +
+      replacement +
+      file.slice(spreadMatch.index + spreadMatch[0].length);
+    showDiff(
+      file,
+      newFile,
+      replacement,
+      spreadMatch.index,
+      spreadMatch.index + replacement.length
+    );
+    return newFile;
+  }
+
   // The rewind summary message: content:<header helper call>,isCompactSummary:!0,...<J>.length>0?{summarizeMetadata:{messagesSummarized:<j>.length,userContext:<O>,direction:<T>}}
   // Every method captures the same 3 groups: [1] the header-helper call to wrap,
   // [2] the isCompactSummary…summarizeMetadata tail, [3] the direction var.
@@ -52,12 +95,6 @@ export const writeFixRewindSummaryHeader = (file: string): string | null => {
   }
 
   if (!match || match.index === undefined) {
-    if (file.includes('.replace(/This session is being continued')) {
-      debug(
-        'patch: fixRewindSummaryHeader: already applied in this CC build — no-op'
-      );
-      return file;
-    }
     console.error(
       'patch: fixRewindSummaryHeader: failed to find the rewind summary message (summarizeMetadata.direction call site)'
     );
